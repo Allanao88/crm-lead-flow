@@ -1,10 +1,5 @@
-# Python
-__pycache__/
-*.py[cod]
-*.class
-backend/venv/
+venv/
+backend/.env
 .env
-
-# Sistema Operacional
-.DS_Store
-Thumbs.db
+__pycache__/
+*.pyc
