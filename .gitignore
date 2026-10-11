@@ -1,0 +1,10 @@
+# Python
+__pycache__/
+*.py[cod]
+*.class
+backend/venv/
+.env
+
+# Sistema Operacional
+.DS_Store
+Thumbs.db
