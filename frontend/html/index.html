@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Allan Augusto Tech CRM</title>
+    
+    <!-- Conecta com o seu CSS padrão -->
+    <link rel="stylesheet" href="style.css">
+    
+    <!-- Estilos específicos para a caixa de login para combinar com seu dashboard -->
+    <style>
+        .login-wrapper {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 90vh; /* Centraliza a caixa na tela */
+        }
+        .login-card {
+            background: var(--bg3);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 40px;
+            width: 100%;
+            max-width: 380px;
+            box-shadow: var(--shadow);
+            text-align: center;
+        }
+        .login-brand {
+            background-color: var(--lime);
+            color: #000;
+            width: 64px;
+            height: 64px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 900;
+            font-size: 26px;
+            border-radius: 14px;
+            margin: 0 auto 20px;
+            box-shadow: 0 4px 15px rgba(204, 255, 0, 0.2);
+        }
+        .login-card h2 {
+            color: var(--white);
+            margin: 0 0 8px;
+            font-weight: 800;
+            font-size: 22px;
+        }
+        .login-card p {
+            color: var(--muted);
+            font-size: 12px;
+            margin-bottom: 30px;
+        }
+        .form-group {
+            text-align: left;
+            margin-bottom: 18px;
+        }
+        .form-group label {
+            display: block;
+            color: var(--muted);
+            font-size: 11px;
+            font-weight: 700;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .form-group input {
+            width: 100%;
+            box-sizing: border-box;
+            background: var(--bg2);
+            border: 1px solid var(--border);
+            color: var(--white);
+            padding: 14px;
+            border-radius: 8px;
+            font-size: 13px;
+            outline: none;
+            transition: border-color 0.3s ease;
+        }
+        .form-group input:focus {
+            border-color: var(--lime);
+        }
+        .btn-login {
+            width: 100%;
+            background: var(--lime);
+            color: #000;
+            border: none;
+            padding: 14px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 800;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-top: 10px;
+        }
+        .btn-login:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(204, 255, 0, 0.3);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="login-wrapper fade-in">
+        <div class="login-card">
+            <!-- Logo (AA de Allan Augusto) -->
+            <div class="login-brand">AA</div>
+            
+            <h2>Allan Augusto Tech</h2>
+            <p>Acesse o painel do seu CRM</p>
+
+            <!-- Formulário de Autenticação -->
+            <form action="dashboard.html" method="POST" id="loginForm">
+                <div class="form-group">
+                    <label for="email">E-mail</label>
+                    <input type="email" id="email" placeholder="seu@email.com" required>
+                </div>
+                <div class="form-group">
+                    <label for="senha">Senha</label>
+                    <input type="password" id="senha" placeholder="••••••••" required>
+                </div>
+                
+                <button type="submit" class="btn-login">Entrar no Sistema</button>
+            </form>
+        </div>
+    </div>
+
+</body>
+</html>
