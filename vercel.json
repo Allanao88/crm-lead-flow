@@ -9,22 +9,22 @@
       "use": "@vercel/static"
     }
   ],
-  "routes": [
+  "rewrites": [
     {
-      "src": "/api/(.*)",
-      "dest": "/backend/main.py"
+      "source": "/api/(.*)",
+      "destination": "/backend/main.py"
     },
     {
-      "src": "/style.css",
-      "dest": "/frontend/css/style.css"
+      "source": "/style.css",
+      "destination": "/frontend/css/style.css"
     },
     {
-      "src": "/",
-      "dest": "/frontend/html/index.html"
+      "source": "/",
+      "destination": "/frontend/html/index.html"
     },
     {
-      "src": "/(.*)",
-      "dest": "/frontend/$1"
+      "source": "/(.*)",
+      "destination": "/frontend/$1"
     }
   ]
 }
