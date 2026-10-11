@@ -21,10 +21,6 @@
     {
       "source": "/",
       "destination": "/frontend/html/index.html"
-    },
-    {
-      "source": "/(.*)",
-      "destination": "/frontend/$1"
     }
   ]
 }
