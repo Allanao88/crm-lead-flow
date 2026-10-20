@@ -1,5 +1,20 @@
+# Python
 venv/
-backend/.env
-.env
+.venv/
 __pycache__/
-*.pyc
+*.py[cod]
+
+# Node.js
+node_modules/
+**/node_modules/
+
+# Builds e cache
+dist/
+**/dist/
+.vite/
+**/.vite/
+
+# Variáveis de ambiente
+.env
+.env.*
+!.env.example
