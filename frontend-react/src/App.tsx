@@ -78,6 +78,7 @@ function App() {
   const [authPassword, setAuthPassword] = useState('')
   const [form, setForm] = useState<LeadForm>(emptyForm)
   const [showForm, setShowForm] = useState(false)
+  const [editingLeadId, setEditingLeadId] = useState<number | null>(null)
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data, error }) => {
@@ -225,34 +226,79 @@ function App() {
 
     setSaving(true)
 
-    const { data, error } = await supabase
-      .from('leads')
-      .insert({
-        name: form.name.trim(),
-        email: form.email.trim() || null,
-        phone: form.phone.trim() || null,
-        company: form.company.trim() || null,
-        stage: form.stage,
-        value: amount,
-      })
-      .select(
-        'id, name, email, phone, company, stage, value, created_at, updated_at',
-      )
-      .single()
-
-    setSaving(false)
-
-    if (error) {
-      setError(`Não foi possível cadastrar o lead: ${error.message}`)
-      return
+    const leadData = {
+      name: form.name.trim(),
+      email: form.email.trim() || null,
+      phone: form.phone.trim() || null,
+      company: form.company.trim() || null,
+      stage: form.stage,
+      value: amount,
     }
 
-    setLeads((current) => [data as Lead, ...current])
+    if (editingLeadId !== null) {
+      const { data, error } = await supabase
+        .from('leads')
+        .update(leadData)
+        .eq('id', editingLeadId)
+        .select(
+          'id, name, email, phone, company, stage, value, created_at, updated_at',
+        )
+        .single()
+
+      setSaving(false)
+
+      if (error) {
+        setError(`Não foi possível atualizar o lead: ${error.message}`)
+        return
+      }
+
+      setLeads((current) =>
+        current.map((lead) =>
+          lead.id === editingLeadId ? (data as Lead) : lead,
+        ),
+      )
+      setNotice('Lead atualizado com sucesso.')
+    } else {
+      const { data, error } = await supabase
+        .from('leads')
+        .insert(leadData)
+        .select(
+          'id, name, email, phone, company, stage, value, created_at, updated_at',
+        )
+        .single()
+
+      setSaving(false)
+
+      if (error) {
+        setError(`Não foi possível cadastrar o lead: ${error.message}`)
+        return
+      }
+
+      setLeads((current) => [data as Lead, ...current])
+      setNotice('Lead cadastrado com sucesso.')
+    }
+
     setForm(emptyForm)
+    setEditingLeadId(null)
     setShowForm(false)
     setSearch('')
     setStageFilter('Todas')
-    setNotice('Lead cadastrado com sucesso.')
+  }
+
+  function handleEditLead(lead: Lead) {
+    setEditingLeadId(lead.id)
+    setForm({
+      name: lead.name,
+      email: lead.email ?? '',
+      phone: lead.phone ?? '',
+      company: lead.company ?? '',
+      stage: lead.stage,
+      value: String(lead.value),
+    })
+    setShowForm(true)
+    setError('')
+    setNotice('')
+    window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   async function handleStageChange(lead: Lead, stage: Stage) {
@@ -401,14 +447,17 @@ function App() {
         </div>
 
         <nav className="space-y-1 px-4 py-6">
-          <a href="#dashboard" className="block rounded-xl bg-indigo-50 px-3 py-3 text-sm font-semibold text-indigo-700">
-            ▦ &nbsp; Visão geral
+          <p className="px-3 pb-2 text-xs font-semibold uppercase tracking-wider text-slate-400">
+            CRM
+          </p>
+          <a href="#leads" className="block rounded-lg bg-indigo-50 px-3 py-3 text-sm font-semibold text-indigo-700">
+            ♙ &nbsp; Leads <span className="ml-1 rounded-md bg-white px-2 py-0.5 text-xs">{leads.length}</span>
           </a>
-          <a href="#leads" className="block rounded-xl px-3 py-3 text-sm text-slate-600 hover:bg-slate-50">
-            ♙ &nbsp; Leads ({leads.length})
-          </a>
-          <a href="#pipeline" className="block rounded-xl px-3 py-3 text-sm text-slate-600 hover:bg-slate-50">
+          <a href="#pipeline" className="block rounded-lg px-3 py-3 text-sm text-slate-600 hover:bg-slate-50">
             ▥ &nbsp; Pipeline
+          </a>
+          <a href="#dashboard" className="block rounded-lg px-3 py-3 text-sm text-slate-600 hover:bg-slate-50">
+            ▦ &nbsp; Visão geral
           </a>
         </nav>
 
@@ -427,12 +476,20 @@ function App() {
       <main id="dashboard" className="min-w-0 lg:ml-64">
         <header className="sticky top-0 z-10 flex min-h-20 items-center justify-between gap-4 border-b border-slate-200 bg-white/95 px-5 py-3 backdrop-blur sm:px-8">
           <div>
-            <p className="text-xs text-slate-500">AKS - Tech / Dashboard</p>
-            <h1 className="mt-1 text-xl font-bold text-slate-900">Visão geral</h1>
+            <p className="text-xs text-slate-500">AKS - Tech / CRM</p>
+            <h1 className="mt-1 text-xl font-bold text-slate-900">Leads</h1>
           </div>
           <button
             onClick={() => {
-              setShowForm((current) => !current)
+              if (showForm) {
+                setShowForm(false)
+                setEditingLeadId(null)
+                setForm(emptyForm)
+              } else {
+                setEditingLeadId(null)
+                setForm(emptyForm)
+                setShowForm(true)
+              }
               setError('')
               setNotice('')
             }}
@@ -456,7 +513,9 @@ function App() {
 
           {showForm && (
             <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-              <h2 className="text-lg font-bold text-slate-900">Cadastrar lead</h2>
+              <h2 className="text-lg font-bold text-slate-900">
+                {editingLeadId !== null ? 'Editar lead' : 'Cadastrar lead'}
+              </h2>
               <form onSubmit={handleCreateLead} className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 <label className="text-sm font-medium text-slate-700">
                   Nome *
@@ -484,9 +543,31 @@ function App() {
                   Valor potencial (R$)
                   <input inputMode="decimal" value={form.value} onChange={(e) => setForm({ ...form, value: e.target.value })} className="mt-1.5 w-full rounded-xl border border-slate-200 px-3 py-2.5" />
                 </label>
-                <div className="sm:col-span-2 lg:col-span-3">
-                  <button disabled={saving} className="rounded-xl bg-indigo-600 px-5 py-3 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-60">
-                    {saving ? 'Salvando...' : 'Salvar lead'}
+                <div className="flex flex-wrap gap-3 sm:col-span-2 lg:col-span-3">
+                  <button
+                    type="submit"
+                    disabled={saving}
+                    className="rounded-xl bg-indigo-600 px-5 py-3 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-60"
+                  >
+                    {saving
+                      ? 'Salvando...'
+                      : editingLeadId !== null
+                        ? 'Salvar alterações'
+                        : 'Cadastrar lead'}
+                  </button>
+                  <button
+                    type="button"
+                    disabled={saving}
+                    onClick={() => {
+                      setShowForm(false)
+                      setEditingLeadId(null)
+                      setForm(emptyForm)
+                      setError('')
+                      setNotice('')
+                    }}
+                    className="rounded-xl border border-slate-200 px-5 py-3 text-sm font-semibold text-slate-600 hover:bg-slate-50 disabled:opacity-60"
+                  >
+                    Cancelar
                   </button>
                 </div>
               </form>
@@ -532,18 +613,58 @@ function App() {
           </section>
 
           <section id="leads" className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-            <div className="flex flex-col justify-between gap-4 border-b border-slate-100 p-5 sm:flex-row sm:items-center">
-              <div>
-                <h2 className="font-bold text-slate-900">Leads</h2>
-                <p className="mt-1 text-sm text-slate-500">Todos os usuários autenticados compartilham estes registros.</p>
+            <div className="space-y-4 border-b border-slate-100 p-5">
+              <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
+                <div>
+                  <h2 className="font-bold text-slate-900">Todos os leads</h2>
+                  <p className="mt-1 text-sm text-slate-500">
+                    Consulte e acompanhe os contatos comerciais da AKS - Tech.
+                  </p>
+                </div>
+                <span className="text-sm text-slate-500">
+                  {filteredLeads.length} resultado(s)
+                </span>
               </div>
-              <div className="flex flex-col gap-2 sm:flex-row">
-                <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar contato..." className="rounded-xl border border-slate-200 px-3 py-2.5 text-sm sm:w-56" />
-                <select value={stageFilter} onChange={(e) => setStageFilter(e.target.value)} className="rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm">
-                  <option value="Todas">Todas as etapas</option>
-                  {stages.map((stage) => <option key={stage}>{stage}</option>)}
-                </select>
-                <button onClick={() => void handleLogout()} className="rounded-xl border border-slate-200 px-3 py-2.5 text-sm hover:bg-slate-50 lg:hidden">
+
+              <div className="flex flex-col gap-3 lg:flex-row lg:items-end">
+                <label className="block flex-1 text-xs font-semibold text-slate-600">
+                  Buscar leads
+                  <input
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder="Nome, empresa, e-mail ou telefone"
+                    className="mt-1.5 w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm font-normal outline-none transition focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+                  />
+                </label>
+
+                <label className="block lg:w-56 text-xs font-semibold text-slate-600">
+                  Filtrar por etapa
+                  <select
+                    value={stageFilter}
+                    onChange={(e) => setStageFilter(e.target.value)}
+                    className="mt-1.5 w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm font-normal outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+                  >
+                    <option value="Todas">Todas as etapas</option>
+                    {stages.map((stage) => <option key={stage}>{stage}</option>)}
+                  </select>
+                </label>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSearch('')
+                    setStageFilter('Todas')
+                  }}
+                  disabled={!search && stageFilter === 'Todas'}
+                  className="rounded-lg border border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  Limpar filtros
+                </button>
+
+                <button
+                  onClick={() => void handleLogout()}
+                  className="rounded-lg border border-slate-200 px-4 py-2.5 text-sm hover:bg-slate-50 lg:hidden"
+                >
                   Sair
                 </button>
               </div>
@@ -567,7 +688,14 @@ function App() {
                     {filteredLeads.map((lead) => (
                       <tr key={lead.id} className="hover:bg-slate-50/70">
                         <td className="px-5 py-4">
-                          <p className="font-semibold text-slate-800">{lead.name}</p>
+                          <button
+                            type="button"
+                            onClick={() => handleEditLead(lead)}
+                            className="text-left font-semibold text-slate-800 hover:text-indigo-600 hover:underline"
+                            title="Editar lead"
+                          >
+                            {lead.name}
+                          </button>
                           <p className="mt-1 text-xs text-slate-500">{lead.email || lead.phone || 'Sem contato informado'}</p>
                         </td>
                         <td className="px-5 py-4 text-slate-600">{lead.company || '—'}</td>
