@@ -5,6 +5,8 @@ import AuthScreen from './components/AuthScreen'
 import Sidebar, { type CrmSection } from './components/Sidebar'
 import ContactsPage from './features/contacts/ContactsPage'
 import { useContacts } from './features/contacts/useContacts'
+import CompaniesPage from './features/companies/CompaniesPage'
+import { useCompanies } from './features/companies/useCompanies'
 
 import type { Lead, LeadForm, Stage } from './features/leads/types'
 import { currency, emptyForm, stageStyles, stages } from './features/leads/constants'
@@ -48,7 +50,12 @@ function App() {
     saveContact,
   } = useContacts(session, setError, setNotice)
 
-
+  const {
+    companies,
+    loading: companiesLoading,
+    saving: companySaving,
+    saveCompany,
+  } = useCompanies(session, setError, setNotice)
 
   const filteredLeads = useMemo(() => {
     const term = search.toLowerCase().trim()
@@ -157,13 +164,14 @@ function App() {
       <Sidebar
         leadsCount={leads.length}
         contactsCount={contacts.length}
+        companiesCount={companies.length}
         userEmail={session.user.email}
         activeSection={activeSection}
         onNavigate={(section) => {
           setActiveSection(section)
           setError('')
           setNotice('')
-          if (section === 'contacts') {
+          if (section !== 'leads') {
             setShowForm(false)
             setEditingLeadId(null)
             setForm(emptyForm)
@@ -177,7 +185,7 @@ function App() {
           <div>
             <p className="text-xs text-slate-500">AKS - Tech / CRM</p>
             <h1 className="mt-1 text-xl font-bold text-slate-900">
-              {activeSection === 'leads' ? 'Leads' : 'Contatos'}
+              {activeSection === 'leads' ? 'Leads' : activeSection === 'contacts' ? 'Contatos' : 'Empresas'}
             </h1>
           </div>
           {activeSection === 'leads' && <button
@@ -218,6 +226,27 @@ function App() {
               loading={contactsLoading}
               saving={contactSaving}
               onSave={saveContact}
+              onError={setError}
+              onNotice={setNotice}
+            />
+          </>
+        ) : activeSection === 'companies' ? (
+          <>
+            {error && (
+              <div role="alert" className="mx-auto mt-5 max-w-[1440px] rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+                {error}
+              </div>
+            )}
+            {notice && (
+              <div role="status" className="mx-auto mt-5 max-w-[1440px] rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-700">
+                {notice}
+              </div>
+            )}
+            <CompaniesPage
+              companies={companies}
+              loading={companiesLoading}
+              saving={companySaving}
+              onSave={saveCompany}
               onError={setError}
               onNotice={setNotice}
             />

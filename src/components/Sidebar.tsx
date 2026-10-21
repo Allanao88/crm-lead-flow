@@ -1,8 +1,9 @@
-export type CrmSection = 'leads' | 'contacts'
+export type CrmSection = 'leads' | 'contacts' | 'companies'
 
 type SidebarProps = {
   leadsCount: number
   contactsCount?: number
+  companiesCount?: number
   userEmail: string | undefined
   activeSection?: CrmSection
   onNavigate?: (section: CrmSection) => void
@@ -12,6 +13,7 @@ type SidebarProps = {
 export default function Sidebar({
   leadsCount,
   contactsCount = 0,
+  companiesCount = 0,
   userEmail,
   activeSection = 'leads',
   onNavigate = () => {},
@@ -34,6 +36,12 @@ export default function Sidebar({
       label: 'Contatos',
       icon: '♧',
       count: contactsCount,
+    },
+    {
+      id: 'companies',
+      label: 'Empresas',
+      icon: '▤',
+      count: companiesCount,
     },
   ]
 
