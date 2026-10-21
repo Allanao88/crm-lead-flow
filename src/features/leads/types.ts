@@ -12,7 +12,8 @@ export type Lead = {
   email: string | null
   phone: string | null
   stage: Stage
-  value: number
+  setup_value: number
+  mrr_value: number
   created_at: string
   updated_at: string
 }
@@ -23,5 +24,6 @@ export type LeadForm = {
   phone: string
   company: string
   stage: Stage
-  value: string
+  setup_value: string
+  mrr_value: string
 }

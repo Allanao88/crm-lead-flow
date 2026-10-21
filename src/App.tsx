@@ -61,13 +61,25 @@ function App() {
     })
   }, [leads, search, stageFilter])
 
-  const pipelineValue = leads
-    .filter((lead) => lead.stage !== 'Ganho')
-    .reduce((total, lead) => total + Number(lead.value), 0)
+  const openLeads = leads.filter((lead) => lead.stage !== 'Ganho')
+  const wonLeads = leads.filter((lead) => lead.stage === 'Ganho')
 
-  const wonValue = leads
-    .filter((lead) => lead.stage === 'Ganho')
-    .reduce((total, lead) => total + Number(lead.value), 0)
+  const pipelineSetup = openLeads.reduce(
+    (total, lead) => total + Number(lead.setup_value),
+    0,
+  )
+  const pipelineMrr = openLeads.reduce(
+    (total, lead) => total + Number(lead.mrr_value),
+    0,
+  )
+  const wonSetup = wonLeads.reduce(
+    (total, lead) => total + Number(lead.setup_value),
+    0,
+  )
+  const wonMrr = wonLeads.reduce(
+    (total, lead) => total + Number(lead.mrr_value),
+    0,
+  )
 
   async function handleCreateLead(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -91,7 +103,8 @@ function App() {
       phone: lead.phone ?? '',
       company: lead.company ?? '',
       stage: lead.stage,
-      value: String(lead.value),
+      setup_value: String(lead.setup_value),
+      mrr_value: String(lead.mrr_value),
     })
     setShowForm(true)
     setError('')
@@ -204,8 +217,12 @@ function App() {
                   </select>
                 </label>
                 <label className="text-sm font-medium text-slate-700">
-                  Valor potencial (R$)
-                  <input inputMode="decimal" value={form.value} onChange={(e) => setForm({ ...form, value: e.target.value })} className="mt-1.5 w-full rounded-xl border border-slate-200 px-3 py-2.5" />
+                  SETUP — desenvolvimento (R$)
+                  <input type="number" min="0" step="0.01" inputMode="decimal" value={form.setup_value} onChange={(e) => setForm({ ...form, setup_value: e.target.value })} className="mt-1.5 w-full rounded-xl border border-slate-200 px-3 py-2.5" />
+                </label>
+                <label className="text-sm font-medium text-slate-700">
+                  MRR — mensalidade (R$/mês)
+                  <input type="number" min="0" step="0.01" inputMode="decimal" value={form.mrr_value} onChange={(e) => setForm({ ...form, mrr_value: e.target.value })} className="mt-1.5 w-full rounded-xl border border-slate-200 px-3 py-2.5" />
                 </label>
                 <div className="flex flex-wrap gap-3 sm:col-span-2 lg:col-span-3">
                   <button
@@ -243,10 +260,12 @@ function App() {
             <h2 className="mt-1 text-2xl font-bold text-slate-900">Resumo comercial</h2>
           </section>
 
-          <section aria-label="Indicadores comerciais" className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <section aria-label="Indicadores comerciais" className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
             <MetricCard label="Total de leads" value={String(leads.length)} detail="Contatos cadastrados" />
-            <MetricCard label="Pipeline aberto" value={currency(pipelineValue)} detail="Oportunidades em andamento" />
-            <MetricCard label="Negócios ganhos" value={currency(wonValue)} detail={`${leads.filter((lead) => lead.stage === 'Ganho').length} convertida(s)`} />
+            <MetricCard label="SETUP potencial" value={currency(pipelineSetup)} detail="Implantação dos negócios em aberto" />
+            <MetricCard label="MRR potencial" value={currency(pipelineMrr)} detail="Recorrência mensal dos negócios em aberto" />
+            <MetricCard label="SETUP ganho" value={currency(wonSetup)} detail="Implantação dos negócios ganhos" />
+            <MetricCard label="MRR contratado" value={currency(wonMrr)} detail="Receita mensal dos negócios ganhos" />
             <MetricCard label="Em negociação" value={String(leads.filter((lead) => lead.stage === 'Negociação').length)} detail="Oportunidades em fase final" />
           </section>
 
@@ -256,7 +275,14 @@ function App() {
             <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-5">
               {stages.map((stage) => {
                 const items = leads.filter((lead) => lead.stage === stage)
-                const total = items.reduce((sum, lead) => sum + Number(lead.value), 0)
+                const setupTotal = items.reduce(
+                  (sum, lead) => sum + Number(lead.setup_value),
+                  0,
+                )
+                const mrrTotal = items.reduce(
+                  (sum, lead) => sum + Number(lead.mrr_value),
+                  0,
+                )
 
                 return (
                   <button
@@ -269,7 +295,8 @@ function App() {
                   >
                     <span className={`rounded-full px-2 py-1 text-xs font-semibold ${stageStyles[stage]}`}>{stage}</span>
                     <p className="mt-4 text-2xl font-bold text-slate-900">{items.length}</p>
-                    <p className="mt-1 text-sm text-slate-500">{currency(total)}</p>
+                    <p className="mt-2 text-sm text-slate-600">SETUP: {currency(setupTotal)}</p>
+                    <p className="mt-1 text-sm text-slate-600">MRR: {currency(mrrTotal)}/mês</p>
                   </button>
                 )
               })}
@@ -338,13 +365,14 @@ function App() {
               <p className="p-8 text-center text-sm text-slate-500">Carregando leads...</p>
             ) : (
               <div className="overflow-x-auto">
-                <table className="w-full min-w-[850px] text-left text-sm">
+                <table className="w-full min-w-[1050px] text-left text-sm">
                   <thead className="bg-slate-50 text-xs uppercase tracking-wider text-slate-500">
                     <tr>
                       <th className="px-5 py-4">Contato</th>
                       <th className="px-5 py-4">Empresa</th>
                       <th className="px-5 py-4">Etapa</th>
-                      <th className="px-5 py-4 text-right">Valor</th>
+                      <th className="px-5 py-4 text-right">SETUP</th>
+                      <th className="px-5 py-4 text-right">MRR/mês</th>
                       <th className="px-5 py-4 text-right">Criado em</th>
                     </tr>
                   </thead>
@@ -373,7 +401,8 @@ function App() {
                             {stages.map((stage) => <option key={stage}>{stage}</option>)}
                           </select>
                         </td>
-                        <td className="px-5 py-4 text-right font-semibold">{currency(Number(lead.value))}</td>
+                        <td className="px-5 py-4 text-right font-semibold">{currency(Number(lead.setup_value))}</td>
+                        <td className="px-5 py-4 text-right font-semibold text-emerald-700">{currency(Number(lead.mrr_value))}</td>
                         <td className="px-5 py-4 text-right text-slate-500">
                           {new Date(lead.created_at).toLocaleDateString('pt-BR')}
                         </td>
@@ -381,7 +410,7 @@ function App() {
                     ))}
                     {!loading && filteredLeads.length === 0 && (
                       <tr>
-                        <td colSpan={5} className="px-5 py-12 text-center text-slate-500">
+                        <td colSpan={6} className="px-5 py-12 text-center text-slate-500">
                           {leads.length === 0 ? 'Nenhum lead cadastrado ainda.' : 'Nenhum lead corresponde à busca.'}
                         </td>
                       </tr>

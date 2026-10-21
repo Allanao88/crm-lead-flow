@@ -14,7 +14,8 @@ export const emptyForm: LeadForm = {
   phone: '',
   company: '',
   stage: 'Novo lead',
-  value: '0',
+  setup_value: '0',
+  mrr_value: '0',
 }
 
 export const currency = (value: number) =>

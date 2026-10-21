@@ -1,7 +1,16 @@
-import { useCallback, useEffect, useState, type Dispatch, type SetStateAction } from 'react'
+import {
+  useCallback,
+  useEffect,
+  useState,
+  type Dispatch,
+  type SetStateAction,
+} from 'react'
 import type { Session } from '@supabase/supabase-js'
 import { supabase } from '../../lib/supabase'
 import type { Lead, LeadForm, Stage } from './types'
+
+const leadFields =
+  'id, name, email, phone, company, stage, setup_value, mrr_value, created_at, updated_at'
 
 type UseLeadsResult = {
   leads: Lead[]
@@ -20,9 +29,11 @@ export function useLeads(
     userId: string | null
     items: Lead[]
   }>({ userId: null, items: [] })
+
   const leads = leadState.userId === (session?.user.id ?? null)
     ? leadState.items
     : []
+
   const setLeads: Dispatch<SetStateAction<Lead[]>> = useCallback((action) => {
     const userId = session?.user.id ?? null
 
@@ -35,6 +46,7 @@ export function useLeads(
       return { userId, items }
     })
   }, [session?.user.id])
+
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
 
@@ -47,22 +59,30 @@ export function useLeads(
       setLoading(true)
       setError('')
 
-      const { data, error } = await supabase
-        .from('leads')
-        .select(
-          'id, name, email, phone, company, stage, value, created_at, updated_at',
-        )
-        .order('created_at', { ascending: false })
+      try {
+        const { data, error } = await supabase
+          .from('leads')
+          .select(leadFields)
+          .order('created_at', { ascending: false })
 
-      if (!active) return
+        if (!active) return
 
-      if (error) {
-        setError(`Não foi possível carregar os leads: ${error.message}`)
-      } else {
-        setLeads((data ?? []) as Lead[])
+        if (error) {
+          setError(`Não foi possível carregar os leads: ${error.message}`)
+        } else {
+          setLeads((data ?? []) as Lead[])
+        }
+      } catch (err) {
+        if (active) {
+          setError(
+            err instanceof Error
+              ? `Não foi possível carregar os leads: ${err.message}`
+              : 'Não foi possível carregar os leads.',
+          )
+        }
+      } finally {
+        if (active) setLoading(false)
       }
-
-      setLoading(false)
     }
 
     void loadLeads()
@@ -79,15 +99,21 @@ export function useLeads(
     setError('')
     setNotice('')
 
-    const amount = Number(form.value.replace(',', '.'))
+    const setupValue = Number(form.setup_value.replace(',', '.'))
+    const mrrValue = Number(form.mrr_value.replace(',', '.'))
 
     if (!form.name.trim()) {
       setError('Informe o nome do contato.')
       return false
     }
 
-    if (!Number.isFinite(amount) || amount < 0) {
-      setError('Informe um valor válido, igual ou maior que zero.')
+    if (!form.setup_value.trim() || !Number.isFinite(setupValue) || setupValue < 0) {
+      setError('Informe um valor de SETUP válido, igual ou maior que zero.')
+      return false
+    }
+
+    if (!form.mrr_value.trim() || !Number.isFinite(mrrValue) || mrrValue < 0) {
+      setError('Informe um valor de MRR válido, igual ou maior que zero.')
       return false
     }
 
@@ -100,7 +126,8 @@ export function useLeads(
         phone: form.phone.trim() || null,
         company: form.company.trim() || null,
         stage: form.stage,
-        value: amount,
+        setup_value: setupValue,
+        mrr_value: mrrValue,
       }
 
       const query = editingLeadId !== null
@@ -108,9 +135,7 @@ export function useLeads(
         : supabase.from('leads').insert(leadData)
 
       const { data, error } = await query
-        .select(
-          'id, name, email, phone, company, stage, value, created_at, updated_at',
-        )
+        .select(leadFields)
         .single()
 
       if (error) {
@@ -135,6 +160,13 @@ export function useLeads(
       }
 
       return true
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? `Não foi possível salvar o lead: ${err.message}`
+          : 'Não foi possível salvar o lead.',
+      )
+      return false
     } finally {
       setSaving(false)
     }
@@ -154,12 +186,25 @@ export function useLeads(
       ),
     )
 
-    const { error } = await supabase
-      .from('leads')
-      .update({ stage })
-      .eq('id', lead.id)
+    try {
+      const { error } = await supabase
+        .from('leads')
+        .update({ stage })
+        .eq('id', lead.id)
 
-    if (error) {
+      if (error) {
+        setLeads((current) =>
+          current.map((item) =>
+            item.id === lead.id
+              ? { ...item, stage: previousStage }
+              : item,
+          ),
+        )
+        setError(`Não foi possível atualizar a etapa: ${error.message}`)
+      } else {
+        setNotice('Etapa do lead atualizada.')
+      }
+    } catch (err) {
       setLeads((current) =>
         current.map((item) =>
           item.id === lead.id
@@ -167,9 +212,11 @@ export function useLeads(
             : item,
         ),
       )
-      setError(`Não foi possível atualizar a etapa: ${error.message}`)
-    } else {
-      setNotice('Etapa do lead atualizada.')
+      setError(
+        err instanceof Error
+          ? `Não foi possível atualizar a etapa: ${err.message}`
+          : 'Não foi possível atualizar a etapa.',
+      )
     }
   }
 
