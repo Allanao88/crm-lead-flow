@@ -1,139 +1,44 @@
 
-import { useEffect, useMemo, useState, type FormEvent } from 'react'
-import type { Session } from '@supabase/supabase-js'
-import { supabase } from './lib/supabase'
+import { useMemo, useState, type FormEvent } from 'react'
 import MetricCard from './components/MetricCard'
 import AuthScreen from './components/AuthScreen'
 import Sidebar from './components/Sidebar'
 
-type Stage =
-  | 'Novo lead'
-  | 'Qualificação'
-  | 'Proposta'
-  | 'Negociação'
-  | 'Ganho'
-
-type Lead = {
-  id: number
-  name: string
-  company: string | null
-  email: string | null
-  phone: string | null
-  stage: Stage
-  value: number
-  created_at: string
-  updated_at: string
-}
-
-type LeadForm = {
-  name: string
-  email: string
-  phone: string
-  company: string
-  stage: Stage
-  value: string
-}
-
-const stages: Stage[] = [
-  'Novo lead',
-  'Qualificação',
-  'Proposta',
-  'Negociação',
-  'Ganho',
-]
-
-const emptyForm: LeadForm = {
-  name: '',
-  email: '',
-  phone: '',
-  company: '',
-  stage: 'Novo lead',
-  value: '0',
-}
-
-const currency = (value: number) =>
-  new Intl.NumberFormat('pt-BR', {
-    style: 'currency',
-    currency: 'BRL',
-    maximumFractionDigits: 2,
-  }).format(value)
-
-const stageStyles: Record<Stage, string> = {
-  'Novo lead': 'bg-slate-100 text-slate-600',
-  Qualificação: 'bg-blue-50 text-blue-700',
-  Proposta: 'bg-violet-50 text-violet-700',
-  Negociação: 'bg-amber-50 text-amber-700',
-  Ganho: 'bg-emerald-50 text-emerald-700',
-}
+import type { Lead, LeadForm, Stage } from './features/leads/types'
+import { currency, emptyForm, stageStyles, stages } from './features/leads/constants'
+import { useLeads } from './features/leads/useLeads'
+import { useAuth } from './features/auth/useAuth'
 
 function App() {
-  const [session, setSession] = useState<Session | null>(null)
-  const [authReady, setAuthReady] = useState(false)
-  const [leads, setLeads] = useState<Lead[]>([])
   const [search, setSearch] = useState('')
   const [stageFilter, setStageFilter] = useState('Todas')
-  const [loading, setLoading] = useState(false)
-  const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
-  const [authMode, setAuthMode] = useState<'login' | 'signup'>('login')
-  const [authEmail, setAuthEmail] = useState('')
-  const [authPassword, setAuthPassword] = useState('')
   const [form, setForm] = useState<LeadForm>(emptyForm)
   const [showForm, setShowForm] = useState(false)
   const [editingLeadId, setEditingLeadId] = useState<number | null>(null)
 
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data, error }) => {
-      if (error) setError(error.message)
-      setSession(data.session)
-      setAuthReady(true)
-    })
+  const {
+    session,
+    authReady,
+    authSaving,
+    authMode,
+    authEmail,
+    authPassword,
+    setAuthEmail,
+    setAuthPassword,
+    setAuthMode,
+    handleAuth,
+    handleLogout,
+  } = useAuth(setError, setNotice)
 
-    const { data: listener } = supabase.auth.onAuthStateChange(
-      (_event, nextSession) => {
-        setSession(nextSession)
-        if (!nextSession) setLeads([])
-        setAuthReady(true)
-      },
-    )
+  const { leads, loading, saving, saveLead, handleStageChange } = useLeads(
+    session,
+    setError,
+    setNotice,
+  )
 
-    return () => listener.subscription.unsubscribe()
-  }, [])
 
-  useEffect(() => {
-    if (!session) return
-
-    let active = true
-
-    async function loadLeads() {
-      setLoading(true)
-      setError('')
-
-      const { data, error } = await supabase
-        .from('leads')
-        .select(
-          'id, name, email, phone, company, stage, value, created_at, updated_at',
-        )
-        .order('created_at', { ascending: false })
-
-      if (!active) return
-
-      if (error) {
-        setError(`Não foi possível carregar os leads: ${error.message}`)
-      } else {
-        setLeads((data ?? []) as Lead[])
-      }
-
-      setLoading(false)
-    }
-
-    void loadLeads()
-
-    return () => {
-      active = false
-    }
-  }, [session])
 
   const filteredLeads = useMemo(() => {
     const term = search.toLowerCase().trim()
@@ -164,120 +69,12 @@ function App() {
     .filter((lead) => lead.stage === 'Ganho')
     .reduce((total, lead) => total + Number(lead.value), 0)
 
-  async function handleAuth(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    setError('')
-    setNotice('')
-    setSaving(true)
-
-    try {
-      if (authMode === 'login') {
-        const { error } = await supabase.auth.signInWithPassword({
-          email: authEmail.trim(),
-          password: authPassword,
-        })
-
-        if (error) throw error
-      } else {
-        const { data, error } = await supabase.auth.signUp({
-          email: authEmail.trim(),
-          password: authPassword,
-        })
-
-        if (error) throw error
-
-        if (!data.session) {
-          setNotice(
-            'Cadastro recebido. Confira seu e-mail para confirmar a conta antes de entrar.',
-          )
-        } else {
-          setNotice('Conta criada com sucesso.')
-        }
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro de autenticação.')
-    } finally {
-      setSaving(false)
-    }
-  }
-
-  async function handleLogout() {
-    setError('')
-    const { error } = await supabase.auth.signOut()
-
-    if (error) setError(`Não foi possível sair: ${error.message}`)
-  }
-
   async function handleCreateLead(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    setError('')
-    setNotice('')
 
-    const amount = Number(form.value.replace(',', '.'))
+    const saved = await saveLead(form, editingLeadId)
 
-    if (!form.name.trim()) {
-      setError('Informe o nome do contato.')
-      return
-    }
-
-    if (!Number.isFinite(amount) || amount < 0) {
-      setError('Informe um valor válido, igual ou maior que zero.')
-      return
-    }
-
-    setSaving(true)
-
-    const leadData = {
-      name: form.name.trim(),
-      email: form.email.trim() || null,
-      phone: form.phone.trim() || null,
-      company: form.company.trim() || null,
-      stage: form.stage,
-      value: amount,
-    }
-
-    if (editingLeadId !== null) {
-      const { data, error } = await supabase
-        .from('leads')
-        .update(leadData)
-        .eq('id', editingLeadId)
-        .select(
-          'id, name, email, phone, company, stage, value, created_at, updated_at',
-        )
-        .single()
-
-      setSaving(false)
-
-      if (error) {
-        setError(`Não foi possível atualizar o lead: ${error.message}`)
-        return
-      }
-
-      setLeads((current) =>
-        current.map((lead) =>
-          lead.id === editingLeadId ? (data as Lead) : lead,
-        ),
-      )
-      setNotice('Lead atualizado com sucesso.')
-    } else {
-      const { data, error } = await supabase
-        .from('leads')
-        .insert(leadData)
-        .select(
-          'id, name, email, phone, company, stage, value, created_at, updated_at',
-        )
-        .single()
-
-      setSaving(false)
-
-      if (error) {
-        setError(`Não foi possível cadastrar o lead: ${error.message}`)
-        return
-      }
-
-      setLeads((current) => [data as Lead, ...current])
-      setNotice('Lead cadastrado com sucesso.')
-    }
+    if (!saved) return
 
     setForm(emptyForm)
     setEditingLeadId(null)
@@ -302,38 +99,6 @@ function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
-  async function handleStageChange(lead: Lead, stage: Stage) {
-    if (lead.stage === stage) return
-
-    setError('')
-    setNotice('')
-
-    const previousStage = lead.stage
-
-    setLeads((current) =>
-      current.map((item) =>
-        item.id === lead.id ? { ...item, stage } : item,
-      ),
-    )
-
-    const { error } = await supabase
-      .from('leads')
-      .update({ stage })
-      .eq('id', lead.id)
-
-    if (error) {
-      setLeads((current) =>
-        current.map((item) =>
-          item.id === lead.id
-            ? { ...item, stage: previousStage }
-            : item,
-        ),
-      )
-      setError(`Não foi possível atualizar a etapa: ${error.message}`)
-    } else {
-      setNotice('Etapa do lead atualizada.')
-    }
-  }
 
   if (!authReady) {
     return (
@@ -351,7 +116,7 @@ function App() {
         authPassword={authPassword}
         error={error}
         notice={notice}
-        saving={saving}
+        saving={authSaving}
         onEmailChange={setAuthEmail}
         onPasswordChange={setAuthPassword}
         onSubmit={handleAuth}
