@@ -1,5 +1,5 @@
 # Logs
-logs
+logs/
 *.log
 npm-debug.log*
 yarn-debug.log*
@@ -7,15 +7,16 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-node_modules
-dist
-dist-ssr
-*.local
+# Dependências e builds do frontend
+node_modules/
+dist/
+dist-ssr/
 
-# Editor directories and files
+# Arquivos locais e configurações de IDE
+*.local
 .vscode/*
 !.vscode/extensions.json
-.idea
+.idea/
 .DS_Store
 *.suo
 *.ntvs*
@@ -23,23 +24,13 @@ dist-ssr
 *.sln
 *.sw?
 
-# Python local environments and cache
+# Ambientes e caches Python
 venv/
 .venv/
 __pycache__/
-<<<<<<< HEAD
 *.py[cod]
 
-# Environment variables and secrets
+# Variáveis de ambiente e segredos
 .env
 .env.*
 !.env.example
-=======
-*.pyc
-
-# Dependências e build do frontend React/Vite
-node_modules/
-dist/
-dist-ssr/
-*.local
->>>>>>> 9d8ded3 (refactor: finaliza modularizacao do App.tsx e consolida estrutura limpa v1.0)
