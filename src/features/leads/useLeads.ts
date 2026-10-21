@@ -8,6 +8,7 @@ import {
 import type { Session } from '@supabase/supabase-js'
 import { supabase } from '../../lib/supabase'
 import type { Lead, LeadForm, Stage } from './types'
+import type { LeadProductItem } from './useLeadProducts'
 
 const leadFields =
   'id, name, email, phone, company, stage, setup_value, mrr_value, created_at, updated_at'
@@ -16,7 +17,7 @@ type UseLeadsResult = {
   leads: Lead[]
   loading: boolean
   saving: boolean
-  saveLead: (form: LeadForm, editingLeadId: number | null) => Promise<boolean>
+  saveLead: (form: LeadForm, editingLeadId: number | null, productItems: LeadProductItem[]) => Promise<boolean>
   handleStageChange: (lead: Lead, stage: Stage) => Promise<void>
 }
 
@@ -95,6 +96,7 @@ export function useLeads(
   async function saveLead(
     form: LeadForm,
     editingLeadId: number | null,
+    productItems: LeadProductItem[],
   ): Promise<boolean> {
     setError('')
     setNotice('')
@@ -117,6 +119,32 @@ export function useLeads(
       return false
     }
 
+    const normalizedProducts: Array<{ product_id: number; quantity: number }> = []
+    const seenProductIds = new Set<number>()
+
+    for (const item of productItems) {
+      const quantity = Number(item.quantity.replace(',', '.'))
+
+      if (
+        !Number.isInteger(item.product_id) ||
+        item.product_id <= 0 ||
+        !Number.isFinite(quantity) ||
+        quantity <= 0 ||
+        Math.round(quantity * 1000) !== quantity * 1000
+      ) {
+        setError('Informe quantidades positivas com até três casas decimais.')
+        return false
+      }
+
+      if (seenProductIds.has(item.product_id)) {
+        setError('Há um produto duplicado na seleção.')
+        return false
+      }
+
+      seenProductIds.add(item.product_id)
+      normalizedProducts.push({ product_id: item.product_id, quantity })
+    }
+
     setSaving(true)
 
     try {
@@ -125,37 +153,141 @@ export function useLeads(
         email: form.email.trim() || null,
         phone: form.phone.trim() || null,
         company: form.company.trim() || null,
-        stage: form.stage,
         setup_value: setupValue,
         mrr_value: mrrValue,
       }
 
-      const query = editingLeadId !== null
-        ? supabase.from('leads').update(leadData).eq('id', editingLeadId)
-        : supabase.from('leads').insert(leadData)
-
-      const { data, error } = await query
-        .select(leadFields)
-        .single()
-
-      if (error) {
-        setError(
-          editingLeadId !== null
-            ? `Não foi possível atualizar o lead: ${error.message}`
-            : `Não foi possível cadastrar o lead: ${error.message}`,
-        )
-        return false
-      }
-
       if (editingLeadId !== null) {
+        const { data: updatedLead, error: updateError } = await supabase
+          .from('leads')
+          .update(leadData)
+          .eq('id', editingLeadId)
+          .select(leadFields)
+          .single()
+
+        if (updateError) {
+          setError(`Não foi possível atualizar o lead: ${updateError.message}`)
+          return false
+        }
+
+        if (updatedLead.stage !== 'Ganho') {
+          const { error: productsError } = await supabase.rpc(
+            'set_lead_products',
+            {
+              p_lead_id: editingLeadId,
+              p_items: normalizedProducts,
+            },
+          )
+
+          if (productsError) {
+            setError(
+              `Dados comerciais salvos, mas não foi possível salvar os produtos: ${productsError.message}`,
+            )
+            return false
+          }
+        }
+
+        if (updatedLead.stage !== form.stage) {
+          const { error: stageError } = await supabase.rpc(
+            'set_lead_stage_with_inventory',
+            {
+              p_lead_id: editingLeadId,
+              p_stage: form.stage,
+            },
+          )
+
+          if (stageError) {
+            setError(
+              `Os dados comerciais foram salvos, mas não foi possível alterar a etapa: ${stageError.message}`,
+            )
+            return false
+          }
+        }
+
+        const { data: finalLead, error: reloadError } = await supabase
+          .from('leads')
+          .select(leadFields)
+          .eq('id', editingLeadId)
+          .single()
+
+        if (reloadError) {
+          setError(
+            `Lead salvo, mas não foi possível atualizar a tela: ${reloadError.message}`,
+          )
+          return false
+        }
+
         setLeads((current) =>
           current.map((lead) =>
-            lead.id === editingLeadId ? (data as Lead) : lead,
+            lead.id === editingLeadId ? (finalLead as Lead) : lead,
           ),
         )
         setNotice('Lead atualizado com sucesso.')
       } else {
-        setLeads((current) => [data as Lead, ...current])
+        const { data, error } = await supabase
+          .from('leads')
+          .insert({ ...leadData, stage: 'Novo lead' })
+          .select(leadFields)
+          .single()
+
+        if (error) {
+          setError(`Não foi possível cadastrar o lead: ${error.message}`)
+          return false
+        }
+
+        let savedLead = data as Lead
+
+        const { error: productsError } = await supabase.rpc(
+          'set_lead_products',
+          {
+            p_lead_id: savedLead.id,
+            p_items: normalizedProducts,
+          },
+        )
+
+        if (productsError) {
+          setLeads((current) => [savedLead, ...current])
+          setError(
+            `Lead cadastrado, mas não foi possível salvar os produtos: ${productsError.message}`,
+          )
+          return false
+        }
+
+        if (form.stage !== 'Novo lead') {
+          const { error: stageError } = await supabase.rpc(
+            'set_lead_stage_with_inventory',
+            {
+              p_lead_id: savedLead.id,
+              p_stage: form.stage,
+            },
+          )
+
+          if (stageError) {
+            setLeads((current) => [savedLead, ...current])
+            setError(
+              `Lead cadastrado em "Novo lead", mas não foi possível alterar a etapa: ${stageError.message}`,
+            )
+            return false
+          }
+
+          const { data: finalLead, error: reloadError } = await supabase
+            .from('leads')
+            .select(leadFields)
+            .eq('id', savedLead.id)
+            .single()
+
+          if (reloadError) {
+            setLeads((current) => [savedLead, ...current])
+            setError(
+              `Lead cadastrado, mas não foi possível atualizar a tela: ${reloadError.message}`,
+            )
+            return false
+          }
+
+          savedLead = finalLead as Lead
+        }
+
+        setLeads((current) => [savedLead, ...current])
         setNotice('Lead cadastrado com sucesso.')
       }
 
@@ -187,10 +319,13 @@ export function useLeads(
     )
 
     try {
-      const { error } = await supabase
-        .from('leads')
-        .update({ stage })
-        .eq('id', lead.id)
+      const { error } = await supabase.rpc(
+        'set_lead_stage_with_inventory',
+        {
+          p_lead_id: lead.id,
+          p_stage: stage,
+        },
+      )
 
       if (error) {
         setLeads((current) =>

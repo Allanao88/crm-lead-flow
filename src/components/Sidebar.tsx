@@ -1,4 +1,4 @@
-export type CrmSection = 'leads' | 'contacts' | 'companies'
+export type CrmSection = 'overview' | 'leads' | 'contacts' | 'companies' | 'inventory'
 
 type SidebarProps = {
   leadsCount: number
@@ -15,7 +15,7 @@ export default function Sidebar({
   contactsCount = 0,
   companiesCount = 0,
   userEmail,
-  activeSection = 'leads',
+  activeSection = 'overview',
   onNavigate = () => {},
   onLogout,
 }: SidebarProps) {
@@ -25,6 +25,12 @@ export default function Sidebar({
     icon: string
     count: number
   }[] = [
+    {
+      id: 'overview',
+      label: 'Visão geral',
+      icon: '▦',
+      count: leadsCount,
+    },
     {
       id: 'leads',
       label: 'Leads',
@@ -42,6 +48,12 @@ export default function Sidebar({
       label: 'Empresas',
       icon: '▤',
       count: companiesCount,
+    },
+    {
+      id: 'inventory',
+      label: 'Estoque',
+      icon: '▦',
+      count: 0,
     },
   ]
 
@@ -91,13 +103,6 @@ export default function Sidebar({
           )
         })}
 
-        <button
-          type="button"
-          onClick={() => onNavigate('leads')}
-          className="block w-full rounded-lg px-3 py-3 text-left text-sm text-slate-600 hover:bg-slate-50"
-        >
-          ▦ &nbsp; Visão geral
-        </button>
       </nav>
 
       <div className="mt-auto border-t border-slate-100 p-4">

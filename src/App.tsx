@@ -3,10 +3,16 @@ import { useMemo, useState, type FormEvent } from 'react'
 import MetricCard from './components/MetricCard'
 import AuthScreen from './components/AuthScreen'
 import Sidebar, { type CrmSection } from './components/Sidebar'
+import OverviewPage from './features/overview/OverviewPage'
 import ContactsPage from './features/contacts/ContactsPage'
 import { useContacts } from './features/contacts/useContacts'
 import CompaniesPage from './features/companies/CompaniesPage'
 import { useCompanies } from './features/companies/useCompanies'
+import InventoryPage from './features/inventory/InventoryPage'
+import LeadProductsEditor from './features/leads/LeadProductsEditor'
+import { useLeadProducts } from './features/leads/useLeadProducts'
+import { useInventory } from './features/inventory/useInventory'
+
 
 import type { Lead, LeadForm, Stage } from './features/leads/types'
 import { currency, emptyForm, stageStyles, stages } from './features/leads/constants'
@@ -21,7 +27,7 @@ function App() {
   const [form, setForm] = useState<LeadForm>(emptyForm)
   const [showForm, setShowForm] = useState(false)
   const [editingLeadId, setEditingLeadId] = useState<number | null>(null)
-  const [activeSection, setActiveSection] = useState<CrmSection>('leads')
+  const [activeSection, setActiveSection] = useState<CrmSection>('overview')
 
   const {
     session,
@@ -56,6 +62,36 @@ function App() {
     saving: companySaving,
     saveCompany,
   } = useCompanies(session, setError, setNotice)
+
+  const {
+    products: inventoryProducts,
+    movements: inventoryMovements,
+    loading: inventoryLoading,
+    saving: inventorySaving,
+    saveProduct,
+    registerMovement,
+    reverseMovement,
+  } = useInventory(setError, setNotice)
+
+  const {
+    items: leadProductItems,
+    setItems: setLeadProductItems,
+    setProductQuantity,
+    loading: leadProductsLoading,
+    loadError: leadProductsError,
+  } = useLeadProducts(editingLeadId)
+
+  async function handleLogoutAndReset() {
+    setActiveSection('overview')
+    setShowForm(false)
+    setEditingLeadId(null)
+    setLeadProductItems([])
+    setForm(emptyForm)
+    setSearch('')
+    setStageFilter('Todas')
+
+    await handleLogout()
+  }
 
   const filteredLeads = useMemo(() => {
     const term = search.toLowerCase().trim()
@@ -101,10 +137,21 @@ function App() {
   async function handleCreateLead(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
 
-    const saved = await saveLead(form, editingLeadId)
+    if (leadProductsLoading) {
+      setError('Aguarde o carregamento dos produtos vinculados.')
+      return
+    }
+
+    if (leadProductsError) {
+      setError(leadProductsError)
+      return
+    }
+
+    const saved = await saveLead(form, editingLeadId, leadProductItems)
 
     if (!saved) return
 
+    setLeadProductItems([])
     setForm(emptyForm)
     setEditingLeadId(null)
     setShowForm(false)
@@ -113,6 +160,7 @@ function App() {
   }
 
   function handleEditLead(lead: Lead) {
+    setLeadProductItems([])
     setEditingLeadId(lead.id)
     setForm({
       name: lead.name,
@@ -177,7 +225,7 @@ function App() {
             setForm(emptyForm)
           }
         }}
-        onLogout={handleLogout}
+        onLogout={handleLogoutAndReset}
       />
 
       <main id="dashboard" className="min-w-0 lg:ml-64">
@@ -185,11 +233,20 @@ function App() {
           <div>
             <p className="text-xs text-slate-500">AKS - Tech / CRM</p>
             <h1 className="mt-1 text-xl font-bold text-slate-900">
-              {activeSection === 'leads' ? 'Leads' : activeSection === 'contacts' ? 'Contatos' : 'Empresas'}
+              {activeSection === 'overview'
+                ? 'Visão geral'
+                : activeSection === 'leads'
+                  ? 'Leads'
+                  : activeSection === 'contacts'
+                    ? 'Contatos'
+                    : activeSection === 'companies'
+                      ? 'Empresas'
+                      : 'Gestão de estoque'}
             </h1>
           </div>
           {activeSection === 'leads' && <button
             onClick={() => {
+              setLeadProductItems([])
               if (showForm) {
                 setShowForm(false)
                 setEditingLeadId(null)
@@ -251,6 +308,50 @@ function App() {
               onNotice={setNotice}
             />
           </>
+        ) : activeSection === 'inventory' ? (
+          <>
+            {error && (
+              <div role="alert" className="mx-auto mt-5 max-w-[1440px] rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+                {error}
+              </div>
+            )}
+            {notice && (
+              <div role="status" className="mx-auto mt-5 max-w-[1440px] rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-700">
+                {notice}
+              </div>
+            )}
+            <InventoryPage
+              products={inventoryProducts}
+              movements={inventoryMovements}
+              loading={inventoryLoading}
+              saving={inventorySaving}
+              onSaveProduct={saveProduct}
+              onRegisterMovement={registerMovement}
+              onReverseMovement={reverseMovement}
+              onError={setError}
+              onNotice={setNotice}
+            />
+          </>
+        ) : activeSection === 'overview' ? (
+          <>
+            {error && (
+              <div role="alert" className="mx-auto mt-5 max-w-[1440px] rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+                {error}
+              </div>
+            )}
+            {notice && (
+              <div role="status" className="mx-auto mt-5 max-w-[1440px] rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-700">
+                {notice}
+              </div>
+            )}
+            <OverviewPage
+              leads={leads}
+              contactsCount={contacts.length}
+              companiesCount={companies.length}
+              loading={loading || contactsLoading || companiesLoading}
+              onOpenLeads={() => setActiveSection('leads')}
+            />
+          </>
         ) : (
           <div className="mx-auto max-w-[1440px] space-y-6 p-5 sm:p-8">
           {error && (
@@ -300,6 +401,32 @@ function App() {
                   MRR — mensalidade (R$/mês)
                   <input type="number" min="0" step="0.01" inputMode="decimal" value={form.mrr_value} onChange={(e) => setForm({ ...form, mrr_value: e.target.value })} className="mt-1.5 w-full rounded-xl border border-slate-200 px-3 py-2.5" />
                 </label>
+                <LeadProductsEditor
+                  products={inventoryProducts}
+                  items={leadProductItems}
+                  loading={leadProductsLoading}
+                  loadError={leadProductsError}
+                  disabled={
+                    saving ||
+                    leadProductsLoading ||
+                    (editingLeadId !== null &&
+                      leads.some(
+                        (lead) =>
+                          lead.id === editingLeadId && lead.stage === 'Ganho',
+                      ))
+                  }
+                  onQuantityChange={setProductQuantity}
+                />
+                {editingLeadId !== null &&
+                  leads.some(
+                    (lead) =>
+                      lead.id === editingLeadId && lead.stage === 'Ganho',
+                  ) && (
+                    <p className="text-sm text-amber-700 sm:col-span-2 lg:col-span-3">
+                      Este lead já foi ganho. Os produtos vinculados ficam bloqueados
+                      para preservar o histórico de estoque.
+                    </p>
+                  )}
                 <div className="flex flex-wrap gap-3 sm:col-span-2 lg:col-span-3">
                   <button
                     type="submit"
@@ -318,6 +445,7 @@ function App() {
                     onClick={() => {
                       setShowForm(false)
                       setEditingLeadId(null)
+                      setLeadProductItems([])
                       setForm(emptyForm)
                       setError('')
                       setNotice('')
@@ -429,7 +557,7 @@ function App() {
                 </button>
 
                 <button
-                  onClick={() => void handleLogout()}
+                  onClick={() => void handleLogoutAndReset()}
                   className="rounded-lg border border-slate-200 px-4 py-2.5 text-sm hover:bg-slate-50 lg:hidden"
                 >
                   Sair
