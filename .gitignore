@@ -27,9 +27,19 @@ dist-ssr
 venv/
 .venv/
 __pycache__/
+<<<<<<< HEAD
 *.py[cod]
 
 # Environment variables and secrets
 .env
 .env.*
 !.env.example
+=======
+*.pyc
+
+# Dependências e build do frontend React/Vite
+node_modules/
+dist/
+dist-ssr/
+*.local
+>>>>>>> 9d8ded3 (refactor: finaliza modularizacao do App.tsx e consolida estrutura limpa v1.0)
