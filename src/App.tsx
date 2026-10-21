@@ -2,7 +2,9 @@
 import { useMemo, useState, type FormEvent } from 'react'
 import MetricCard from './components/MetricCard'
 import AuthScreen from './components/AuthScreen'
-import Sidebar from './components/Sidebar'
+import Sidebar, { type CrmSection } from './components/Sidebar'
+import ContactsPage from './features/contacts/ContactsPage'
+import { useContacts } from './features/contacts/useContacts'
 
 import type { Lead, LeadForm, Stage } from './features/leads/types'
 import { currency, emptyForm, stageStyles, stages } from './features/leads/constants'
@@ -17,6 +19,7 @@ function App() {
   const [form, setForm] = useState<LeadForm>(emptyForm)
   const [showForm, setShowForm] = useState(false)
   const [editingLeadId, setEditingLeadId] = useState<number | null>(null)
+  const [activeSection, setActiveSection] = useState<CrmSection>('leads')
 
   const {
     session,
@@ -37,6 +40,13 @@ function App() {
     setError,
     setNotice,
   )
+
+  const {
+    contacts,
+    loading: contactsLoading,
+    saving: contactSaving,
+    saveContact,
+  } = useContacts(session, setError, setNotice)
 
 
 
@@ -146,7 +156,19 @@ function App() {
     <div className="min-h-screen bg-[#f7f8fc] text-slate-800">
       <Sidebar
         leadsCount={leads.length}
+        contactsCount={contacts.length}
         userEmail={session.user.email}
+        activeSection={activeSection}
+        onNavigate={(section) => {
+          setActiveSection(section)
+          setError('')
+          setNotice('')
+          if (section === 'contacts') {
+            setShowForm(false)
+            setEditingLeadId(null)
+            setForm(emptyForm)
+          }
+        }}
         onLogout={handleLogout}
       />
 
@@ -154,9 +176,11 @@ function App() {
         <header className="sticky top-0 z-10 flex min-h-20 items-center justify-between gap-4 border-b border-slate-200 bg-white/95 px-5 py-3 backdrop-blur sm:px-8">
           <div>
             <p className="text-xs text-slate-500">AKS - Tech / CRM</p>
-            <h1 className="mt-1 text-xl font-bold text-slate-900">Leads</h1>
+            <h1 className="mt-1 text-xl font-bold text-slate-900">
+              {activeSection === 'leads' ? 'Leads' : 'Contatos'}
+            </h1>
           </div>
-          <button
+          {activeSection === 'leads' && <button
             onClick={() => {
               if (showForm) {
                 setShowForm(false)
@@ -173,10 +197,33 @@ function App() {
             className="rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700"
           >
             {showForm ? 'Cancelar' : '+ Novo lead'}
-          </button>
+          </button>}
         </header>
 
-        <div className="mx-auto max-w-[1440px] space-y-6 p-5 sm:p-8">
+        {activeSection === 'contacts' ? (
+          <>
+            {error && (
+              <div role="alert" className="mx-auto mt-5 max-w-[1440px] rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+                {error}
+              </div>
+            )}
+            {notice && (
+              <div role="status" className="mx-auto mt-5 max-w-[1440px] rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-700">
+                {notice}
+              </div>
+            )}
+            <ContactsPage
+              contacts={contacts}
+              leads={leads}
+              loading={contactsLoading}
+              saving={contactSaving}
+              onSave={saveContact}
+              onError={setError}
+              onNotice={setNotice}
+            />
+          </>
+        ) : (
+          <div className="mx-auto max-w-[1440px] space-y-6 p-5 sm:p-8">
           {error && (
             <div role="alert" className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
               {error}
@@ -427,7 +474,8 @@ function App() {
           <footer className="pb-2 text-center text-xs text-slate-400">
             LeadFlow CRM · AKS - Tech
           </footer>
-        </div>
+          </div>
+        )}
       </main>
     </div>
   )
