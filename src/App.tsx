@@ -5,6 +5,7 @@ import AuthScreen from './components/AuthScreen'
 import FeedbackMessages from './components/FeedbackMessages'
 import { getSectionTitle } from './components/getSectionTitle'
 import Sidebar, { type CrmSection } from './components/Sidebar'
+import MobileNavigation from './components/MobileNavigation'
 
 import { useAuth } from './features/auth/useAuth'
 import { useCompanies } from './features/companies/useCompanies'
@@ -156,7 +157,7 @@ function App() {
         companiesCount={companies.length}
         userEmail={session.user.email}
         activeSection={activeSection}
-        onNavigate={(section) => {
+        onNavigate={(section: CrmSection) => {
           setActiveSection(section)
           setError('')
           setNotice('')
@@ -168,7 +169,7 @@ function App() {
         onLogout={handleLogoutAndReset}
       />
 
-      <main id="dashboard" className="min-w-0 lg:ml-64">
+      <main id="dashboard" className="min-w-0 pb-24 lg:ml-64 lg:pb-0">
         <header className="sticky top-0 z-10 flex min-h-20 items-center justify-between gap-4 border-b border-[var(--color-border)] bg-[var(--color-surface)]/95 px-4 py-3 shadow-sm backdrop-blur-xl sm:px-8">
           <h1 className="text-xl font-bold text-[var(--color-text-primary)]">
             {getSectionTitle(activeSection)}
@@ -300,6 +301,19 @@ function App() {
         </div>
         </Suspense>
       </main>
+      <MobileNavigation
+        activeSection={activeSection}
+        onNavigate={(section: CrmSection) => {
+          setActiveSection(section)
+          setError('')
+          setNotice('')
+          if (section !== 'leads') {
+            resetForm()
+            setLeadProductItems([])
+          }
+          window.scrollTo({ top: 0, behavior: 'auto' })
+        }}
+      />
     </div>
   )
 }
