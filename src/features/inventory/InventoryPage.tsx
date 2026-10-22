@@ -198,7 +198,7 @@ export default function InventoryPage({
     <div className="mx-auto max-w-[1440px] space-y-6 p-5 sm:p-8">
       <section className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div>
-          <p className="text-sm text-slate-500">AKS - Tech / CRM</p>
+
           <h2 className="mt-1 text-2xl font-bold text-slate-900">
             Gestão de estoque
           </h2>
@@ -228,7 +228,7 @@ export default function InventoryPage({
             type="button"
             onClick={showProductForm ? closeProductForm : openNewProductForm}
             disabled={saving}
-            className="rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50"
+            className="rounded-xl bg-[var(--color-brand)] px-4 py-2.5 text-sm font-semibold text-[var(--color-brand-text)] hover:bg-[var(--color-brand-hover)] disabled:opacity-50"
           >
             {showProductForm ? 'Cancelar produto' : '+ Novo produto'}
           </button>
@@ -300,7 +300,7 @@ export default function InventoryPage({
               onClick={() => setTab('products')}
               className={`rounded-xl px-4 py-2 text-sm font-semibold ${
                 tab === 'products'
-                  ? 'bg-indigo-600 text-white'
+                  ? 'bg-[var(--color-brand)] text-[var(--color-brand-text)]'
                   : 'border border-slate-200 text-slate-600 hover:bg-slate-50'
               }`}
             >
@@ -311,7 +311,7 @@ export default function InventoryPage({
               onClick={() => setTab('movements')}
               className={`rounded-xl px-4 py-2 text-sm font-semibold ${
                 tab === 'movements'
-                  ? 'bg-indigo-600 text-white'
+                  ? 'bg-[var(--color-brand)] text-[var(--color-brand-text)]'
                   : 'border border-slate-200 text-slate-600 hover:bg-slate-50'
               }`}
             >

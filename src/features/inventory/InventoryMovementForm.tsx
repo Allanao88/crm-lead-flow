@@ -105,7 +105,7 @@ export default function InventoryMovementForm({
           <button
             type="submit"
             disabled={saving || products.length === 0}
-            className="rounded-xl bg-indigo-600 px-5 py-3 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50"
+            className="rounded-xl bg-[var(--color-brand)] px-5 py-3 text-sm font-semibold text-[var(--color-brand-text)] hover:bg-[var(--color-brand-hover)] disabled:opacity-50"
           >
             {saving ? 'Registrando...' : 'Confirmar movimentação'}
           </button>

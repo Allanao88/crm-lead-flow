@@ -93,7 +93,7 @@ export default function CompaniesPage({
     <div className="crm-page space-y-6">
       <section className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div>
-          <p className="text-sm text-slate-500">AKS - Tech / CRM</p>
+
           <h2 className="crm-page-title mt-1">
             Empresas
           </h2>
@@ -295,7 +295,7 @@ export default function CompaniesPage({
                       <button
                         type="button"
                         onClick={() => handleEdit(company)}
-                        className="text-left font-semibold text-slate-800 hover:text-indigo-600 hover:underline"
+                        className="text-left font-semibold text-slate-800 hover:text-[var(--color-brand)] hover:underline"
                         title="Editar empresa"
                       >
                         {company.name}

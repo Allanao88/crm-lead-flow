@@ -6,14 +6,14 @@ type MetricCardProps = {
 
 export default function MetricCard({ label, value, detail }: MetricCardProps) {
   return (
-    <article className="group relative min-w-0 overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-md sm:p-6">
-      <div className="absolute inset-x-0 top-0 h-[3px] bg-gradient-to-r from-indigo-500 to-violet-400 opacity-0 transition-opacity duration-200 group-hover:opacity-100" />
+    <article className="group relative min-w-0 overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-[var(--color-brand)] hover:shadow-md sm:p-6">
+      <div className="absolute inset-x-0 top-0 h-[3px] bg-gradient-to-r from-[var(--color-brand)] to-[var(--color-brand-hover)] opacity-0 transition-opacity duration-200 group-hover:opacity-100" />
 
       <div className="flex min-h-8 items-start justify-between gap-3">
         <p className="text-[13px] font-semibold tracking-wide text-slate-500">
           {label}
         </p>
-        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600 transition-colors group-hover:bg-indigo-100">
+        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[var(--color-brand-soft)] text-[var(--color-brand)] transition-colors group-hover:bg-[var(--color-brand-soft)]">
           <svg
             aria-hidden="true"
             width="17"

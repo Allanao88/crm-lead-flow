@@ -16,6 +16,7 @@ import { useLeadForm } from './features/leads/useLeadForm'
 import type { Lead } from './features/leads/types'
 import { useLeads } from './features/leads/useLeads'
 import { useLeadFilters } from './features/leads/useLeadFilters'
+import { useTheme } from './hooks/useTheme'
 
 const CompaniesPage = lazy(() => import('./features/companies/CompaniesPage'))
 const ContactsPage = lazy(() => import('./features/contacts/ContactsPage'))
@@ -26,6 +27,7 @@ function App() {
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
   const [activeSection, setActiveSection] = useState<CrmSection>('overview')
+  const { theme, toggleTheme } = useTheme()
 
   const {
     session,
@@ -119,7 +121,7 @@ function App() {
 
   if (!authReady) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#f7f8fc] text-slate-600">
+      <div className="flex min-h-screen items-center justify-center bg-[var(--color-surface-muted)] text-[var(--color-text-secondary)]">
         Verificando sessão...
       </div>
     )
@@ -147,7 +149,7 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-800">
+    <div className="min-h-screen bg-[var(--color-surface-muted)] text-[var(--color-text-primary)]">
       <Sidebar
         leadsCount={leads.length}
         contactsCount={contacts.length}
@@ -167,14 +169,22 @@ function App() {
       />
 
       <main id="dashboard" className="min-w-0 lg:ml-64">
-        <header className="sticky top-0 z-10 flex min-h-20 items-center justify-between gap-4 border-b border-slate-200/80 bg-white/95 px-4 py-3 shadow-[0_1px_3px_rgb(15_23_42/3%)] backdrop-blur-xl sm:px-8">
-          <div>
-            <p className="text-xs text-slate-500">AKS - Tech / CRM</p>
-            <h1 className="mt-1 text-xl font-bold text-slate-900">
-{getSectionTitle(activeSection)}
-            </h1>
-          </div>
-          {activeSection === 'leads' && <button
+        <header className="sticky top-0 z-10 flex min-h-20 items-center justify-between gap-4 border-b border-[var(--color-border)] bg-[var(--color-surface)]/95 px-4 py-3 shadow-sm backdrop-blur-xl sm:px-8">
+          <h1 className="text-xl font-bold text-[var(--color-text-primary)]">
+            {getSectionTitle(activeSection)}
+          </h1>
+          <div className="ml-auto flex items-center gap-3">
+            <button
+              type="button"
+              onClick={toggleTheme}
+              aria-label={theme === 'dark' ? 'Ativar tema claro' : 'Ativar tema escuro'}
+              title={theme === 'dark' ? 'Ativar tema claro' : 'Ativar tema escuro'}
+              className="inline-flex h-10 items-center gap-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-muted)] px-3 text-sm font-medium text-[var(--color-text-primary)] hover:border-[var(--color-brand)]"
+            >
+              <span aria-hidden="true">{theme === 'dark' ? '☀' : '☾'}</span>
+              <span className="hidden sm:inline">{theme === 'dark' ? 'Tema claro' : 'Tema escuro'}</span>
+            </button>
+            {activeSection === 'leads' && <button
             onClick={() => {
               setLeadProductItems([])
               if (showForm) {
@@ -189,6 +199,7 @@ function App() {
           >
             {showForm ? 'Cancelar' : '+ Novo lead'}
           </button>}
+          </div>
         </header>
 
         <Suspense
@@ -198,6 +209,7 @@ function App() {
             </div>
           }
         >
+        <div key={activeSection} className="crm-page-transition">
         {activeSection === 'contacts' ? (
           <>
             <FeedbackMessages error={error} notice={notice} />
@@ -285,6 +297,7 @@ function App() {
             }}
           />
         )}
+        </div>
         </Suspense>
       </main>
     </div>

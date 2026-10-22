@@ -26,22 +26,22 @@ export default function AuthScreen({
   onToggleMode,
 }: AuthScreenProps) {
   return (
-    <main className="flex min-h-screen items-center justify-center bg-[#f7f8fc] px-5 py-10">
-      <section className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
+    <main className="flex min-h-screen items-center justify-center bg-[var(--color-surface-muted)] px-5 py-10">
+      <section className="w-full max-w-md rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-8 shadow-sm">
         <div className="mb-7 flex items-center gap-3">
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-indigo-600 text-xl font-bold text-white">
-            L
-          </div>
           <div>
-            <h1 className="text-xl font-bold text-slate-900">LeadFlow</h1>
-            <p className="text-sm text-slate-500">CRM da AKS - Tech</p>
+            <img
+              src="/brand/lead-flow.svg"
+              alt="Lead Flow — CRM da AKS-Tech"
+              className="h-auto w-44 max-w-full"
+            />
           </div>
         </div>
 
-        <h2 className="text-2xl font-bold text-slate-900">
+        <h2 className="text-2xl font-bold text-[var(--color-text-primary)]">
           {authMode === 'login' ? 'Entrar na sua conta' : 'Criar conta'}
         </h2>
-        <p className="mt-2 text-sm text-slate-500">
+        <p className="mt-2 text-sm text-[var(--color-text-secondary)]">
           Acesse o ambiente comercial compartilhado.
         </p>
 
@@ -57,7 +57,7 @@ export default function AuthScreen({
         )}
 
         <form onSubmit={onSubmit} className="mt-6 space-y-4">
-          <label className="block text-sm font-medium text-slate-700">
+          <label className="block text-sm font-medium text-[var(--color-text-primary)]">
             E-mail
             <input
               required
@@ -65,11 +65,11 @@ export default function AuthScreen({
               autoComplete="email"
               value={authEmail}
               onChange={(event) => onEmailChange(event.target.value)}
-              className="mt-1.5 w-full rounded-xl border border-slate-200 px-3 py-3 outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+              className="mt-1.5 w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-3 text-[var(--color-text-primary)] outline-none focus:border-[var(--color-brand)] focus:ring-2 focus:ring-[var(--color-focus-ring)]"
             />
           </label>
 
-          <label className="block text-sm font-medium text-slate-700">
+          <label className="block text-sm font-medium text-[var(--color-text-primary)]">
             Senha
             <input
               required
@@ -78,16 +78,16 @@ export default function AuthScreen({
               autoComplete={authMode === 'login' ? 'current-password' : 'new-password'}
               value={authPassword}
               onChange={(event) => onPasswordChange(event.target.value)}
-              className="mt-1.5 w-full rounded-xl border border-slate-200 px-3 py-3 outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+              className="mt-1.5 w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-3 text-[var(--color-text-primary)] outline-none focus:border-[var(--color-brand)] focus:ring-2 focus:ring-[var(--color-focus-ring)]"
             />
-            <span className="mt-1 block text-xs text-slate-500">
+            <span className="mt-1 block text-xs text-[var(--color-text-secondary)]">
               Mínimo de 6 caracteres; use uma senha forte e exclusiva.
             </span>
           </label>
 
           <button
             disabled={saving}
-            className="w-full rounded-xl bg-indigo-600 px-4 py-3 font-semibold text-white hover:bg-indigo-700 disabled:opacity-60"
+            className="w-full rounded-xl bg-[var(--color-brand)] px-4 py-3 font-semibold text-[#1a1a1a] hover:bg-[var(--color-brand-hover)] disabled:opacity-60"
           >
             {saving
               ? 'Aguarde...'
@@ -100,7 +100,7 @@ export default function AuthScreen({
         <button
           type="button"
           onClick={onToggleMode}
-          className="mt-5 w-full text-sm font-medium text-indigo-700 hover:text-indigo-900"
+          className="mt-5 w-full text-sm font-medium text-[var(--color-brand)] hover:opacity-80"
         >
           {authMode === 'login'
             ? 'Primeiro acesso? Criar conta'

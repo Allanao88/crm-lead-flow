@@ -113,7 +113,7 @@ export default function LeadsTable({
                     <button
                       type="button"
                       onClick={() => onEditLead(lead)}
-                      className="text-left font-semibold text-slate-800 hover:text-indigo-600 hover:underline"
+                      className="text-left font-semibold text-slate-800 hover:text-[var(--color-brand)] hover:underline"
                       title="Editar lead"
                     >
                       {lead.name}

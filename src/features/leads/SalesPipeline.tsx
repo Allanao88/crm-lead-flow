@@ -33,7 +33,7 @@ export default function SalesPipeline({
             <button
               key={stage}
               onClick={() => onSelectStage(stage)}
-              className="rounded-xl border border-slate-100 bg-slate-50 p-4 text-left hover:border-indigo-200"
+              className="rounded-xl border border-slate-100 bg-slate-50 p-4 text-left hover:border-[var(--color-brand)]"
             >
               <span
                 className={`rounded-full px-2 py-1 text-xs font-semibold ${stageStyles[stage]}`}

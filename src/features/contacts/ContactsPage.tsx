@@ -91,7 +91,7 @@ export default function ContactsPage({
     <div className="crm-page space-y-6">
       <section className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div>
-          <p className="text-sm text-slate-500">AKS - Tech / CRM</p>
+
           <h2 className="crm-page-title mt-1">
             Contatos
           </h2>
@@ -299,7 +299,7 @@ export default function ContactsPage({
                         <button
                           type="button"
                           onClick={() => handleEdit(contact)}
-                          className="text-left font-semibold text-slate-800 hover:text-indigo-600 hover:underline"
+                          className="text-left font-semibold text-slate-800 hover:text-[var(--color-brand)] hover:underline"
                           title="Editar contato"
                         >
                           {contact.name}

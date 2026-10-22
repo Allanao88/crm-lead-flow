@@ -123,7 +123,7 @@ export default function InventoryMovementsTable({
                         type="button"
                         onClick={() => onReverse(movement)}
                         disabled={saving}
-                        className="font-semibold text-indigo-600 hover:text-indigo-800 disabled:opacity-50"
+                        className="font-semibold text-[var(--color-brand)] hover:text-[var(--color-brand-hover)] disabled:opacity-50"
                       >
                         Estornar
                       </button>

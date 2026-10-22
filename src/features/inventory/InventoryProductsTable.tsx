@@ -123,7 +123,7 @@ export default function InventoryProductsTable({
                     <button
                       type="button"
                       onClick={() => onEdit(product)}
-                      className="font-semibold text-indigo-600 hover:text-indigo-800"
+                      className="font-semibold text-[var(--color-brand)] hover:text-[var(--color-brand-hover)]"
                     >
                       Editar
                     </button>

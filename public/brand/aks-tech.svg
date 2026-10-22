@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 90" fill="none">
+  <g transform="translate(4 7)">
+    <path d="M34 68 66 8a5 5 0 0 1 9 0l32 60H84L70 40 54 68H34Z" fill="#CCFF00"/>
+    <path d="M8 72 44 45 75 27" stroke="#CCFF00" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="m14 72 27-20 16 20" stroke="#CCFF00" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+  <text x="132" y="48" font-family="Segoe UI, Arial, sans-serif" font-size="35" font-weight="700" fill="#FFFFFF">AKS<tspan fill="#CCFF00">-Tech</tspan></text>
+  <text x="134" y="70" font-family="Segoe UI, Arial, sans-serif" font-size="10" letter-spacing="2.4" fill="#B8B8B8">TECNOLOGIA QUE IMPULSIONA</text>
+</svg>

@@ -58,11 +58,14 @@ export default function Sidebar({
   ]
 
   return (
-    <aside className="fixed inset-y-0 left-0 z-20 hidden w-64 flex-col border-r border-slate-800/70 bg-[#111827] text-slate-300 lg:flex">
+    <aside className="fixed inset-y-0 left-0 z-20 hidden w-64 flex-col border-r border-white/10 bg-[#1a1a1a] text-[#cccccc] lg:flex">
       <div className="flex h-20 shrink-0 items-center gap-3 border-b border-white/[0.08] px-6">
-        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-500 text-lg font-extrabold text-white shadow-lg shadow-indigo-950/30">
-          L
-        </div>
+        <img
+          src="/brand/lead-flow-icon.svg"
+          alt=""
+          aria-hidden="true"
+          className="h-10 w-10 shrink-0"
+        />
         <div className="min-w-0">
           <p className="text-base font-bold tracking-tight text-white">LeadFlow</p>
           <p className="mt-0.5 text-[11px] font-medium tracking-wide text-slate-400">
@@ -87,14 +90,14 @@ export default function Sidebar({
               aria-current={isActive ? 'page' : undefined}
               className={`group relative flex min-h-11 w-full items-center gap-3 rounded-xl px-3 text-left text-[13px] font-medium transition-colors ${
                 isActive
-                  ? 'bg-indigo-500/15 text-white'
+                  ? 'bg-[#ccff00]/10 text-white'
                   : 'text-slate-400 hover:bg-white/[0.05] hover:text-slate-100'
               }`}
             >
               {isActive && (
-                <span className="absolute inset-y-2 left-0 w-[3px] rounded-r-full bg-indigo-400" />
+                <span className="absolute inset-y-2 left-0 w-[3px] rounded-r-full bg-[#ccff00]" />
               )}
-              <span className={isActive ? 'text-indigo-300' : 'text-slate-500 group-hover:text-slate-300'}>
+              <span className={isActive ? 'text-[#ccff00]' : 'text-slate-500 group-hover:text-slate-300'}>
                 <NavIcon name={item.id} />
               </span>
               <span className="flex-1">{item.label}</span>
@@ -102,7 +105,7 @@ export default function Sidebar({
                 <span
                   className={`min-w-6 rounded-md px-1.5 py-0.5 text-center text-[11px] tabular-nums ${
                     isActive
-                      ? 'bg-indigo-400/15 font-semibold text-indigo-200'
+                      ? 'bg-[#ccff00]/15 font-semibold text-[#ccff00]'
                       : 'bg-white/[0.05] text-slate-500'
                   }`}
                 >
@@ -116,7 +119,7 @@ export default function Sidebar({
 
       <div className="border-t border-white/[0.08] p-4">
         <div className="mb-4 flex items-center gap-3 rounded-xl bg-white/[0.04] p-3">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-indigo-300/20 bg-indigo-400/15 text-sm font-bold text-indigo-200">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[#ccff00]/20 bg-[#ccff00]/10 text-sm font-bold text-[#ccff00]">
             {(userEmail?.trim().charAt(0) || 'U').toUpperCase()}
           </div>
           <div className="min-w-0 flex-1">

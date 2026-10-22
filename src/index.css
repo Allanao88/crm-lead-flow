@@ -7,17 +7,44 @@
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 
-  color: #172033;
-  background: #f5f7fb;
+  color: #181a17;
+  background: #f4f7f4;
 
-  --color-brand: #4f46e5;
-  --color-brand-hover: #4338ca;
-  --color-brand-soft: #eef2ff;
-  --color-text-primary: #172033;
-  --color-text-secondary: #64748b;
-  --color-border: #e2e8f0;
+  --color-brand: #009933;
+  --color-brand-hover: #007a29;
+  --color-brand-text: #ffffff;
+  --color-brand-soft: #e8f5ec;
+  --color-text-primary: #181a17;
+  --color-text-secondary: #687168;
+  --color-border: #dfe5df;
   --color-surface: #ffffff;
+  --color-surface-muted: #f4f7f4;
+  --color-sidebar: #1a1a1a;
+  --color-sidebar-text: #cccccc;
+  --color-accent: #009933;
+  --color-focus-ring: rgb(0 153 51 / 28%);
   --shadow-card: 0 1px 3px rgb(15 23 42 / 4%), 0 4px 12px rgb(15 23 42 / 3%);
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  color: #f5f7f5;
+  background: #1a1a1a;
+
+  --color-brand: #ccff00;
+  --color-brand-hover: #b8e600;
+  --color-brand-text: #1a1a1a;
+  --color-brand-soft: rgb(204 255 0 / 12%);
+  --color-text-primary: #f5f7f5;
+  --color-text-secondary: #a1a8a1;
+  --color-border: rgb(255 255 255 / 10%);
+  --color-surface: #242424;
+  --color-surface-muted: #2a2a2a;
+  --color-sidebar: #1a1a1a;
+  --color-sidebar-text: #cccccc;
+  --color-accent: #ccff00;
+  --color-focus-ring: rgb(204 255 0 / 30%);
+  --shadow-card: 0 4px 20px rgb(0 0 0 / 30%);
 }
 
 * {
@@ -35,7 +62,7 @@ body {
   min-width: 320px;
   min-height: 100vh;
   margin: 0;
-  background: #f5f7fb;
+  background: var(--color-surface-muted);
   color: var(--color-text-primary);
   font-size: 14px;
   line-height: 1.5;
@@ -79,17 +106,17 @@ textarea {
 
 input::placeholder,
 textarea::placeholder {
-  color: #94a3b8;
+  color: var(--color-text-secondary);
 }
 
 :focus-visible {
-  outline: 3px solid rgb(99 102 241 / 35%);
+  outline: 3px solid var(--color-focus-ring);
   outline-offset: 2px;
 }
 
 ::selection {
-  background: #c7d2fe;
-  color: #1e1b4b;
+  background: var(--color-brand-soft);
+  color: var(--color-text-primary);
 }
 
 ::-webkit-scrollbar {
@@ -104,12 +131,12 @@ textarea::placeholder {
 ::-webkit-scrollbar-thumb {
   border: 2px solid transparent;
   border-radius: 999px;
-  background: #cbd5e1;
+  background: var(--color-border);
   background-clip: padding-box;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+  background: var(--color-text-secondary);
   background-clip: padding-box;
 }
 
@@ -122,4 +149,63 @@ textarea::placeholder {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+/* Compatibilidade visual dos componentes Tailwind com o tema escuro */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+}
+
+:root[data-theme="dark"] body {
+  background: var(--color-surface-muted);
+  color: var(--color-text-primary);
+}
+
+:root[data-theme="dark"] .bg-white {
+  background-color: var(--color-surface);
+}
+
+:root[data-theme="dark"] .bg-slate-50,
+:root[data-theme="dark"] .bg-slate-100,
+:root[data-theme="dark"] .bg-gray-50,
+:root[data-theme="dark"] .bg-gray-100 {
+  background-color: var(--color-surface-muted);
+}
+
+:root[data-theme="dark"] .text-slate-900,
+:root[data-theme="dark"] .text-slate-800,
+:root[data-theme="dark"] .text-slate-700,
+:root[data-theme="dark"] .text-gray-900,
+:root[data-theme="dark"] .text-gray-800,
+:root[data-theme="dark"] .text-gray-700 {
+  color: var(--color-text-primary);
+}
+
+:root[data-theme="dark"] .text-slate-600,
+:root[data-theme="dark"] .text-slate-500,
+:root[data-theme="dark"] .text-gray-600,
+:root[data-theme="dark"] .text-gray-500 {
+  color: var(--color-text-secondary);
+}
+
+:root[data-theme="dark"] .border-slate-200,
+:root[data-theme="dark"] .border-slate-100,
+:root[data-theme="dark"] .border-gray-200,
+:root[data-theme="dark"] .border-gray-100 {
+  border-color: var(--color-border);
+}
+
+:root[data-theme="dark"] .hover\:bg-slate-50:hover,
+:root[data-theme="dark"] .hover\:bg-slate-50\/70:hover,
+:root[data-theme="dark"] .hover\:bg-slate-100:hover,
+:root[data-theme="dark"] .hover\:bg-gray-50:hover {
+  background-color: var(--color-brand-soft);
+}
+
+:root[data-theme="dark"] input,
+:root[data-theme="dark"] select,
+:root[data-theme="dark"] textarea {
+  background-color: var(--color-surface);
+  color: var(--color-text-primary);
+  border-color: var(--color-border);
 }
