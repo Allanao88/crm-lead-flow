@@ -97,7 +97,14 @@ export function useAuth(
         )
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro de autenticação.')
+      const message = err instanceof Error ? err.message : ''
+
+      setError(
+        authMode === 'signup' &&
+          message.includes('Database error saving new user')
+          ? 'Cadastro não autorizado. Solicite ao administrador a liberação do seu e-mail.'
+          : message || 'Erro de autenticação.',
+      )
     } finally {
       setAuthSaving(false)
     }
