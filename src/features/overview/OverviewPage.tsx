@@ -1,6 +1,7 @@
 import MetricCard from '../../components/MetricCard'
 import { currency, stages, stageStyles } from '../leads/constants'
 import type { Lead } from '../leads/types'
+import { useSalesMetrics } from './useSalesMetrics'
 
 type OverviewPageProps = {
   leads: Lead[]
@@ -19,23 +20,8 @@ export default function OverviewPage({
 }: OverviewPageProps) {
   const openLeads = leads.filter((lead) => lead.stage !== 'Ganho')
   const wonLeads = leads.filter((lead) => lead.stage === 'Ganho')
-
-  const pipelineSetup = openLeads.reduce(
-    (total, lead) => total + Number(lead.setup_value),
-    0,
-  )
-  const pipelineMrr = openLeads.reduce(
-    (total, lead) => total + Number(lead.mrr_value),
-    0,
-  )
-  const wonSetup = wonLeads.reduce(
-    (total, lead) => total + Number(lead.setup_value),
-    0,
-  )
-  const wonMrr = wonLeads.reduce(
-    (total, lead) => total + Number(lead.mrr_value),
-    0,
-  )
+  const { pipelineSetup, pipelineMrr, wonSetup, wonMrr } =
+    useSalesMetrics(leads)
 
   return (
     <div className="mx-auto max-w-[1440px] space-y-6 p-5 sm:p-8">

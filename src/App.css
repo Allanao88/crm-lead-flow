@@ -1,1 +1,167 @@
-import './App.css'
+/* Componentes compartilhados do CRM Lead Flow */
+
+.crm-page {
+  width: 100%;
+  max-width: 1600px;
+  margin-inline: auto;
+  padding: 28px;
+}
+
+.crm-panel {
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  background: var(--color-surface);
+  box-shadow: var(--shadow-card);
+}
+
+.crm-page-title {
+  color: var(--color-text-primary);
+  font-size: clamp(1.5rem, 2vw, 1.875rem);
+  font-weight: 750;
+  letter-spacing: -0.04em;
+  line-height: 1.2;
+}
+
+.crm-muted {
+  color: var(--color-text-secondary);
+}
+
+.crm-primary-button {
+  display: inline-flex;
+  min-height: 40px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: var(--color-brand);
+  padding: 9px 16px;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 650;
+  box-shadow: 0 1px 2px rgb(15 23 42 / 10%);
+}
+
+.crm-primary-button:hover:not(:disabled) {
+  background: var(--color-brand-hover);
+  box-shadow: 0 3px 8px rgb(79 70 229 / 20%);
+}
+
+.crm-secondary-button {
+  display: inline-flex;
+  min-height: 40px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  background: #fff;
+  padding: 9px 16px;
+  color: #334155;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.crm-secondary-button:hover:not(:disabled) {
+  border-color: #c7d2fe;
+  background: #f8faff;
+}
+
+/* Campos de formulário */
+.crm-field {
+  display: block;
+  width: 100%;
+  min-height: 42px;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  background: #fff;
+  padding: 9px 12px;
+  color: var(--color-text-primary);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.crm-field:hover:not(:disabled) {
+  border-color: #cbd5e1;
+}
+
+.crm-field:focus {
+  border-color: #818cf8;
+  outline: none;
+  box-shadow: 0 0 0 3px rgb(99 102 241 / 12%);
+}
+
+.crm-field:disabled {
+  cursor: not-allowed;
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+.crm-field-label {
+  display: block;
+  color: #334155;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+/* Painéis e tabelas */
+
+.crm-table-container {
+  width: 100%;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+}
+
+.crm-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  text-align: left;
+  font-size: 13px;
+}
+
+.crm-table thead {
+  background: #f8fafc;
+  color: #64748b;
+}
+
+.crm-table th {
+  padding: 13px 20px;
+  border-bottom: 1px solid #e2e8f0;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.055em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.crm-table td {
+  padding: 15px 20px;
+  border-bottom: 1px solid #f1f5f9;
+  color: #475569;
+  vertical-align: middle;
+}
+
+.crm-table tbody tr {
+  transition: background-color 150ms ease;
+}
+
+.crm-table tbody tr:hover {
+  background: #f8faff;
+}
+
+.crm-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+@media (max-width: 640px) {
+  .crm-page {
+    padding: 20px 16px;
+  }
+
+  .crm-table th,
+  .crm-table td {
+    padding: 12px 14px;
+  }
+}

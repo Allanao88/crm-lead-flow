@@ -90,11 +90,11 @@ export default function CompaniesPage({
   }
 
   return (
-    <div className="mx-auto max-w-[1440px] space-y-6 p-5 sm:p-8">
+    <div className="crm-page space-y-6">
       <section className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div>
           <p className="text-sm text-slate-500">AKS - Tech / CRM</p>
-          <h2 className="mt-1 text-2xl font-bold text-slate-900">
+          <h2 className="crm-page-title mt-1">
             Empresas
           </h2>
           <p className="mt-1 text-sm text-slate-500">
@@ -116,14 +116,14 @@ export default function CompaniesPage({
             onError('')
             onNotice('')
           }}
-          className="rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700"
+          className="crm-primary-button"
         >
           {showForm ? 'Cancelar' : '+ Nova empresa'}
         </button>
       </section>
 
       {showForm && (
-        <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+        <section className="crm-panel p-5 sm:p-6">
           <h3 className="font-bold text-slate-900">
             {editingCompanyId !== null ? 'Editar empresa' : 'Cadastrar empresa'}
           </h3>
@@ -135,7 +135,7 @@ export default function CompaniesPage({
             onSubmit={handleSubmit}
             className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"
           >
-            <label className="text-sm font-medium text-slate-700">
+            <label className="crm-field-label">
               Nome da empresa *
               <input
                 required
@@ -143,88 +143,88 @@ export default function CompaniesPage({
                 value={form.name}
                 onChange={(event) => updateField('name', event.target.value)}
                 maxLength={200}
-                className="mt-1.5 w-full rounded-xl border border-slate-200 px-3 py-2.5 outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+                className="crm-field mt-1.5"
                 placeholder="Razão social ou nome fantasia"
               />
             </label>
 
-            <label className="text-sm font-medium text-slate-700">
+            <label className="crm-field-label">
               CNPJ
               <input
                 value={form.cnpj}
                 onChange={(event) => updateField('cnpj', event.target.value)}
                 maxLength={18}
-                className="mt-1.5 w-full rounded-xl border border-slate-200 px-3 py-2.5 outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+                className="crm-field mt-1.5"
                 placeholder="00.000.000/0000-00"
               />
             </label>
 
-            <label className="text-sm font-medium text-slate-700">
+            <label className="crm-field-label">
               Setor de atuação
               <input
                 value={form.industry}
                 onChange={(event) => updateField('industry', event.target.value)}
                 maxLength={150}
-                className="mt-1.5 w-full rounded-xl border border-slate-200 px-3 py-2.5 outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+                className="crm-field mt-1.5"
                 placeholder="Ex.: Tecnologia"
               />
             </label>
 
-            <label className="text-sm font-medium text-slate-700">
+            <label className="crm-field-label">
               E-mail corporativo
               <input
                 type="email"
                 value={form.email}
                 onChange={(event) => updateField('email', event.target.value)}
                 maxLength={254}
-                className="mt-1.5 w-full rounded-xl border border-slate-200 px-3 py-2.5 outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+                className="crm-field mt-1.5"
                 placeholder="contato@empresa.com.br"
               />
             </label>
 
-            <label className="text-sm font-medium text-slate-700">
+            <label className="crm-field-label">
               Telefone
               <input
                 type="tel"
                 value={form.phone}
                 onChange={(event) => updateField('phone', event.target.value)}
                 maxLength={40}
-                className="mt-1.5 w-full rounded-xl border border-slate-200 px-3 py-2.5 outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+                className="crm-field mt-1.5"
                 placeholder="(11) 3333-4444"
               />
             </label>
 
-            <label className="text-sm font-medium text-slate-700">
+            <label className="crm-field-label">
               Website
               <input
                 type="url"
                 value={form.website}
                 onChange={(event) => updateField('website', event.target.value)}
                 maxLength={500}
-                className="mt-1.5 w-full rounded-xl border border-slate-200 px-3 py-2.5 outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+                className="crm-field mt-1.5"
                 placeholder="https://empresa.com.br"
               />
             </label>
 
-            <label className="text-sm font-medium text-slate-700 sm:col-span-2 lg:col-span-3">
+            <label className="crm-field-label sm:col-span-2 lg:col-span-3">
               Endereço
               <input
                 value={form.address}
                 onChange={(event) => updateField('address', event.target.value)}
                 maxLength={500}
-                className="mt-1.5 w-full rounded-xl border border-slate-200 px-3 py-2.5 outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+                className="crm-field mt-1.5"
                 placeholder="Rua, número, cidade, estado e CEP"
               />
             </label>
 
-            <label className="text-sm font-medium text-slate-700 sm:col-span-2 lg:col-span-3">
+            <label className="crm-field-label sm:col-span-2 lg:col-span-3">
               Observações
               <textarea
                 value={form.notes}
                 onChange={(event) => updateField('notes', event.target.value)}
                 maxLength={5000}
                 rows={3}
-                className="mt-1.5 w-full resize-y rounded-xl border border-slate-200 px-3 py-2.5 outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+                className="crm-field mt-1.5 resize-y"
                 placeholder="Informações relevantes sobre a empresa"
               />
             </label>
@@ -233,7 +233,7 @@ export default function CompaniesPage({
               <button
                 type="submit"
                 disabled={saving}
-                className="rounded-xl bg-indigo-600 px-5 py-3 text-sm font-semibold text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
+                className="crm-primary-button"
               >
                 {saving
                   ? 'Salvando...'
@@ -246,7 +246,7 @@ export default function CompaniesPage({
                 type="button"
                 disabled={saving}
                 onClick={() => resetForm()}
-                className="rounded-xl border border-slate-200 px-5 py-3 text-sm font-semibold text-slate-600 hover:bg-slate-50 disabled:opacity-60"
+                className="crm-secondary-button"
               >
                 Cancelar
               </button>
@@ -255,15 +255,15 @@ export default function CompaniesPage({
         </section>
       )}
 
-      <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+      <section className="crm-panel">
         <div className="flex flex-col justify-between gap-4 border-b border-slate-100 p-5 sm:flex-row sm:items-end">
-          <label className="block flex-1 text-xs font-semibold text-slate-600">
+          <label className="crm-field-label block flex-1">
             Buscar empresas
             <input
               value={search}
               onChange={(event) => setSearch(event.target.value)}
               placeholder="Nome, CNPJ, e-mail, telefone ou setor"
-              className="mt-1.5 w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm font-normal outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+              className="crm-field mt-1.5 font-normal"
             />
           </label>
 
@@ -277,9 +277,9 @@ export default function CompaniesPage({
             Carregando empresas...
           </p>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[900px] text-left text-sm">
-              <thead className="bg-slate-50 text-xs uppercase tracking-wider text-slate-500">
+          <div className="crm-table-container">
+            <table className="crm-table min-w-[900px]">
+              <thead>
                 <tr>
                   <th className="px-5 py-4">Empresa</th>
                   <th className="px-5 py-4">Setor</th>
@@ -288,7 +288,7 @@ export default function CompaniesPage({
                   <th className="px-5 py-4 text-right">Cadastro</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody>
                 {filteredCompanies.map((company) => (
                   <tr key={company.id} className="hover:bg-slate-50/70">
                     <td className="px-5 py-4">

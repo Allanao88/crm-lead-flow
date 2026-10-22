@@ -9,6 +9,7 @@ import type { Session } from '@supabase/supabase-js'
 import { supabase } from '../../lib/supabase'
 import type { Lead, LeadForm, Stage } from './types'
 import type { LeadProductItem } from './useLeadProducts'
+import { validateLeadForm } from './leadValidation'
 
 const leadFields =
   'id, name, email, phone, company, stage, setup_value, mrr_value, created_at, updated_at'
@@ -101,49 +102,18 @@ export function useLeads(
     setError('')
     setNotice('')
 
-    const setupValue = Number(form.setup_value.replace(',', '.'))
-    const mrrValue = Number(form.mrr_value.replace(',', '.'))
+    const validation = validateLeadForm(form, productItems)
 
-    if (!form.name.trim()) {
-      setError('Informe o nome do contato.')
+    if (!validation.valid) {
+      setError(validation.error)
       return false
     }
 
-    if (!form.setup_value.trim() || !Number.isFinite(setupValue) || setupValue < 0) {
-      setError('Informe um valor de SETUP válido, igual ou maior que zero.')
-      return false
-    }
-
-    if (!form.mrr_value.trim() || !Number.isFinite(mrrValue) || mrrValue < 0) {
-      setError('Informe um valor de MRR válido, igual ou maior que zero.')
-      return false
-    }
-
-    const normalizedProducts: Array<{ product_id: number; quantity: number }> = []
-    const seenProductIds = new Set<number>()
-
-    for (const item of productItems) {
-      const quantity = Number(item.quantity.replace(',', '.'))
-
-      if (
-        !Number.isInteger(item.product_id) ||
-        item.product_id <= 0 ||
-        !Number.isFinite(quantity) ||
-        quantity <= 0 ||
-        Math.round(quantity * 1000) !== quantity * 1000
-      ) {
-        setError('Informe quantidades positivas com até três casas decimais.')
-        return false
-      }
-
-      if (seenProductIds.has(item.product_id)) {
-        setError('Há um produto duplicado na seleção.')
-        return false
-      }
-
-      seenProductIds.add(item.product_id)
-      normalizedProducts.push({ product_id: item.product_id, quantity })
-    }
+    const {
+      setupValue,
+      mrrValue,
+      products: normalizedProducts,
+    } = validation
 
     setSaving(true)
 

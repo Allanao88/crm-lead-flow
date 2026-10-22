@@ -88,11 +88,11 @@ export default function ContactsPage({
   }
 
   return (
-    <div className="mx-auto max-w-[1440px] space-y-6 p-5 sm:p-8">
+    <div className="crm-page space-y-6">
       <section className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div>
           <p className="text-sm text-slate-500">AKS - Tech / CRM</p>
-          <h2 className="mt-1 text-2xl font-bold text-slate-900">
+          <h2 className="crm-page-title mt-1">
             Contatos
           </h2>
           <p className="mt-1 text-sm text-slate-500">
@@ -114,14 +114,14 @@ export default function ContactsPage({
             onError('')
             onNotice('')
           }}
-          className="rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700"
+          className="crm-primary-button"
         >
           {showForm ? 'Cancelar' : '+ Novo contato'}
         </button>
       </section>
 
       {showForm && (
-        <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+        <section className="crm-panel p-5 sm:p-6">
           <h3 className="font-bold text-slate-900">
             {editingContactId !== null ? 'Editar contato' : 'Cadastrar contato'}
           </h3>
@@ -130,7 +130,7 @@ export default function ContactsPage({
           </p>
 
           <form onSubmit={handleSubmit} className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            <label className="text-sm font-medium text-slate-700">
+            <label className="crm-field-label">
               Nome completo *
               <input
                 required
@@ -138,74 +138,74 @@ export default function ContactsPage({
                 value={form.name}
                 onChange={(event) => setForm({ ...form, name: event.target.value })}
                 maxLength={200}
-                className="mt-1.5 w-full rounded-xl border border-slate-200 px-3 py-2.5 outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+                className="crm-field mt-1.5"
                 placeholder="Nome do contato"
               />
             </label>
 
-            <label className="text-sm font-medium text-slate-700">
+            <label className="crm-field-label">
               E-mail
               <input
                 type="email"
                 value={form.email}
                 onChange={(event) => setForm({ ...form, email: event.target.value })}
                 maxLength={254}
-                className="mt-1.5 w-full rounded-xl border border-slate-200 px-3 py-2.5 outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+                className="crm-field mt-1.5"
                 placeholder="nome@empresa.com"
               />
             </label>
 
-            <label className="text-sm font-medium text-slate-700">
+            <label className="crm-field-label">
               Telefone
               <input
                 type="tel"
                 value={form.phone}
                 onChange={(event) => setForm({ ...form, phone: event.target.value })}
                 maxLength={40}
-                className="mt-1.5 w-full rounded-xl border border-slate-200 px-3 py-2.5 outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+                className="crm-field mt-1.5"
                 placeholder="(11) 99999-9999"
               />
             </label>
 
-            <label className="text-sm font-medium text-slate-700">
+            <label className="crm-field-label">
               Empresa
               <input
                 value={form.company}
                 onChange={(event) => setForm({ ...form, company: event.target.value })}
                 maxLength={200}
-                className="mt-1.5 w-full rounded-xl border border-slate-200 px-3 py-2.5 outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+                className="crm-field mt-1.5"
                 placeholder="Nome da empresa"
               />
             </label>
 
-            <label className="text-sm font-medium text-slate-700">
+            <label className="crm-field-label">
               Cargo
               <input
                 value={form.job_title}
                 onChange={(event) => setForm({ ...form, job_title: event.target.value })}
                 maxLength={150}
-                className="mt-1.5 w-full rounded-xl border border-slate-200 px-3 py-2.5 outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+                className="crm-field mt-1.5"
                 placeholder="Ex.: Gerente de TI"
               />
             </label>
 
-            <label className="text-sm font-medium text-slate-700">
+            <label className="crm-field-label">
               Origem do contato
               <input
                 value={form.source}
                 onChange={(event) => setForm({ ...form, source: event.target.value })}
                 maxLength={100}
-                className="mt-1.5 w-full rounded-xl border border-slate-200 px-3 py-2.5 outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+                className="crm-field mt-1.5"
                 placeholder="Ex.: Indicação, site, LinkedIn"
               />
             </label>
 
-            <label className="text-sm font-medium text-slate-700 sm:col-span-2 lg:col-span-3">
+            <label className="crm-field-label sm:col-span-2 lg:col-span-3">
               Lead relacionado
               <select
                 value={form.lead_id}
                 onChange={(event) => setForm({ ...form, lead_id: event.target.value })}
-                className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+                className="crm-field mt-1.5"
               >
                 <option value="">Nenhum lead vinculado</option>
                 {leads.map((lead) => (
@@ -216,14 +216,14 @@ export default function ContactsPage({
               </select>
             </label>
 
-            <label className="text-sm font-medium text-slate-700 sm:col-span-2 lg:col-span-3">
+            <label className="crm-field-label sm:col-span-2 lg:col-span-3">
               Observações
               <textarea
                 value={form.notes}
                 onChange={(event) => setForm({ ...form, notes: event.target.value })}
                 maxLength={5000}
                 rows={3}
-                className="mt-1.5 w-full resize-y rounded-xl border border-slate-200 px-3 py-2.5 outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+                className="crm-field mt-1.5 resize-y"
                 placeholder="Informações relevantes sobre o contato"
               />
             </label>
@@ -232,7 +232,7 @@ export default function ContactsPage({
               <button
                 type="submit"
                 disabled={saving}
-                className="rounded-xl bg-indigo-600 px-5 py-3 text-sm font-semibold text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
+                className="crm-primary-button"
               >
                 {saving
                   ? 'Salvando...'
@@ -245,7 +245,7 @@ export default function ContactsPage({
                 type="button"
                 disabled={saving}
                 onClick={() => resetForm()}
-                className="rounded-xl border border-slate-200 px-5 py-3 text-sm font-semibold text-slate-600 hover:bg-slate-50 disabled:opacity-60"
+                className="crm-secondary-button"
               >
                 Cancelar
               </button>
@@ -254,15 +254,15 @@ export default function ContactsPage({
         </section>
       )}
 
-      <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+      <section className="crm-panel">
         <div className="flex flex-col justify-between gap-4 border-b border-slate-100 p-5 sm:flex-row sm:items-end">
-          <label className="block flex-1 text-xs font-semibold text-slate-600">
+          <label className="crm-field-label block flex-1">
             Buscar contatos
             <input
               value={search}
               onChange={(event) => setSearch(event.target.value)}
               placeholder="Nome, empresa, e-mail, telefone ou cargo"
-              className="mt-1.5 w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm font-normal outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+              className="crm-field mt-1.5 font-normal"
             />
           </label>
 
@@ -276,9 +276,9 @@ export default function ContactsPage({
             Carregando contatos...
           </p>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[900px] text-left text-sm">
-              <thead className="bg-slate-50 text-xs uppercase tracking-wider text-slate-500">
+          <div className="crm-table-container">
+            <table className="crm-table min-w-[900px]">
+              <thead>
                 <tr>
                   <th className="px-5 py-4">Contato</th>
                   <th className="px-5 py-4">Empresa / cargo</th>
@@ -287,7 +287,7 @@ export default function ContactsPage({
                   <th className="px-5 py-4 text-right">Cadastro</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody>
                 {filteredContacts.map((contact) => {
                   const relatedLead = leads.find(
                     (lead) => lead.id === contact.lead_id,
