@@ -1,3 +1,7 @@
+import Button from '../../components/Button'
+import EmptyState from '../../components/EmptyState'
+import FormField from '../../components/FormField'
+import { TableRowsSkeleton } from '../../components/Skeleton'
 import type { Lead, Stage } from './types'
 import { currency, stages, stageStyles } from './constants'
 
@@ -14,9 +18,35 @@ type LeadsTableProps = {
   onStageFilterChange: (value: string) => void
   onClearFilters: () => void
   onPageChange: (page: number) => void
-  onLogout: () => void
+  onCreateLead: () => void
   onEditLead: (lead: Lead) => void
   onStageChange: (lead: Lead, stage: Stage) => void | Promise<void>
+}
+
+function buildPageItems(page: number, totalPages: number): Array<number | 'ellipsis-start' | 'ellipsis-end'> {
+  if (totalPages <= 7) {
+    return Array.from({ length: totalPages }, (_, index) => index + 1)
+  }
+
+  const items: Array<number | 'ellipsis-start' | 'ellipsis-end'> = [1]
+
+  if (page > 3) {
+    items.push('ellipsis-start')
+  }
+
+  const start = Math.max(2, page - 1)
+  const end = Math.min(totalPages - 1, page + 1)
+
+  for (let current = start; current <= end; current += 1) {
+    items.push(current)
+  }
+
+  if (page < totalPages - 2) {
+    items.push('ellipsis-end')
+  }
+
+  items.push(totalPages)
+  return items
 }
 
 export default function LeadsTable({
@@ -32,115 +62,134 @@ export default function LeadsTable({
   onStageFilterChange,
   onClearFilters,
   onPageChange,
-  onLogout,
+  onCreateLead,
   onEditLead,
   onStageChange,
 }: LeadsTableProps) {
+  const hasActiveFilters = Boolean(search) || stageFilter !== 'Todas'
+  const pageItems = buildPageItems(page, totalPages)
   return (
     <section id="leads" className="crm-panel">
-      <div className="space-y-4 border-b border-slate-100 p-5">
+      <div className="space-y-4 border-b border-[var(--glass-border)] p-5 sm:p-6">
         <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
           <div>
-            <h2 className="font-bold text-slate-900">Todos os leads</h2>
-            <p className="mt-1 text-sm text-slate-500">
+            <h2 className="crm-section-title">Todos os leads</h2>
+            <p className="mt-1 text-[length:var(--text-sm)] text-[var(--color-text-secondary)]">
               Consulte e acompanhe os contatos comerciais da AKS - Tech.
             </p>
           </div>
-          <span className="text-sm text-slate-500">
+          <span className="text-[length:var(--text-xs)] font-[var(--font-weight-semibold)] text-[var(--color-text-muted)] tabular-nums">
             {filteredLeads.length} resultado(s)
           </span>
         </div>
 
         <div className="flex flex-col gap-3 lg:flex-row lg:items-end">
-          <label className="crm-field-label flex-1">
-            Buscar leads
-            <input
-              value={search}
-              onChange={(event) => onSearchChange(event.target.value)}
-              placeholder="Nome, empresa, e-mail ou telefone"
-              className="crm-field mt-1.5 font-normal"
-            />
-          </label>
+          <FormField label="Buscar leads" className="flex-1">
+            {(fieldProps) => (
+              <input
+                {...fieldProps}
+                type="search"
+                value={search}
+                onChange={(event) => onSearchChange(event.target.value)}
+                placeholder="Nome, empresa, e-mail ou telefone"
+              />
+            )}
+          </FormField>
 
-          <label className="crm-field-label lg:w-56">
-            Filtrar por etapa
-            <select
-              value={stageFilter}
-              onChange={(event) => onStageFilterChange(event.target.value)}
-              className="crm-field mt-1.5 font-normal"
-            >
-              <option value="Todas">Todas as etapas</option>
-              {stages.map((stage) => (
-                <option key={stage} value={stage}>
-                  {stage}
-                </option>
-              ))}
-            </select>
-          </label>
+          <FormField label="Filtrar por etapa" className="lg:w-56">
+            {(fieldProps) => (
+              <select
+                {...fieldProps}
+                value={stageFilter}
+                onChange={(event) => onStageFilterChange(event.target.value)}
+              >
+                <option value="Todas">Todas as etapas</option>
+                {stages.map((stage) => (
+                  <option key={stage} value={stage}>
+                    {stage}
+                  </option>
+                ))}
+              </select>
+            )}
+          </FormField>
 
-          <button
-            type="button"
+          <Button
+            variant="secondary"
             onClick={onClearFilters}
             disabled={!search && stageFilter === 'Todas'}
-            className="crm-secondary-button disabled:cursor-not-allowed disabled:opacity-40"
           >
             Limpar filtros
-          </button>
-
-          <button
-            type="button"
-            onClick={onLogout}
-            className="rounded-lg border border-slate-200 px-4 py-2.5 text-sm hover:bg-slate-50 lg:hidden"
-          >
-            Sair
-          </button>
+          </Button>
         </div>
       </div>
 
-      {loading ? (
-        <p className="p-8 text-center text-sm text-slate-500">
-          Carregando leads...
-        </p>
-      ) : (
-        <div className="crm-table-container">
-          <table className="crm-table min-w-[1050px]">
-            <thead className="bg-slate-50 text-xs uppercase tracking-wider text-slate-500">
+      <div className="crm-table-container">
+        <table className="crm-table min-w-[980px]">
+          <thead>
+            <tr>
+              <th>Contato</th>
+              <th>Empresa</th>
+              <th>Etapa</th>
+              <th className="text-right">SETUP</th>
+              <th className="text-right">MRR/mês</th>
+              <th className="text-right">Criado em</th>
+            </tr>
+          </thead>
+          <tbody className="crm-stagger-rows">
+            {loading ? (
+              <TableRowsSkeleton columns={6} rows={6} />
+            ) : filteredLeads.length === 0 ? (
               <tr>
-                <th className="px-5 py-4">Contato</th>
-                <th className="px-5 py-4">Empresa</th>
-                <th className="px-5 py-4">Etapa</th>
-                <th className="px-5 py-4 text-right">SETUP</th>
-                <th className="px-5 py-4 text-right">MRR/mês</th>
-                <th className="px-5 py-4 text-right">Criado em</th>
+                <td colSpan={6} className="p-0">
+                  {leads.length === 0 && !hasActiveFilters ? (
+                    <EmptyState
+                      icon="leads"
+                      title="Nenhum lead cadastrado"
+                      description="Adicione sua primeira oportunidade comercial para acompanhar propostas, valores de implantação e receita recorrente."
+                      actionLabel="+ Novo lead"
+                      onAction={onCreateLead}
+                    />
+                  ) : (
+                    <EmptyState
+                      icon="search"
+                      title="Nenhum lead encontrado"
+                      description="Nenhuma oportunidade desta página corresponde aos filtros selecionados."
+                      actionLabel="Limpar filtros"
+                      actionVariant="secondary"
+                      onAction={onClearFilters}
+                    />
+                  )}
+                </td>
               </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {filteredLeads.map((lead) => (
-                <tr key={lead.id} className="hover:bg-slate-50/70">
-                  <td className="px-5 py-4">
+            ) : (
+              filteredLeads.map((lead) => (
+                <tr key={lead.id}>
+                  <td>
                     <button
                       type="button"
                       onClick={() => onEditLead(lead)}
-                      className="text-left font-semibold text-slate-800 hover:text-[var(--color-brand)] hover:underline"
+                      className="min-h-6 text-left font-[var(--font-weight-semibold)] text-[var(--color-text-primary)] hover:text-[var(--color-brand)] hover:underline"
                       title="Editar lead"
                     >
                       {lead.name}
                     </button>
-                    <p className="mt-1 text-xs text-slate-500">
+                    <p className="mt-1 text-[length:var(--text-xs)] text-[var(--color-text-muted)]">
                       {lead.email || lead.phone || 'Sem contato informado'}
                     </p>
                   </td>
-                  <td className="px-5 py-4 text-slate-600">
-                    {lead.company || '—'}
+                  <td>
+                    <span className="text-[var(--color-text-primary)]">
+                      {lead.company || '—'}
+                    </span>
                   </td>
-                  <td className="px-5 py-4">
+                  <td>
                     <select
                       aria-label={`Etapa de ${lead.name}`}
                       value={lead.stage}
                       onChange={(event) =>
                         void onStageChange(lead, event.target.value as Stage)
                       }
-                      className={`rounded-full border-0 px-2.5 py-1.5 text-xs font-semibold ${stageStyles[lead.stage]}`}
+                      className={`crm-stage-select ${stageStyles[lead.stage]}`}
                     >
                       {stages.map((stage) => (
                         <option key={stage} value={stage}>
@@ -149,56 +198,82 @@ export default function LeadsTable({
                       ))}
                     </select>
                   </td>
-                  <td className="px-5 py-4 text-right font-semibold">
-                    {currency(Number(lead.setup_value))}
+                  <td className="text-right tabular-nums">
+                    <span className="font-[var(--font-weight-semibold)] text-[var(--color-text-primary)]">
+                      {currency(Number(lead.setup_value))}
+                    </span>
                   </td>
-                  <td className="px-5 py-4 text-right font-semibold text-emerald-700">
-                    {currency(Number(lead.mrr_value))}
+                  <td className="text-right tabular-nums">
+                    <span className="font-[var(--font-weight-semibold)] text-[var(--color-positive-text)]">
+                      {currency(Number(lead.mrr_value))}
+                    </span>
                   </td>
-                  <td className="px-5 py-4 text-right text-slate-500">
+                  <td className="text-right tabular-nums">
                     {new Date(lead.created_at).toLocaleDateString('pt-BR')}
                   </td>
                 </tr>
-              ))}
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
 
-              {filteredLeads.length === 0 && (
-                <tr>
-                  <td colSpan={6} className="px-5 py-12 text-center text-slate-500">
-                    {leads.length === 0
-                      ? 'Nenhum lead cadastrado ainda.'
-                      : 'Nenhum lead corresponde à busca.'}
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      )}
-
-      <div className="flex flex-col items-center justify-between gap-3 border-t border-slate-100 px-5 py-4 text-xs text-slate-500 sm:flex-row">
-        <span>
+      <nav
+        aria-label="Paginação de leads"
+        className="flex flex-col items-center justify-between gap-3 border-t border-[var(--glass-border)] px-5 py-4 text-[length:var(--text-xs)] text-[var(--color-text-secondary)] sm:flex-row sm:px-6"
+      >
+        <span className="tabular-nums">
           Exibindo {filteredLeads.length} de {totalCount} leads · Página {page} de {totalPages}
         </span>
 
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
+        <div className="flex flex-wrap items-center justify-center gap-1.5">
+          <Button
+            variant="secondary"
+            size="sm"
             onClick={() => onPageChange(page - 1)}
             disabled={loading || page <= 1}
-            className="crm-secondary-button min-h-8 px-3 py-1.5 text-xs disabled:cursor-not-allowed disabled:opacity-40"
           >
             Anterior
-          </button>
-          <button
-            type="button"
+          </Button>
+
+          <div className="hidden items-center gap-1 sm:flex">
+            {pageItems.map((item) =>
+              typeof item === 'number' ? (
+                <button
+                  key={item}
+                  type="button"
+                  disabled={loading}
+                  onClick={() => onPageChange(item)}
+                  aria-label={`Ir para página ${item}`}
+                  aria-current={item === page ? 'page' : undefined}
+                  className={`crm-page-pill tabular-nums ${
+                    item === page ? 'crm-page-pill--active' : ''
+                  }`}
+                >
+                  {item}
+                </button>
+              ) : (
+                <span
+                  key={item}
+                  aria-hidden="true"
+                  className="px-1 text-[var(--color-text-muted)]"
+                >
+                  …
+                </span>
+              ),
+            )}
+          </div>
+
+          <Button
+            variant="secondary"
+            size="sm"
             onClick={() => onPageChange(page + 1)}
             disabled={loading || page >= totalPages}
-            className="crm-secondary-button min-h-8 px-3 py-1.5 text-xs disabled:cursor-not-allowed disabled:opacity-40"
           >
             Próxima
-          </button>
+          </Button>
         </div>
-      </div>
+      </nav>
     </section>
   )
 }

@@ -1,4 +1,9 @@
 import { useMemo, useState, type FormEvent } from 'react'
+import Button from '../../components/Button'
+import EmptyState from '../../components/EmptyState'
+import FormField from '../../components/FormField'
+import GlassDialog from '../../components/GlassDialog'
+import { TableRowsSkeleton } from '../../components/Skeleton'
 import type { Company, CompanyForm } from './types'
 import { emptyCompanyForm } from './types'
 
@@ -26,6 +31,7 @@ export default function CompaniesPage({
   const [showForm, setShowForm] = useState(false)
   const [editingCompanyId, setEditingCompanyId] = useState<number | null>(null)
   const [form, setForm] = useState<CompanyForm>(emptyCompanyForm)
+  const [nameTouched, setNameTouched] = useState(false)
 
   const filteredCompanies = useMemo(() => {
     const term = search.trim().toLowerCase()
@@ -48,6 +54,7 @@ export default function CompaniesPage({
   function resetForm(clearMessages = true) {
     setForm(emptyCompanyForm)
     setEditingCompanyId(null)
+    setNameTouched(false)
     setShowForm(false)
 
     if (clearMessages) {
@@ -68,14 +75,15 @@ export default function CompaniesPage({
       notes: company.notes ?? '',
     })
     setEditingCompanyId(company.id)
+    setNameTouched(false)
     setShowForm(true)
     onError('')
     onNotice('')
-    window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
+    setNameTouched(true)
 
     const saved = await onSave(form, editingCompanyId)
 
@@ -89,261 +97,301 @@ export default function CompaniesPage({
     setForm((current) => ({ ...current, [field]: value }))
   }
 
+  const nameError =
+    nameTouched && !form.name.trim() ? 'Informe o nome da empresa.' : undefined
+
   return (
-    <div className="crm-page space-y-6">
+    <div className="crm-page">
       <section className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div>
-
-          <h2 className="crm-page-title mt-1">
-            Empresas
-          </h2>
-          <p className="mt-1 text-sm text-slate-500">
+          <p className="text-[length:var(--text-sm)] text-[var(--color-text-secondary)]">
             Organize as empresas e mantenha os dados das suas contas comerciais.
           </p>
         </div>
 
-        <button
-          type="button"
+        <Button
+          variant="primary"
           onClick={() => {
-            if (showForm) {
-              resetForm()
-              return
-            }
-
             setForm(emptyCompanyForm)
             setEditingCompanyId(null)
+            setNameTouched(false)
             setShowForm(true)
             onError('')
             onNotice('')
           }}
-          className="crm-primary-button"
         >
-          {showForm ? 'Cancelar' : '+ Nova empresa'}
-        </button>
+          + Nova empresa
+        </Button>
       </section>
 
-      {showForm && (
-        <section className="crm-panel p-5 sm:p-6">
-          <h3 className="font-bold text-slate-900">
-            {editingCompanyId !== null ? 'Editar empresa' : 'Cadastrar empresa'}
-          </h3>
-          <p className="mt-1 text-sm text-slate-500">
-            Nome é obrigatório. Os demais campos são opcionais.
-          </p>
-
-          <form
-            onSubmit={handleSubmit}
-            className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"
+      <GlassDialog
+        open={showForm}
+        variant="drawer"
+        busy={saving}
+        title={editingCompanyId !== null ? 'Editar empresa' : 'Cadastrar empresa'}
+        description="Nome é obrigatório. Os demais campos são opcionais."
+        onClose={() => resetForm()}
+      >
+        <form
+          noValidate
+          onSubmit={handleSubmit}
+          className="grid grid-cols-1 gap-4 sm:grid-cols-2"
+        >
+          <FormField
+            label="Nome da empresa *"
+            error={nameError}
+            className="sm:col-span-2"
           >
-            <label className="crm-field-label">
-              Nome da empresa *
+            {(fieldProps) => (
               <input
+                {...fieldProps}
+                data-autofocus
                 required
-                autoFocus
                 value={form.name}
+                onBlur={() => setNameTouched(true)}
                 onChange={(event) => updateField('name', event.target.value)}
                 maxLength={200}
-                className="crm-field mt-1.5"
                 placeholder="Razão social ou nome fantasia"
               />
-            </label>
+            )}
+          </FormField>
 
-            <label className="crm-field-label">
-              CNPJ
+          <FormField label="CNPJ">
+            {(fieldProps) => (
               <input
+                {...fieldProps}
                 value={form.cnpj}
                 onChange={(event) => updateField('cnpj', event.target.value)}
                 maxLength={18}
-                className="crm-field mt-1.5"
                 placeholder="00.000.000/0000-00"
               />
-            </label>
+            )}
+          </FormField>
 
-            <label className="crm-field-label">
-              Setor de atuação
+          <FormField label="Setor de atuação">
+            {(fieldProps) => (
               <input
+                {...fieldProps}
                 value={form.industry}
                 onChange={(event) => updateField('industry', event.target.value)}
                 maxLength={150}
-                className="crm-field mt-1.5"
                 placeholder="Ex.: Tecnologia"
               />
-            </label>
+            )}
+          </FormField>
 
-            <label className="crm-field-label">
-              E-mail corporativo
+          <FormField label="E-mail corporativo">
+            {(fieldProps) => (
               <input
+                {...fieldProps}
                 type="email"
                 value={form.email}
                 onChange={(event) => updateField('email', event.target.value)}
                 maxLength={254}
-                className="crm-field mt-1.5"
                 placeholder="contato@empresa.com.br"
               />
-            </label>
+            )}
+          </FormField>
 
-            <label className="crm-field-label">
-              Telefone
+          <FormField label="Telefone">
+            {(fieldProps) => (
               <input
+                {...fieldProps}
                 type="tel"
                 value={form.phone}
                 onChange={(event) => updateField('phone', event.target.value)}
                 maxLength={40}
-                className="crm-field mt-1.5"
                 placeholder="(11) 3333-4444"
               />
-            </label>
+            )}
+          </FormField>
 
-            <label className="crm-field-label">
-              Website
+          <FormField label="Website" className="sm:col-span-2">
+            {(fieldProps) => (
               <input
+                {...fieldProps}
                 type="url"
                 value={form.website}
                 onChange={(event) => updateField('website', event.target.value)}
                 maxLength={500}
-                className="crm-field mt-1.5"
                 placeholder="https://empresa.com.br"
               />
-            </label>
+            )}
+          </FormField>
 
-            <label className="crm-field-label sm:col-span-2 lg:col-span-3">
-              Endereço
+          <FormField label="Endereço" className="sm:col-span-2">
+            {(fieldProps) => (
               <input
+                {...fieldProps}
                 value={form.address}
                 onChange={(event) => updateField('address', event.target.value)}
                 maxLength={500}
-                className="crm-field mt-1.5"
                 placeholder="Rua, número, cidade, estado e CEP"
               />
-            </label>
+            )}
+          </FormField>
 
-            <label className="crm-field-label sm:col-span-2 lg:col-span-3">
-              Observações
+          <FormField label="Observações" className="sm:col-span-2">
+            {(fieldProps) => (
               <textarea
+                {...fieldProps}
                 value={form.notes}
                 onChange={(event) => updateField('notes', event.target.value)}
                 maxLength={5000}
                 rows={3}
-                className="crm-field mt-1.5 resize-y"
+                className={`${fieldProps.className} resize-y`}
                 placeholder="Informações relevantes sobre a empresa"
               />
-            </label>
+            )}
+          </FormField>
 
-            <div className="flex flex-wrap gap-3 sm:col-span-2 lg:col-span-3">
-              <button
-                type="submit"
-                disabled={saving}
-                className="crm-primary-button"
-              >
-                {saving
-                  ? 'Salvando...'
-                  : editingCompanyId !== null
-                    ? 'Salvar alterações'
-                    : 'Cadastrar empresa'}
-              </button>
+          <div className="flex flex-wrap justify-end gap-3 border-t border-[var(--glass-border)] pt-4 sm:col-span-2">
+            <Button
+              variant="secondary"
+              disabled={saving}
+              onClick={() => resetForm()}
+            >
+              Cancelar
+            </Button>
 
-              <button
-                type="button"
-                disabled={saving}
-                onClick={() => resetForm()}
-                className="crm-secondary-button"
-              >
-                Cancelar
-              </button>
-            </div>
-          </form>
-        </section>
-      )}
+            <Button type="submit" variant="primary" loading={saving}>
+              {editingCompanyId !== null
+                ? 'Salvar alterações'
+                : 'Cadastrar empresa'}
+            </Button>
+          </div>
+        </form>
+      </GlassDialog>
 
       <section className="crm-panel">
-        <div className="flex flex-col justify-between gap-4 border-b border-slate-100 p-5 sm:flex-row sm:items-end">
-          <label className="crm-field-label block flex-1">
-            Buscar empresas
-            <input
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              placeholder="Nome, CNPJ, e-mail, telefone ou setor"
-              className="crm-field mt-1.5 font-normal"
-            />
-          </label>
+        <div className="space-y-4 border-b border-[var(--glass-border)] p-5 sm:p-6">
+          <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-center">
+            <div>
+              <h2 className="crm-section-title">Todas as empresas</h2>
+              <p className="mt-1 text-[length:var(--text-sm)] text-[var(--color-text-secondary)]">
+                Consulte dados cadastrais, setor de atuação e canais corporativos.
+              </p>
+            </div>
+            <p className="text-[length:var(--text-xs)] font-[var(--font-weight-semibold)] text-[var(--color-text-muted)] tabular-nums">
+              {filteredCompanies.length} resultado(s)
+            </p>
+          </div>
 
-          <p className="text-sm text-slate-500">
-            {filteredCompanies.length} resultado(s)
-          </p>
+          <FormField label="Buscar empresas" className="sm:max-w-lg">
+            {(fieldProps) => (
+              <input
+                {...fieldProps}
+                type="search"
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                placeholder="Nome, CNPJ, e-mail, telefone ou setor"
+              />
+            )}
+          </FormField>
         </div>
 
-        {loading ? (
-          <p className="p-8 text-center text-sm text-slate-500">
-            Carregando empresas...
-          </p>
-        ) : (
-          <div className="crm-table-container">
-            <table className="crm-table min-w-[900px]">
-              <thead>
+        <div className="crm-table-container">
+          <table className="crm-table min-w-[900px]">
+            <thead>
+              <tr>
+                <th>Empresa</th>
+                <th>Setor</th>
+                <th>Contato</th>
+                <th>CNPJ</th>
+                <th className="text-right">Cadastro</th>
+              </tr>
+            </thead>
+            <tbody className="crm-stagger-rows">
+              {loading ? (
+                <TableRowsSkeleton columns={5} rows={5} />
+              ) : filteredCompanies.length === 0 ? (
                 <tr>
-                  <th className="px-5 py-4">Empresa</th>
-                  <th className="px-5 py-4">Setor</th>
-                  <th className="px-5 py-4">Contato</th>
-                  <th className="px-5 py-4">CNPJ</th>
-                  <th className="px-5 py-4 text-right">Cadastro</th>
+                  <td colSpan={5} className="p-0">
+                    {companies.length === 0 ? (
+                      <EmptyState
+                        icon="companies"
+                        title="Nenhuma empresa cadastrada"
+                        description="Centralize CNPJ, setor e canais corporativos das contas atendidas pela equipe."
+                        actionLabel="+ Nova empresa"
+                        onAction={() => {
+                          setForm(emptyCompanyForm)
+                          setEditingCompanyId(null)
+                          setNameTouched(false)
+                          setShowForm(true)
+                          onError('')
+                          onNotice('')
+                        }}
+                      />
+                    ) : (
+                      <EmptyState
+                        icon="search"
+                        title="Nenhuma empresa encontrada"
+                        description="Nenhuma empresa corresponde ao termo pesquisado."
+                        actionLabel="Limpar busca"
+                        actionVariant="secondary"
+                        onAction={() => setSearch('')}
+                      />
+                    )}
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {filteredCompanies.map((company) => (
-                  <tr key={company.id} className="hover:bg-slate-50/70">
-                    <td className="px-5 py-4">
+              ) : (
+                filteredCompanies.map((company) => (
+                  <tr key={company.id}>
+                    <td>
                       <button
                         type="button"
                         onClick={() => handleEdit(company)}
-                        className="text-left font-semibold text-slate-800 hover:text-[var(--color-brand)] hover:underline"
+                        className="min-h-6 text-left font-[var(--font-weight-semibold)] text-[var(--color-text-primary)] hover:text-[var(--color-brand)] hover:underline"
                         title="Editar empresa"
                       >
                         {company.name}
                       </button>
                       {company.website && (
-                        <p className="mt-1 text-xs text-slate-500">
+                        <p className="mt-1 text-[length:var(--text-xs)] text-[var(--color-text-muted)]">
                           {company.website}
                         </p>
                       )}
                     </td>
-                    <td className="px-5 py-4 text-slate-600">
-                      {company.industry || '—'}
+                    <td>
+                      {company.industry ? (
+                        <span className="crm-badge crm-badge--neutral">
+                          {company.industry}
+                        </span>
+                      ) : (
+                        '—'
+                      )}
                     </td>
-                    <td className="px-5 py-4 text-slate-600">
-                      <p>{company.email || '—'}</p>
+                    <td>
+                      <p className="text-[var(--color-text-primary)]">
+                        {company.email || '—'}
+                      </p>
                       {company.phone && (
-                        <p className="mt-1 text-xs text-slate-500">
+                        <p className="mt-1 text-[length:var(--text-xs)] text-[var(--color-text-muted)]">
                           {company.phone}
                         </p>
                       )}
                     </td>
-                    <td className="px-5 py-4 text-slate-600">
+                    <td className="tabular-nums">
                       {company.cnpj || '—'}
                     </td>
-                    <td className="px-5 py-4 text-right text-slate-500">
+                    <td className="text-right tabular-nums">
                       {new Date(company.created_at).toLocaleDateString('pt-BR')}
                     </td>
                   </tr>
-                ))}
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
 
-                {filteredCompanies.length === 0 && (
-                  <tr>
-                    <td colSpan={5} className="px-5 py-12 text-center text-slate-500">
-                      {companies.length === 0
-                        ? 'Nenhuma empresa cadastrada ainda.'
-                        : 'Nenhuma empresa corresponde à busca.'}
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        )}
-
-        <div className="border-t border-slate-100 px-5 py-4 text-xs text-slate-500">
+        <div className="border-t border-[var(--glass-border)] px-5 py-4 text-[length:var(--text-xs)] text-[var(--color-text-secondary)] sm:px-6 tabular-nums">
           Exibindo {filteredCompanies.length} de {companies.length} empresas
         </div>
       </section>
+
+      <footer className="pb-2 text-center text-[length:var(--text-xs)] text-[var(--color-text-muted)]">
+        LeadFlow CRM · AKS - Tech
+      </footer>
     </div>
   )
 }

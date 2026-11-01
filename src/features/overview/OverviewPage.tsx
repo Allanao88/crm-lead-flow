@@ -1,4 +1,7 @@
+import Button from '../../components/Button'
+import EmptyState from '../../components/EmptyState'
 import MetricCard from '../../components/MetricCard'
+import { MetricCardSkeleton, Skeleton } from '../../components/Skeleton'
 import { currency, stages, stageStyles } from '../leads/constants'
 import type { Lead } from '../leads/types'
 import { useSalesMetrics } from './useSalesMetrics'
@@ -24,24 +27,32 @@ export default function OverviewPage({
     useSalesMetrics(leads)
 
   return (
-    <div className="mx-auto max-w-[1440px] space-y-6 p-5 sm:p-8">
+    <div className="crm-page">
       <section>
-        <p className="text-sm text-slate-500">
+        <p className="text-[length:var(--text-sm)] text-[var(--color-text-secondary)]">
           Acompanhe os principais indicadores comerciais da AKS - Tech.
         </p>
-        <h2 className="mt-1 text-2xl font-bold text-slate-900">
+        <h2 className="crm-page-title mt-1">
           Resumo comercial
         </h2>
       </section>
 
       {loading ? (
-        <p className="rounded-xl border border-slate-200 bg-white p-6 text-sm text-slate-500">
-          Carregando indicadores...
-        </p>
+        <section
+          role="status"
+          aria-live="polite"
+          aria-label="Carregando indicadores comerciais"
+          className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3"
+        >
+          <span className="sr-only">Carregando indicadores...</span>
+          {Array.from({ length: 9 }).map((_, index) => (
+            <MetricCardSkeleton key={index} />
+          ))}
+        </section>
       ) : (
         <section
           aria-label="Indicadores comerciais"
-          className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3"
+          className="crm-stagger-cards grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3"
         >
           <MetricCard
             label="Total de leads"
@@ -91,50 +102,67 @@ export default function OverviewPage({
         </section>
       )}
 
-      <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+      <section className="crm-panel p-5 sm:p-6">
         <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
           <div>
-            <h2 className="font-bold text-slate-900">Pipeline de vendas</h2>
-            <p className="mt-1 text-sm text-slate-500">
+            <h2 className="crm-section-title">Pipeline de vendas</h2>
+            <p className="mt-1 text-[length:var(--text-sm)] text-[var(--color-text-secondary)]">
               Distribuição das oportunidades por etapa.
             </p>
           </div>
-          <button
-            type="button"
-            onClick={onOpenLeads}
-            className="rounded-lg bg-[var(--color-brand)] px-4 py-2.5 text-sm font-semibold text-[var(--color-brand-text)] hover:bg-[var(--color-brand-hover)]"
-          >
-            Acessar leads
-          </button>
+          {leads.length > 0 && (
+            <Button variant="primary" onClick={onOpenLeads}>
+              Acessar leads
+            </Button>
+          )}
         </div>
 
-        <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-5">
-          {stages.map((stage) => {
-            const items = leads.filter((lead) => lead.stage === stage)
+        {!loading && leads.length === 0 ? (
+          <div className="mt-4">
+            <EmptyState
+              icon="leads"
+              title="Nenhuma oportunidade no pipeline"
+              description="Cadastre seu primeiro lead para visualizar a distribuição das etapas comerciais."
+              actionLabel="Ir para leads"
+              onAction={onOpenLeads}
+            />
+          </div>
+        ) : (
+          <div className="crm-stagger-cards mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-5">
+            {stages.map((stage) => {
+              const items = leads.filter((lead) => lead.stage === stage)
 
-            return (
-              <div
-                key={stage}
-                className="rounded-xl border border-slate-100 bg-slate-50 p-4"
-              >
-                <span
-                  className={`rounded-full px-2 py-1 text-xs font-semibold ${stageStyles[stage]}`}
+              return (
+                <div
+                  key={stage}
+                  className="glass-subtle rounded-[var(--radius-md)] p-4"
                 >
-                  {stage}
-                </span>
-                <p className="mt-4 text-2xl font-bold text-slate-900">
-                  {items.length}
-                </p>
-                <p className="mt-1 text-sm text-slate-500">
-                  {items.length === 1 ? 'oportunidade' : 'oportunidades'}
-                </p>
-              </div>
-            )
-          })}
-        </div>
+                  <span className={stageStyles[stage]}>
+                    {stage}
+                  </span>
+                  {loading ? (
+                    <>
+                      <Skeleton className="mt-4 h-7 w-12" />
+                      <Skeleton className="mt-2 h-3.5 w-24" />
+                    </>
+                  ) : (
+                    <>
+                      <p className="mt-4 text-2xl font-[var(--font-weight-bold)] tracking-[var(--tracking-tight)] text-[var(--color-text-primary)] tabular-nums">
+                        {items.length}
+                      </p>
+                      <p className="mt-1 text-[length:var(--text-xs)] text-[var(--color-text-muted)]">
+                        {items.length === 1 ? 'oportunidade' : 'oportunidades'}
+                      </p>
+                    </>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        )}
       </section>
 
-      <footer className="pb-2 text-center text-xs text-slate-400">
+      <footer className="pb-2 text-center text-[length:var(--text-xs)] text-[var(--color-text-muted)]">
         LeadFlow CRM · AKS - Tech
       </footer>
     </div>

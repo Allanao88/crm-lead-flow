@@ -1,5 +1,4 @@
-import type { FormEvent } from 'react'
-import FeedbackMessages from '../../components/FeedbackMessages'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
 import LeadFormPanel from './LeadFormPanel'
 import LeadsTable from './LeadsTable'
 import SalesPipeline from './SalesPipeline'
@@ -26,18 +25,17 @@ type LeadsPageProps = {
   productsLoading: boolean
   productsError: string
   error: string
-  notice: string
   onSearchChange: (value: string) => void
   onStageFilterChange: (value: string) => void
   onFormChange: (form: LeadForm) => void
   onSubmit: (event: FormEvent<HTMLFormElement>) => void
+  onCreateLead: () => void
   onCancelForm: () => void
   onQuantityChange: (productId: number, quantity: string) => void
   onEditLead: (lead: Lead) => void
   onStageChange: (lead: Lead, stage: Stage) => void | Promise<void>
   onClearFilters: () => void
   onPageChange: (page: number) => void
-  onLogout: () => void
   onSelectStage: (stage: string) => void
 }
 
@@ -59,30 +57,54 @@ export default function LeadsPage({
   productsLoading,
   productsError,
   error,
-  notice,
   onSearchChange,
   onStageFilterChange,
   onFormChange,
   onSubmit,
+  onCreateLead,
   onCancelForm,
   onQuantityChange,
   onEditLead,
   onStageChange,
   onClearFilters,
   onPageChange,
-  onLogout,
   onSelectStage,
 }: LeadsPageProps) {
-  return (
-    <div className="mx-auto max-w-[1440px] space-y-6 p-5 sm:p-8">
-      <FeedbackMessages
-        error={error}
-        notice={notice}
-        className="mb-0"
-      />
+  const [movedTransition, setMovedTransition] = useState<{
+    from: Stage
+    to: Stage
+  } | null>(null)
+  const movedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
+  useEffect(() => {
+    return () => {
+      if (movedTimerRef.current) {
+        clearTimeout(movedTimerRef.current)
+      }
+    }
+  }, [])
+
+  function handleStageMove(lead: Lead, nextStage: Stage) {
+    if (lead.stage === nextStage) return
+
+    if (movedTimerRef.current) {
+      clearTimeout(movedTimerRef.current)
+    }
+
+    setMovedTransition({ from: lead.stage, to: nextStage })
+    movedTimerRef.current = setTimeout(() => {
+      setMovedTransition(null)
+    }, 240)
+
+    void onStageChange(lead, nextStage)
+  }
+
+  return (
+    <div className="crm-page">
       {showForm && (
         <LeadFormPanel
+          open={showForm}
+          key={editingLeadId ?? 'new'}
           form={form}
           editingLeadId={editingLeadId}
           leads={leads}
@@ -91,6 +113,7 @@ export default function LeadsPage({
           saving={saving}
           productsLoading={productsLoading}
           productsError={productsError}
+          error={error}
           onFormChange={onFormChange}
           onSubmit={onSubmit}
           onCancel={onCancelForm}
@@ -98,8 +121,13 @@ export default function LeadsPage({
         />
       )}
 
-      <SalesMetricsPanel leads={leads} />
-      <SalesPipeline leads={leads} onSelectStage={onSelectStage} />
+      <SalesMetricsPanel leads={leads} loading={loading} />
+      <SalesPipeline
+        leads={leads}
+        activeStage={stageFilter}
+        movedTransition={movedTransition}
+        onSelectStage={onSelectStage}
+      />
       <LeadsTable
         leads={leads}
         filteredLeads={filteredLeads}
@@ -113,11 +141,11 @@ export default function LeadsPage({
         onStageFilterChange={onStageFilterChange}
         onClearFilters={onClearFilters}
         onPageChange={onPageChange}
-        onLogout={onLogout}
+        onCreateLead={onCreateLead}
         onEditLead={onEditLead}
-        onStageChange={onStageChange}
+        onStageChange={handleStageMove}
       />
-      <footer className="pb-2 text-center text-xs text-slate-400">
+      <footer className="pb-2 text-center text-[length:var(--text-xs)] text-[var(--color-text-muted)]">
         LeadFlow CRM · AKS - Tech
       </footer>
     </div>

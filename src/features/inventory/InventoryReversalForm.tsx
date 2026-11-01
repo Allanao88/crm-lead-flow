@@ -1,6 +1,10 @@
-import type { FormEvent } from 'react'
+import { useState, type FormEvent } from 'react'
+import Button from '../../components/Button'
+import FormField from '../../components/FormField'
+import GlassDialog from '../../components/GlassDialog'
 
 type InventoryReversalFormProps = {
+  open: boolean
   movementId: number
   reason: string
   saving: boolean
@@ -9,10 +13,8 @@ type InventoryReversalFormProps = {
   onCancel: () => void
 }
 
-const inputClass = 'crm-field mt-1.5'
-const labelClass = 'crm-field-label'
-
 export default function InventoryReversalForm({
+  open,
   movementId,
   reason,
   saving,
@@ -20,46 +22,56 @@ export default function InventoryReversalForm({
   onSubmit,
   onCancel,
 }: InventoryReversalFormProps) {
+  const [touched, setTouched] = useState(false)
+  const reasonError =
+    touched && !reason.trim() ? 'Informe o motivo do estorno.' : undefined
+
+  function handleFormSubmit(event: FormEvent<HTMLFormElement>) {
+    setTouched(true)
+    onSubmit(event)
+  }
+
   return (
-    <section className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-sm sm:p-6">
-      <h3 className="font-bold text-[var(--color-text-primary)]">
-        Confirmar estorno da movimentação #{movementId}
-      </h3>
-      <p className="mt-1 text-sm text-[var(--color-text-secondary)]">
-        O estorno criará um novo registro no histórico. A movimentação original será preservada.
-      </p>
-      <form onSubmit={onSubmit} className="mt-4 space-y-4">
-        <label className={labelClass}>
-          Motivo do estorno *
-          <textarea
-            required
-            autoFocus
-            rows={2}
-            maxLength={500}
-            value={reason}
-            onChange={(event) => onReasonChange(event.target.value)}
-            className={inputClass}
-            placeholder="Explique por que esta movimentação precisa ser revertida."
-          />
-        </label>
-        <div className="flex flex-wrap gap-3">
-          <button
-            type="submit"
-            disabled={saving || !reason.trim()}
-            className="rounded-xl bg-amber-700 px-5 py-3 text-sm font-semibold text-white hover:bg-amber-800 disabled:opacity-50"
-          >
-            {saving ? 'Registrando...' : 'Confirmar estorno'}
-          </button>
-          <button
-            type="button"
-            onClick={onCancel}
-            disabled={saving}
-            className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-muted)] px-5 py-3 text-sm font-semibold text-[var(--color-text-primary)] hover:bg-[var(--color-brand-soft)]"
-          >
+    <GlassDialog
+      open={open}
+      variant="modal"
+      busy={saving}
+      title={`Confirmar estorno da movimentação #${movementId}`}
+      description="O estorno criará um novo registro no histórico. A movimentação original será preservada."
+      onClose={onCancel}
+    >
+      <form noValidate onSubmit={handleFormSubmit} className="space-y-4">
+        <FormField label="Motivo do estorno *" error={reasonError}>
+          {(fieldProps) => (
+            <textarea
+              {...fieldProps}
+              data-autofocus
+              required
+              rows={3}
+              maxLength={500}
+              value={reason}
+              onBlur={() => setTouched(true)}
+              onChange={(event) => onReasonChange(event.target.value)}
+              className={`${fieldProps.className} resize-y`}
+              placeholder="Explique por que esta movimentação precisa ser revertida."
+            />
+          )}
+        </FormField>
+
+        <div className="flex flex-wrap justify-end gap-3 border-t border-[var(--glass-border)] pt-4">
+          <Button variant="secondary" onClick={onCancel} disabled={saving}>
             Cancelar
-          </button>
+          </Button>
+          <Button
+            type="submit"
+            variant="danger"
+            loading={saving}
+            disabled={!reason.trim()}
+          >
+            Confirmar estorno
+          </Button>
         </div>
       </form>
-    </section>
+    </GlassDialog>
   )
 }

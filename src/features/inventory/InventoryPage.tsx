@@ -1,4 +1,6 @@
 import { useMemo, useState, type FormEvent } from 'react'
+import Button from '../../components/Button'
+import { MetricCardSkeleton } from '../../components/Skeleton'
 import type {
   InventoryMovement,
   InventoryProduct,
@@ -45,7 +47,6 @@ const currency = new Intl.NumberFormat('pt-BR', {
 const quantityFormat = new Intl.NumberFormat('pt-BR', {
   maximumFractionDigits: 3,
 })
-
 
 export default function InventoryPage({
   products,
@@ -129,7 +130,6 @@ export default function InventoryPage({
     setEditingProductId(product.id)
     setShowProductForm(true)
     clearMessages()
-    window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   function updateProductField(field: keyof ProductForm, value: string) {
@@ -195,71 +195,77 @@ export default function InventoryPage({
   }
 
   return (
-    <div className="mx-auto max-w-[1440px] space-y-6 p-5 sm:p-8">
+    <div className="crm-page">
       <section className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div>
-
-          <h2 className="mt-1 text-2xl font-bold text-slate-900">
-            Gestão de estoque
-          </h2>
-          <p className="mt-1 text-sm text-slate-500">
+          <p className="text-[length:var(--text-sm)] text-[var(--color-text-secondary)]">
             Controle produtos, custos médios e movimentações do estoque compartilhado.
           </p>
         </div>
 
         <div className="flex flex-wrap gap-2">
-          <button
-            type="button"
+          <Button
+            variant="secondary"
             onClick={() => openMovementForm('entry')}
             disabled={activeProducts.length === 0 || saving}
-            className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
           >
             + Entrada
-          </button>
-          <button
-            type="button"
+          </Button>
+          <Button
+            variant="secondary"
             onClick={() => openMovementForm('exit')}
             disabled={activeProducts.length === 0 || saving}
-            className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
           >
             − Saída
-          </button>
-          <button
-            type="button"
-            onClick={showProductForm ? closeProductForm : openNewProductForm}
+          </Button>
+          <Button
+            variant="primary"
+            onClick={openNewProductForm}
             disabled={saving}
-            className="rounded-xl bg-[var(--color-brand)] px-4 py-2.5 text-sm font-semibold text-[var(--color-brand-text)] hover:bg-[var(--color-brand-hover)] disabled:opacity-50"
           >
-            {showProductForm ? 'Cancelar produto' : '+ Novo produto'}
-          </button>
+            + Novo produto
+          </Button>
         </div>
       </section>
 
-      <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <InventoryMetricCard
-          label="Produtos cadastrados"
-          value={products.length.toLocaleString('pt-BR')}
-          detail={`${activeProducts.length} ativos`}
-        />
-        <InventoryMetricCard
-          label="Unidades em estoque"
-          value={quantityFormat.format(totalUnits)}
-          detail="Saldo consolidado dos produtos"
-        />
-        <InventoryMetricCard
-          label="Valor do estoque"
-          value={currency.format(inventoryValue)}
-          detail="Quantidade × custo médio atual"
-        />
-        <InventoryMetricCard
-          label="Movimentações recentes"
-          value={movements.length.toLocaleString('pt-BR')}
-          detail="Até 200 registros mais recentes"
-        />
-      </section>
+      {loading && products.length === 0 ? (
+        <section
+          aria-label="Carregando indicadores do estoque"
+          className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4"
+        >
+          {Array.from({ length: 4 }).map((_, index) => (
+            <MetricCardSkeleton key={index} />
+          ))}
+        </section>
+      ) : (
+        <section className="crm-stagger-cards grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <InventoryMetricCard
+            label="Produtos cadastrados"
+            value={products.length.toLocaleString('pt-BR')}
+            detail={`${activeProducts.length} ativos`}
+          />
+          <InventoryMetricCard
+            label="Unidades em estoque"
+            value={quantityFormat.format(totalUnits)}
+            detail="Saldo consolidado dos produtos"
+          />
+          <InventoryMetricCard
+            label="Valor do estoque"
+            value={currency.format(inventoryValue)}
+            detail="Quantidade × custo médio atual"
+          />
+          <InventoryMetricCard
+            label="Movimentações recentes"
+            value={movements.length.toLocaleString('pt-BR')}
+            detail="Até 200 registros mais recentes"
+          />
+        </section>
+      )}
 
       {showProductForm && (
         <InventoryProductForm
+          open={showProductForm}
+          key={editingProductId ?? 'new-product'}
           form={productForm}
           editingProductId={editingProductId}
           saving={saving}
@@ -271,6 +277,8 @@ export default function InventoryPage({
 
       {showMovementForm && (
         <InventoryMovementForm
+          open={showMovementForm}
+          key={movementType}
           form={movementForm}
           products={activeProducts}
           movementType={movementType}
@@ -285,34 +293,46 @@ export default function InventoryPage({
         />
       )}
 
-      <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-        <div className="flex flex-col justify-between gap-4 border-b border-slate-100 p-5 sm:flex-row sm:items-center sm:p-6">
+      <section className="crm-panel">
+        <div className="flex flex-col justify-between gap-4 border-b border-[var(--glass-border)] p-5 sm:flex-row sm:items-center sm:p-6">
           <div>
-            <h3 className="font-bold text-slate-900">Controle de estoque</h3>
-            <p className="mt-1 text-sm text-slate-500">
+            <h2 className="crm-section-title">Controle de estoque</h2>
+            <p className="mt-1 text-[length:var(--text-sm)] text-[var(--color-text-secondary)]">
               Consulte produtos, saldos e histórico de movimentações.
             </p>
           </div>
 
-          <div className="flex gap-2">
+          <div
+            role="tablist"
+            aria-label="Visualização do estoque"
+            className="glass-subtle inline-flex self-start rounded-full p-1 sm:self-auto"
+          >
             <button
+              id="inventory-tab-products"
               type="button"
+              role="tab"
+              aria-selected={tab === 'products'}
+              aria-controls="inventory-panel-products"
               onClick={() => setTab('products')}
-              className={`rounded-xl px-4 py-2 text-sm font-semibold ${
+              className={`min-h-9 rounded-full px-4 py-1.5 text-[length:var(--text-xs)] font-[var(--font-weight-semibold)] ${
                 tab === 'products'
-                  ? 'bg-[var(--color-brand)] text-[var(--color-brand-text)]'
-                  : 'border border-slate-200 text-slate-600 hover:bg-slate-50'
+                  ? 'bg-[var(--color-brand)] text-[var(--color-brand-text)] shadow-[var(--shadow-xs)]'
+                  : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]'
               }`}
             >
               Produtos
             </button>
             <button
+              id="inventory-tab-movements"
               type="button"
+              role="tab"
+              aria-selected={tab === 'movements'}
+              aria-controls="inventory-panel-movements"
               onClick={() => setTab('movements')}
-              className={`rounded-xl px-4 py-2 text-sm font-semibold ${
+              className={`min-h-9 rounded-full px-4 py-1.5 text-[length:var(--text-xs)] font-[var(--font-weight-semibold)] ${
                 tab === 'movements'
-                  ? 'bg-[var(--color-brand)] text-[var(--color-brand-text)]'
-                  : 'border border-slate-200 text-slate-600 hover:bg-slate-50'
+                  ? 'bg-[var(--color-brand)] text-[var(--color-brand-text)] shadow-[var(--shadow-xs)]'
+                  : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]'
               }`}
             >
               Movimentações
@@ -321,25 +341,46 @@ export default function InventoryPage({
         </div>
 
         {tab === 'products' ? (
-          <InventoryProductsTable
-            products={filteredProducts}
-            loading={loading}
-            search={search}
-            onSearchChange={setSearch}
-            onEdit={openEditProductForm}
-          />
+          <div
+            id="inventory-panel-products"
+            role="tabpanel"
+            aria-labelledby="inventory-tab-products"
+          >
+            <InventoryProductsTable
+              products={filteredProducts}
+              loading={loading}
+              search={search}
+              onSearchChange={setSearch}
+              onCreateProduct={openNewProductForm}
+              onEdit={openEditProductForm}
+            />
+          </div>
         ) : (
-          <InventoryMovementsTable
-            movements={movements}
-            loading={loading}
-            saving={saving}
-            onReverse={startReversal}
-          />
+          <div
+            id="inventory-panel-movements"
+            role="tabpanel"
+            aria-labelledby="inventory-tab-movements"
+          >
+            <InventoryMovementsTable
+              movements={movements}
+              loading={loading}
+              saving={saving}
+              hasActiveProducts={activeProducts.length > 0}
+              onCreateEntry={
+                activeProducts.length > 0
+                  ? () => openMovementForm('entry')
+                  : openNewProductForm
+              }
+              onReverse={startReversal}
+            />
+          </div>
         )}
       </section>
 
       {reversingMovementId !== null && (
         <InventoryReversalForm
+          open={reversingMovementId !== null}
+          key={reversingMovementId}
           movementId={reversingMovementId}
           reason={reversalReason}
           saving={saving}
@@ -352,6 +393,9 @@ export default function InventoryPage({
           }}
         />
       )}
+      <footer className="pb-2 text-center text-[length:var(--text-xs)] text-[var(--color-text-muted)]">
+        LeadFlow CRM · AKS - Tech
+      </footer>
     </div>
   )
 }

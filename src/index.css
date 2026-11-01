@@ -1,56 +1,283 @@
 @import "tailwindcss";
 
-:root {
+:root,
+:root[data-theme="light"] {
+  color-scheme: light;
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 
-  color: #181a17;
-  background: #f4f7f4;
+  /* Escala tipográfica e pesos */
+  --text-2xs: 0.6875rem;
+  --text-xs: 0.75rem;
+  --text-sm: 0.8125rem;
+  --text-base: 0.875rem;
+  --text-md: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.375rem;
+  --text-2xl: clamp(1.5rem, 2vw, 1.875rem);
+  --text-metric: clamp(1.5rem, 2.1vw, 1.95rem);
 
-  --color-brand: #009933;
-  --color-brand-hover: #007a29;
+  --leading-tight: 1.2;
+  --leading-snug: 1.35;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.625;
+
+  --tracking-tight: -0.03em;
+  --tracking-normal: -0.006em;
+  --tracking-wide: 0.06em;
+
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  /* Escala de espaçamento e dimensões */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+
+  --page-max-width: 1440px;
+  --target-min: 1.5rem;
+  --target-control: 2.5rem;
+  --target-primary: 2.75rem;
+
+  /* Raios */
+  --radius-xs: 0.5rem;
+  --radius-sm: 0.625rem;
+  --radius-md: 0.875rem;
+  --radius-lg: 1.125rem;
+  --radius-xl: 1.5rem;
+  --radius-pill: 9999px;
+
+  /* Durações e easings */
+  --duration-instant: 80ms;
+  --duration-fast: 150ms;
+  --duration-normal: 200ms;
+  --duration-slow: 250ms;
+  --ease-standard: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* Fundo com gradiente discreto da marca (tema claro) */
+  --bg-canvas: #edf3ee;
+  --bg-app-gradient:
+    radial-gradient(65rem 40rem at 8% -6%, rgb(0 153 51 / 9%), transparent 62%),
+    radial-gradient(55rem 36rem at 94% 4%, rgb(16 185 129 / 7%), transparent 60%),
+    radial-gradient(50rem 34rem at 52% 104%, rgb(132 204 22 / 7%), transparent 64%),
+    linear-gradient(180deg, #f3f7f4 0%, #e8f0ea 100%);
+
+  /* Paleta semântica e marca (contraste AA >= 4.5:1 sobre vidro e fundo sólido) */
+  --color-brand: #007a29;
+  --color-brand-vivid: #009933;
+  --color-brand-hover: #006120;
   --color-brand-text: #ffffff;
-  --color-brand-soft: #e8f5ec;
-  --color-text-primary: #181a17;
-  --color-text-secondary: #687168;
-  --color-border: #dfe5df;
+  --color-brand-soft: rgb(0 122 41 / 10%);
+  --color-brand-border: rgb(0 122 41 / 74%);
+
+  --color-text-primary: #141a16;
+  --color-text-secondary: #46534a;
+  --color-text-muted: #556258;
+
+  --color-border: rgb(18 36 24 / 14%);
+  --color-border-strong: rgb(18 36 24 / 52%);
   --color-surface: #ffffff;
-  --color-surface-muted: #f4f7f4;
-  --color-sidebar: #1a1a1a;
-  --color-sidebar-text: #cccccc;
-  --color-accent: #009933;
-  --color-action-text: #007a29;
-  --color-positive-text: #007a55;
-  --color-negative-text: #be123c;
-  --color-focus-ring: rgb(0 153 51 / 28%);
-  --shadow-card: 0 1px 3px rgb(15 23 42 / 4%), 0 4px 12px rgb(15 23 42 / 3%);
+  --color-surface-muted: #eef4ef;
+  --color-sidebar: rgb(255 255 255 / 76%);
+  --color-sidebar-text: #141a16;
+  --color-accent: #007a29;
+  --color-action-text: #006b24;
+  --color-positive-text: #066949;
+  --color-negative-text: #b41138;
+  --color-warning-text: #803f00;
+  --color-focus-ring: rgb(0 122 41 / 30%);
+
+  /* Botões destrutivos, campos, cabeçalho de tabela e overlay (tema claro) */
+  --color-danger-solid: #be123c;
+  --color-danger-solid-hover: #9f1239;
+  --color-danger-text-on-solid: #ffffff;
+  --color-danger-border: rgb(180 17 56 / 68%);
+  --color-danger-soft: rgb(190 18 60 / 9%);
+
+  --field-bg: rgb(255 255 255 / 78%);
+  --field-bg-focus: #ffffff;
+  --field-bg-disabled: rgb(226 234 228 / 72%);
+  --table-header-bg: #eef4f0;
+  --overlay-backdrop: rgb(15 24 18 / 38%);
+
+  /* Tokens de badges semânticos (contraste >= 4.5:1 no claro) */
+  --badge-neutral-bg: #e4ebe6;
+  --badge-neutral-text: #334038;
+  --badge-neutral-border: rgb(51 64 56 / 28%);
+
+  --badge-info-bg: #dff0fe;
+  --badge-info-text: #0b4f8a;
+  --badge-info-border: rgb(11 79 138 / 28%);
+
+  --badge-violet-bg: #efe8ff;
+  --badge-violet-text: #5628a8;
+  --badge-violet-border: rgb(86 40 168 / 28%);
+
+  --badge-warning-bg: #fdeed3;
+  --badge-warning-text: #803f00;
+  --badge-warning-border: rgb(128 63 0 / 32%);
+
+  --badge-success-bg: #dcf5e6;
+  --badge-success-text: #065f3e;
+  --badge-success-border: rgb(6 95 62 / 30%);
+
+  --badge-danger-bg: #ffe2e8;
+  --badge-danger-text: #9f1239;
+  --badge-danger-border: rgb(159 18 57 / 30%);
+
+  /* Superfícies Liquid Glass (tema claro) */
+  --glass-bg: rgb(255 255 255 / 72%);
+  --glass-bg-strong: rgb(255 255 255 / 86%);
+  --glass-bg-subtle: rgb(255 255 255 / 54%);
+  --glass-bg-hover: rgb(255 255 255 / 84%);
+  --glass-bg-active: rgb(246 250 247 / 92%);
+  --glass-bg-solid: #f9fcfa;
+  --glass-bg-strong-solid: #ffffff;
+  --glass-bg-hover-solid: #f1f7f3;
+
+  --glass-border: rgb(20 42 27 / 14%);
+  --glass-border-strong: rgb(20 42 27 / 52%);
+  --glass-highlight:
+    inset 0 1px 0 0 rgb(255 255 255 / 82%),
+    inset 0 0 0 1px rgb(255 255 255 / 28%);
+
+  /* Sombras em camadas */
+  --shadow-xs: 0 1px 2px rgb(15 26 19 / 5%);
+  --shadow-sm:
+    0 1px 2px rgb(15 26 19 / 5%),
+    0 4px 12px rgb(15 26 19 / 4%);
+  --glass-shadow:
+    0 2px 6px rgb(15 26 19 / 5%),
+    0 10px 28px -6px rgb(15 26 19 / 8%);
+  --glass-shadow-strong:
+    0 6px 16px rgb(15 26 19 / 8%),
+    0 22px 48px -10px rgb(15 26 19 / 14%);
+  --shadow-card: var(--glass-shadow);
+
+  --glass-blur: 18px;
+  --glass-blur-strong: 24px;
+  --glass-saturate: 165%;
+
+  color: var(--color-text-primary);
+  background-color: var(--bg-canvas);
 }
 
 :root[data-theme="dark"] {
   color-scheme: dark;
-  color: #f5f7f5;
-  background: #1a1a1a;
 
+  /* Fundo com gradiente discreto da marca (tema escuro) */
+  --bg-canvas: #0f1311;
+  --bg-app-gradient:
+    radial-gradient(62rem 38rem at 10% -8%, rgb(204 255 0 / 7%), transparent 60%),
+    radial-gradient(54rem 34rem at 92% 6%, rgb(0 153 51 / 9%), transparent 58%),
+    radial-gradient(48rem 32rem at 50% 106%, rgb(16 185 129 / 6%), transparent 62%),
+    linear-gradient(180deg, #131815 0%, #0c0f0d 100%);
+
+  /* Paleta semântica e marca (contraste AA >= 4.5:1 sobre vidro escuro) */
   --color-brand: #ccff00;
+  --color-brand-vivid: #ccff00;
   --color-brand-hover: #b8e600;
-  --color-brand-text: #1a1a1a;
+  --color-brand-text: #111612;
   --color-brand-soft: rgb(204 255 0 / 12%);
-  --color-text-primary: #f5f7f5;
-  --color-text-secondary: #a1a8a1;
-  --color-border: rgb(255 255 255 / 10%);
-  --color-surface: #242424;
-  --color-surface-muted: #2a2a2a;
-  --color-sidebar: #1a1a1a;
-  --color-sidebar-text: #cccccc;
+  --color-brand-border: rgb(204 255 0 / 42%);
+
+  --color-text-primary: #f4f7f4;
+  --color-text-secondary: #aeb9b0;
+  --color-text-muted: #909d93;
+
+  --color-border: rgb(255 255 255 / 12%);
+  --color-border-strong: rgb(255 255 255 / 40%);
+  --color-surface: #1b211d;
+  --color-surface-muted: #131815;
+  --color-sidebar: rgb(20 25 22 / 76%);
+  --color-sidebar-text: #e4ebe5;
   --color-accent: #ccff00;
   --color-action-text: #ccff00;
   --color-positive-text: #6ee7b7;
   --color-negative-text: #fda4af;
-  --color-focus-ring: rgb(204 255 0 / 30%);
-  --shadow-card: 0 4px 20px rgb(0 0 0 / 30%);
+  --color-warning-text: #fcd34d;
+  --color-focus-ring: rgb(204 255 0 / 34%);
+
+  /* Botões destrutivos, campos, cabeçalho de tabela e overlay (tema escuro) */
+  --color-danger-solid: #be123c;
+  --color-danger-solid-hover: #e11d48;
+  --color-danger-text-on-solid: #ffffff;
+  --color-danger-border: rgb(253 164 175 / 62%);
+  --color-danger-soft: rgb(244 63 94 / 14%);
+
+  --field-bg: rgb(18 23 20 / 74%);
+  --field-bg-focus: rgb(22 28 24 / 94%);
+  --field-bg-disabled: rgb(255 255 255 / 6%);
+  --table-header-bg: #171d19;
+  --overlay-backdrop: rgb(5 8 6 / 62%);
+
+  /* Tokens de badges semânticos (contraste >= 4.5:1 no escuro) */
+  --badge-neutral-bg: rgb(148 163 184 / 16%);
+  --badge-neutral-text: #dce4df;
+  --badge-neutral-border: rgb(220 228 223 / 28%);
+
+  --badge-info-bg: rgb(56 189 248 / 16%);
+  --badge-info-text: #93d5ff;
+  --badge-info-border: rgb(147 213 255 / 32%);
+
+  --badge-violet-bg: rgb(167 139 250 / 18%);
+  --badge-violet-text: #d8b4fe;
+  --badge-violet-border: rgb(216 180 254 / 32%);
+
+  --badge-warning-bg: rgb(245 158 11 / 16%);
+  --badge-warning-text: #fcd34d;
+  --badge-warning-border: rgb(252 211 77 / 32%);
+
+  --badge-success-bg: rgb(16 185 129 / 16%);
+  --badge-success-text: #6ee7b7;
+  --badge-success-border: rgb(110 231 183 / 32%);
+
+  --badge-danger-bg: rgb(244 63 94 / 16%);
+  --badge-danger-text: #fda4af;
+  --badge-danger-border: rgb(253 164 175 / 32%);
+
+  /* Superfícies Liquid Glass (tema escuro) */
+  --glass-bg: rgb(24 30 26 / 68%);
+  --glass-bg-strong: rgb(26 33 29 / 84%);
+  --glass-bg-subtle: rgb(255 255 255 / 4%);
+  --glass-bg-hover: rgb(32 40 35 / 78%);
+  --glass-bg-active: rgb(28 36 31 / 88%);
+  --glass-bg-solid: #181e1a;
+  --glass-bg-strong-solid: #1d2420;
+  --glass-bg-hover-solid: #222b26;
+
+  --glass-border: rgb(255 255 255 / 12%);
+  --glass-border-strong: rgb(255 255 255 / 38%);
+  --glass-highlight:
+    inset 0 1px 0 0 rgb(255 255 255 / 12%),
+    inset 0 0 0 1px rgb(255 255 255 / 4%);
+
+  --shadow-xs: 0 1px 2px rgb(0 0 0 / 28%);
+  --shadow-sm:
+    0 2px 6px rgb(0 0 0 / 26%),
+    0 8px 18px rgb(0 0 0 / 20%);
+  --glass-shadow:
+    0 4px 12px rgb(0 0 0 / 32%),
+    0 16px 36px -8px rgb(0 0 0 / 42%);
+  --glass-shadow-strong:
+    0 10px 24px rgb(0 0 0 / 44%),
+    0 28px 60px -12px rgb(0 0 0 / 58%);
+  --shadow-card: var(--glass-shadow);
+
+  color: var(--color-text-primary);
+  background-color: var(--bg-canvas);
 }
 
 * {
@@ -68,10 +295,96 @@ body {
   min-width: 320px;
   min-height: 100vh;
   margin: 0;
-  background: var(--color-surface-muted);
+  background-color: var(--bg-canvas);
+  background-image: var(--bg-app-gradient);
+  background-attachment: fixed;
   color: var(--color-text-primary);
-  font-size: 14px;
-  line-height: 1.5;
+  font-size: var(--text-base);
+  line-height: var(--leading-normal);
+  letter-spacing: var(--tracking-normal);
+}
+
+.crm-app-canvas {
+  min-height: 100vh;
+  color: var(--color-text-primary);
+}
+
+/* Superfícies reutilizáveis Liquid Glass */
+.glass {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-highlight), var(--glass-shadow);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+}
+
+.glass-strong {
+  background: var(--glass-bg-strong);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-highlight), var(--glass-shadow-strong);
+  -webkit-backdrop-filter: blur(var(--glass-blur-strong)) saturate(var(--glass-saturate));
+  backdrop-filter: blur(var(--glass-blur-strong)) saturate(var(--glass-saturate));
+}
+
+.glass-subtle {
+  background: var(--glass-bg-subtle);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-highlight);
+}
+
+.glass-interactive {
+  transition:
+    transform var(--duration-normal) var(--ease-standard),
+    background-color var(--duration-normal) var(--ease-standard),
+    border-color var(--duration-normal) var(--ease-standard),
+    box-shadow var(--duration-normal) var(--ease-standard);
+}
+
+.glass-interactive:hover:not(:disabled) {
+  background: var(--glass-bg-hover);
+  border-color: var(--color-brand-border);
+  transform: translateY(-1px);
+}
+
+.glass-interactive:active:not(:disabled) {
+  background: var(--glass-bg-active);
+  transform: translateY(0) scale(0.985);
+  transition-duration: var(--duration-instant);
+}
+
+/* Fallback para navegadores sem suporte a backdrop-filter */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .glass {
+    background: var(--glass-bg-solid);
+  }
+
+  .glass-strong {
+    background: var(--glass-bg-strong-solid);
+  }
+
+  .glass-interactive:hover:not(:disabled) {
+    background: var(--glass-bg-hover-solid);
+  }
+}
+
+/* Preferência do sistema por transparência reduzida */
+@media (prefers-reduced-transparency: reduce) {
+  :root,
+  :root[data-theme="light"],
+  :root[data-theme="dark"] {
+    --glass-bg: var(--glass-bg-solid);
+    --glass-bg-strong: var(--glass-bg-strong-solid);
+    --glass-bg-subtle: var(--glass-bg-solid);
+    --glass-bg-hover: var(--glass-bg-hover-solid);
+    --glass-bg-active: var(--glass-bg-solid);
+  }
+
+  .glass,
+  .glass-strong,
+  [class*="backdrop-blur"] {
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
 }
 
 body,
@@ -98,10 +411,11 @@ input,
 select,
 textarea {
   transition:
-    color 160ms ease,
-    background-color 160ms ease,
-    border-color 160ms ease,
-    box-shadow 160ms ease;
+    color var(--duration-fast) var(--ease-standard),
+    background-color var(--duration-fast) var(--ease-standard),
+    border-color var(--duration-fast) var(--ease-standard),
+    box-shadow var(--duration-fast) var(--ease-standard),
+    transform var(--duration-fast) var(--ease-standard);
 }
 
 input,
@@ -116,8 +430,9 @@ textarea::placeholder {
 }
 
 :focus-visible {
-  outline: 3px solid var(--color-focus-ring);
+  outline: 2px solid var(--color-brand);
   outline-offset: 2px;
+  box-shadow: 0 0 0 4px var(--color-focus-ring);
 }
 
 ::selection {
@@ -136,8 +451,8 @@ textarea::placeholder {
 
 ::-webkit-scrollbar-thumb {
   border: 2px solid transparent;
-  border-radius: 999px;
-  background: var(--color-border);
+  border-radius: var(--radius-pill);
+  background: var(--color-border-strong);
   background-clip: padding-box;
 }
 
@@ -147,26 +462,31 @@ textarea::placeholder {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto !important;
+  }
+
   *,
   *::before,
   *::after {
     scroll-behavior: auto !important;
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
+    animation: none !important;
+    transition-property: color, background-color, border-color !important;
+    transition-duration: 120ms !important;
+  }
+
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+
+  .glass-interactive:hover:not(:disabled),
+  .glass-interactive:active:not(:disabled) {
+    transform: none !important;
   }
 }
 
-/* Compatibilidade visual dos componentes Tailwind com o tema escuro */
-:root[data-theme="dark"] {
-  color-scheme: dark;
-}
-
-:root[data-theme="dark"] body {
-  background: var(--color-surface-muted);
-  color: var(--color-text-primary);
-}
-
+/* Compatibilidade transitória dos componentes legados com o tema escuro */
 :root[data-theme="dark"] .bg-white {
   background-color: var(--color-surface);
 }
@@ -208,10 +528,15 @@ textarea::placeholder {
   background-color: var(--color-brand-soft);
 }
 
-:root[data-theme="dark"] input,
-:root[data-theme="dark"] select,
-:root[data-theme="dark"] textarea {
+:root[data-theme="dark"] input:not(.crm-field),
+:root[data-theme="dark"] select:not(.crm-field):not(.crm-stage-select),
+:root[data-theme="dark"] textarea:not(.crm-field) {
   background-color: var(--color-surface);
   color: var(--color-text-primary);
-  border-color: var(--color-border);
+  border-color: var(--color-border-strong);
+}
+
+select option {
+  background-color: var(--color-surface);
+  color: var(--color-text-primary);
 }
