@@ -24,7 +24,7 @@ export default function OverviewPage({
     useSalesMetrics(leads)
 
   return (
-    <div className="mx-auto max-w-[1440px] space-y-6 p-5 sm:p-8">
+    <div className="crm-page">
       <section>
         <p className="text-sm text-slate-500">
           Acompanhe os principais indicadores comerciais da AKS - Tech.

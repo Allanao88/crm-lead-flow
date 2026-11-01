@@ -1,5 +1,4 @@
-
-import { lazy, Suspense, useState, type FormEvent } from 'react'
+import { lazy, Suspense, useEffect, useState, type FormEvent } from 'react'
 
 import AuthScreen from './components/AuthScreen'
 import FeedbackMessages from './components/FeedbackMessages'
@@ -28,7 +27,18 @@ function App() {
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
   const [activeSection, setActiveSection] = useState<CrmSection>('overview')
+  const [isScrolled, setIsScrolled] = useState(false)
   const { theme, toggleTheme } = useTheme()
+
+  useEffect(() => {
+    function handleScroll() {
+      setIsScrolled(window.scrollY > 8)
+    }
+
+    handleScroll()
+    window.addEventListener('scroll', handleScroll, { passive: true })
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
 
   const {
     session,
@@ -117,7 +127,6 @@ function App() {
     await handleLogout()
   }
 
-
   async function handleCreateLead(event: FormEvent<HTMLFormElement>) {
     const saved = await saveLeadForm(
       event, leadProductItems, leadProductsLoading, leadProductsError,
@@ -139,6 +148,16 @@ function App() {
     editLeadForm(lead)
   }
 
+  function handleNavigateSection(section: CrmSection) {
+    setActiveSection(section)
+    setError('')
+    setNotice('')
+    if (section !== 'leads') {
+      resetForm()
+      setLeadProductItems([])
+    }
+    window.scrollTo({ top: 0, behavior: 'auto' })
+  }
 
   if (!authReady) {
     return (
@@ -169,6 +188,8 @@ function App() {
     )
   }
 
+  const hasFeedback = Boolean(error || notice)
+
   return (
     <div className="crm-app-canvas min-h-screen text-[var(--color-text-primary)]">
       <Sidebar
@@ -177,170 +198,204 @@ function App() {
         companiesCount={companies.length}
         userEmail={session.user.email}
         activeSection={activeSection}
-        onNavigate={(section: CrmSection) => {
-          setActiveSection(section)
-          setError('')
-          setNotice('')
-          if (section !== 'leads') {
-            resetForm()
-            setLeadProductItems([])
-          }
-        }}
+        onNavigate={handleNavigateSection}
         onLogout={handleLogoutAndReset}
       />
 
-      <main id="dashboard" className="min-w-0 pb-24 lg:ml-64 lg:pb-0">
-        <header className="sticky top-0 z-10 flex min-h-20 items-center justify-between gap-4 border-b border-[var(--color-border)] bg-[var(--color-surface)]/95 px-4 py-3 shadow-sm backdrop-blur-xl sm:px-8">
-          <h1 className="text-xl font-bold text-[var(--color-text-primary)]">
-            {getSectionTitle(activeSection)}
-          </h1>
-          <div className="ml-auto flex items-center gap-3">
-            <button
-              type="button"
-              onClick={toggleTheme}
-              aria-label={theme === 'dark' ? 'Ativar tema claro' : 'Ativar tema escuro'}
-              title={theme === 'dark' ? 'Ativar tema claro' : 'Ativar tema escuro'}
-              className="inline-flex h-10 items-center gap-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-muted)] px-3 text-sm font-medium text-[var(--color-text-primary)] hover:border-[var(--color-brand)]"
-            >
-              <span aria-hidden="true">{theme === 'dark' ? '☀' : '☾'}</span>
-              <span className="hidden sm:inline">{theme === 'dark' ? 'Tema claro' : 'Tema escuro'}</span>
-            </button>
-            {activeSection === 'leads' && <button
-            onClick={() => {
-              setLeadProductItems([])
-              if (showForm) {
-                cancelForm()
-              } else {
-                startNewLead()
-              }
-              setError('')
-              setNotice('')
-            }}
-            className="crm-primary-button shrink-0"
-          >
-            {showForm ? 'Cancelar' : '+ Novo lead'}
-          </button>}
+      <main
+        id="dashboard"
+        className="min-w-0 pb-[calc(5.25rem+env(safe-area-inset-bottom,0px))] lg:ml-64 lg:pb-0"
+      >
+        <header
+          className={`crm-topbar sticky top-0 z-20 ${
+            isScrolled ? 'crm-topbar--scrolled' : ''
+          }`}
+        >
+          <div className="crm-topbar-inner">
+            <div className="flex min-w-0 items-center gap-[var(--space-3)]">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--radius-sm)] border border-[var(--glass-border)] bg-[var(--glass-bg-subtle)] lg:hidden">
+                <img
+                  src="/brand/lead-flow-icon.svg"
+                  alt=""
+                  aria-hidden="true"
+                  className="h-6 w-6"
+                />
+              </span>
+              <h1 className="truncate text-[length:var(--text-lg)] font-[var(--font-weight-bold)] tracking-[var(--tracking-tight)] text-[var(--color-text-primary)] sm:text-[length:var(--text-xl)]">
+                {getSectionTitle(activeSection)}
+              </h1>
+            </div>
+
+            <div className="ml-auto flex shrink-0 items-center gap-[var(--space-2)] sm:gap-[var(--space-3)]">
+              <button
+                type="button"
+                onClick={toggleTheme}
+                aria-label={theme === 'dark' ? 'Ativar tema claro' : 'Ativar tema escuro'}
+                title={theme === 'dark' ? 'Ativar tema claro' : 'Ativar tema escuro'}
+                className="crm-secondary-button px-3"
+              >
+                {theme === 'dark' ? (
+                  <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="4" />
+                    <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" />
+                  </svg>
+                ) : (
+                  <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" />
+                  </svg>
+                )}
+                <span className="hidden sm:inline">
+                  {theme === 'dark' ? 'Tema claro' : 'Tema escuro'}
+                </span>
+              </button>
+
+              {activeSection === 'leads' && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setLeadProductItems([])
+                    if (showForm) {
+                      cancelForm()
+                    } else {
+                      startNewLead()
+                    }
+                    setError('')
+                    setNotice('')
+                  }}
+                  className="crm-primary-button shrink-0"
+                >
+                  {showForm ? 'Cancelar' : '+ Novo lead'}
+                </button>
+              )}
+
+              <button
+                type="button"
+                onClick={() => void handleLogoutAndReset()}
+                aria-label="Sair da conta"
+                title="Sair da conta"
+                className="crm-secondary-button px-3 lg:hidden"
+              >
+                <svg
+                  aria-hidden="true"
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M10 17l5-5-5-5M15 12H3" />
+                  <path d="M12 3h6a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-6" />
+                </svg>
+              </button>
+            </div>
           </div>
         </header>
 
         <Suspense
           fallback={
-            <div className="p-8 text-center text-sm text-slate-500">
+            <div className="crm-page text-center text-[length:var(--text-sm)] text-[var(--color-text-secondary)]">
               Carregando módulo...
             </div>
           }
         >
-        <div key={activeSection} className="crm-page-transition">
-        {activeSection === 'contacts' ? (
-          <>
-            <FeedbackMessages error={error} notice={notice} />
-            <ContactsPage
-              contacts={contacts}
-              leads={leads}
-              loading={contactsLoading}
-              saving={contactSaving}
-              onSave={saveContact}
-              onError={setError}
-              onNotice={setNotice}
-            />
-          </>
-        ) : activeSection === 'companies' ? (
-          <>
-            <FeedbackMessages error={error} notice={notice} />
-            <CompaniesPage
-              companies={companies}
-              loading={companiesLoading}
-              saving={companySaving}
-              onSave={saveCompany}
-              onError={setError}
-              onNotice={setNotice}
-            />
-          </>
-        ) : activeSection === 'inventory' ? (
-          <>
-            <FeedbackMessages error={error} notice={notice} />
-            <InventoryPage
-              products={inventoryProducts}
-              movements={inventoryMovements}
-              loading={inventoryLoading}
-              saving={inventorySaving}
-              onSaveProduct={saveProduct}
-              onRegisterMovement={registerMovement}
-              onReverseMovement={reverseMovement}
-              onError={setError}
-              onNotice={setNotice}
-            />
-          </>
-        ) : activeSection === 'overview' ? (
-          <>
-            <FeedbackMessages error={error} notice={notice} />
-            <OverviewPage
-              leads={leads}
-              contactsCount={contacts.length}
-              companiesCount={companies.length}
-              loading={loading || contactsLoading || companiesLoading}
-              onOpenLeads={() => setActiveSection('leads')}
-            />
-          </>
-        ) : (
-          <LeadsPage
-            leads={leads}
-            filteredLeads={filteredLeads}
-            totalCount={leadsTotalCount}
-            page={leadsPage}
-            totalPages={leadsTotalPages}
-            loading={loading}
-            saving={saving}
-            search={search}
-            stageFilter={stageFilter}
-            form={form}
-            showForm={showForm}
-            editingLeadId={editingLeadId}
-            products={inventoryProducts}
-            productItems={leadProductItems}
-            productsLoading={leadProductsLoading}
-            productsError={leadProductsError}
-            error={error}
-            notice={notice}
-            onSearchChange={setSearch}
-            onStageFilterChange={setStageFilter}
-            onFormChange={setForm}
-            onSubmit={handleCreateLead}
-            onCancelForm={() => {
-              setLeadProductItems([])
-              cancelForm()
-            }}
-            onQuantityChange={setProductQuantity}
-            onEditLead={handleEditLead}
-            onStageChange={handleLeadStageChange}
-            onClearFilters={resetFilters}
-            onPageChange={setLeadsPage}
-            onLogout={() => void handleLogoutAndReset()}
-            onSelectStage={(stage) => {
-              setStageFilter(stage)
-              document.getElementById('leads')?.scrollIntoView({ behavior: 'smooth' })
-            }}
-          />
-        )}
-        </div>
+          <div key={activeSection} className="crm-page-transition">
+            {activeSection !== 'leads' && hasFeedback && (
+              <div className="crm-feedback-wrap">
+                <FeedbackMessages error={error} notice={notice} className="mb-0" />
+              </div>
+            )}
+
+            {activeSection === 'contacts' ? (
+              <ContactsPage
+                contacts={contacts}
+                leads={leads}
+                loading={contactsLoading}
+                saving={contactSaving}
+                onSave={saveContact}
+                onError={setError}
+                onNotice={setNotice}
+              />
+            ) : activeSection === 'companies' ? (
+              <CompaniesPage
+                companies={companies}
+                loading={companiesLoading}
+                saving={companySaving}
+                onSave={saveCompany}
+                onError={setError}
+                onNotice={setNotice}
+              />
+            ) : activeSection === 'inventory' ? (
+              <InventoryPage
+                products={inventoryProducts}
+                movements={inventoryMovements}
+                loading={inventoryLoading}
+                saving={inventorySaving}
+                onSaveProduct={saveProduct}
+                onRegisterMovement={registerMovement}
+                onReverseMovement={reverseMovement}
+                onError={setError}
+                onNotice={setNotice}
+              />
+            ) : activeSection === 'overview' ? (
+              <OverviewPage
+                leads={leads}
+                contactsCount={contacts.length}
+                companiesCount={companies.length}
+                loading={loading || contactsLoading || companiesLoading}
+                onOpenLeads={() => handleNavigateSection('leads')}
+              />
+            ) : (
+              <LeadsPage
+                leads={leads}
+                filteredLeads={filteredLeads}
+                totalCount={leadsTotalCount}
+                page={leadsPage}
+                totalPages={leadsTotalPages}
+                loading={loading}
+                saving={saving}
+                search={search}
+                stageFilter={stageFilter}
+                form={form}
+                showForm={showForm}
+                editingLeadId={editingLeadId}
+                products={inventoryProducts}
+                productItems={leadProductItems}
+                productsLoading={leadProductsLoading}
+                productsError={leadProductsError}
+                error={error}
+                notice={notice}
+                onSearchChange={setSearch}
+                onStageFilterChange={setStageFilter}
+                onFormChange={setForm}
+                onSubmit={handleCreateLead}
+                onCancelForm={() => {
+                  setLeadProductItems([])
+                  cancelForm()
+                }}
+                onQuantityChange={setProductQuantity}
+                onEditLead={handleEditLead}
+                onStageChange={handleLeadStageChange}
+                onClearFilters={resetFilters}
+                onPageChange={setLeadsPage}
+                onSelectStage={(stage) => {
+                  setStageFilter(stage)
+                  document.getElementById('leads')?.scrollIntoView({ behavior: 'smooth' })
+                }}
+              />
+            )}
+          </div>
         </Suspense>
       </main>
+
       <MobileNavigation
         activeSection={activeSection}
-        onNavigate={(section: CrmSection) => {
-          setActiveSection(section)
-          setError('')
-          setNotice('')
-          if (section !== 'leads') {
-            resetForm()
-            setLeadProductItems([])
-          }
-          window.scrollTo({ top: 0, behavior: 'auto' })
-        }}
+        onNavigate={handleNavigateSection}
       />
     </div>
   )
 }
-
 
 export default App

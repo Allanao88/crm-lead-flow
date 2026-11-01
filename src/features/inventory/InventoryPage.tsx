@@ -195,7 +195,7 @@ export default function InventoryPage({
   }
 
   return (
-    <div className="mx-auto max-w-[1440px] space-y-6 p-5 sm:p-8">
+    <div className="crm-page">
       <section className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div>
 

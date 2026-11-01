@@ -37,7 +37,6 @@ type LeadsPageProps = {
   onStageChange: (lead: Lead, stage: Stage) => void | Promise<void>
   onClearFilters: () => void
   onPageChange: (page: number) => void
-  onLogout: () => void
   onSelectStage: (stage: string) => void
 }
 
@@ -70,11 +69,10 @@ export default function LeadsPage({
   onStageChange,
   onClearFilters,
   onPageChange,
-  onLogout,
   onSelectStage,
 }: LeadsPageProps) {
   return (
-    <div className="mx-auto max-w-[1440px] space-y-6 p-5 sm:p-8">
+    <div className="crm-page">
       <FeedbackMessages
         error={error}
         notice={notice}
@@ -113,7 +111,6 @@ export default function LeadsPage({
         onStageFilterChange={onStageFilterChange}
         onClearFilters={onClearFilters}
         onPageChange={onPageChange}
-        onLogout={onLogout}
         onEditLead={onEditLead}
         onStageChange={onStageChange}
       />

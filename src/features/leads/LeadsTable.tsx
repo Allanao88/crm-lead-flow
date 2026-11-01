@@ -14,7 +14,6 @@ type LeadsTableProps = {
   onStageFilterChange: (value: string) => void
   onClearFilters: () => void
   onPageChange: (page: number) => void
-  onLogout: () => void
   onEditLead: (lead: Lead) => void
   onStageChange: (lead: Lead, stage: Stage) => void | Promise<void>
 }
@@ -32,7 +31,6 @@ export default function LeadsTable({
   onStageFilterChange,
   onClearFilters,
   onPageChange,
-  onLogout,
   onEditLead,
   onStageChange,
 }: LeadsTableProps) {
@@ -85,14 +83,6 @@ export default function LeadsTable({
             className="crm-secondary-button disabled:cursor-not-allowed disabled:opacity-40"
           >
             Limpar filtros
-          </button>
-
-          <button
-            type="button"
-            onClick={onLogout}
-            className="rounded-lg border border-slate-200 px-4 py-2.5 text-sm hover:bg-slate-50 lg:hidden"
-          >
-            Sair
           </button>
         </div>
       </div>
