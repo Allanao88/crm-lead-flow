@@ -1,4 +1,6 @@
 import Button from '../../components/Button'
+import EmptyState from '../../components/EmptyState'
+import { TableRowsSkeleton } from '../../components/Skeleton'
 import type { InventoryMovement } from './types'
 
 const currency = new Intl.NumberFormat('pt-BR', {
@@ -19,6 +21,8 @@ type InventoryMovementsTableProps = {
   movements: InventoryMovement[]
   loading: boolean
   saving: boolean
+  hasActiveProducts: boolean
+  onCreateEntry: () => void
   onReverse: (movement: InventoryMovement) => void
 }
 
@@ -26,6 +30,8 @@ export default function InventoryMovementsTable({
   movements,
   loading,
   saving,
+  hasActiveProducts,
+  onCreateEntry,
   onReverse,
 }: InventoryMovementsTableProps) {
   return (
@@ -45,15 +51,23 @@ export default function InventoryMovementsTable({
         </thead>
         <tbody>
           {loading ? (
-            <tr>
-              <td colSpan={8} className="px-5 py-10 text-center">
-                Carregando movimentações...
-              </td>
-            </tr>
+            <TableRowsSkeleton columns={8} rows={5} />
           ) : movements.length === 0 ? (
             <tr>
-              <td colSpan={8} className="px-5 py-10 text-center">
-                Nenhuma movimentação registrada.
+              <td colSpan={8} className="p-0">
+                <EmptyState
+                  icon="inventory"
+                  title="Nenhuma movimentação registrada"
+                  description={
+                    hasActiveProducts
+                      ? 'Registre entradas, saídas ou estornos para auditar o histórico do estoque.'
+                      : 'Cadastre um produto ativo antes de registrar entradas ou saídas no estoque.'
+                  }
+                  actionLabel={
+                    hasActiveProducts ? '+ Registrar entrada' : '+ Novo produto'
+                  }
+                  onAction={onCreateEntry}
+                />
               </td>
             </tr>
           ) : (

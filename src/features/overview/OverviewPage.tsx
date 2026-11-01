@@ -1,5 +1,7 @@
 import Button from '../../components/Button'
+import EmptyState from '../../components/EmptyState'
 import MetricCard from '../../components/MetricCard'
+import { MetricCardSkeleton, Skeleton } from '../../components/Skeleton'
 import { currency, stages, stageStyles } from '../leads/constants'
 import type { Lead } from '../leads/types'
 import { useSalesMetrics } from './useSalesMetrics'
@@ -36,9 +38,17 @@ export default function OverviewPage({
       </section>
 
       {loading ? (
-        <p className="crm-panel p-6 text-[length:var(--text-sm)] text-[var(--color-text-secondary)]">
-          Carregando indicadores...
-        </p>
+        <section
+          role="status"
+          aria-live="polite"
+          aria-label="Carregando indicadores comerciais"
+          className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3"
+        >
+          <span className="sr-only">Carregando indicadores...</span>
+          {Array.from({ length: 9 }).map((_, index) => (
+            <MetricCardSkeleton key={index} />
+          ))}
+        </section>
       ) : (
         <section
           aria-label="Indicadores comerciais"
@@ -100,33 +110,56 @@ export default function OverviewPage({
               Distribuição das oportunidades por etapa.
             </p>
           </div>
-          <Button variant="primary" onClick={onOpenLeads}>
-            Acessar leads
-          </Button>
+          {leads.length > 0 && (
+            <Button variant="primary" onClick={onOpenLeads}>
+              Acessar leads
+            </Button>
+          )}
         </div>
 
-        <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-5">
-          {stages.map((stage) => {
-            const items = leads.filter((lead) => lead.stage === stage)
+        {!loading && leads.length === 0 ? (
+          <div className="mt-4">
+            <EmptyState
+              icon="leads"
+              title="Nenhuma oportunidade no pipeline"
+              description="Cadastre seu primeiro lead para visualizar a distribuição das etapas comerciais."
+              actionLabel="Ir para leads"
+              onAction={onOpenLeads}
+            />
+          </div>
+        ) : (
+          <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-5">
+            {stages.map((stage) => {
+              const items = leads.filter((lead) => lead.stage === stage)
 
-            return (
-              <div
-                key={stage}
-                className="glass-subtle rounded-[var(--radius-md)] p-4"
-              >
-                <span className={stageStyles[stage]}>
-                  {stage}
-                </span>
-                <p className="mt-4 text-2xl font-[var(--font-weight-bold)] tracking-[var(--tracking-tight)] text-[var(--color-text-primary)] tabular-nums">
-                  {items.length}
-                </p>
-                <p className="mt-1 text-[length:var(--text-xs)] text-[var(--color-text-muted)]">
-                  {items.length === 1 ? 'oportunidade' : 'oportunidades'}
-                </p>
-              </div>
-            )
-          })}
-        </div>
+              return (
+                <div
+                  key={stage}
+                  className="glass-subtle rounded-[var(--radius-md)] p-4"
+                >
+                  <span className={stageStyles[stage]}>
+                    {stage}
+                  </span>
+                  {loading ? (
+                    <>
+                      <Skeleton className="mt-4 h-7 w-12" />
+                      <Skeleton className="mt-2 h-3.5 w-24" />
+                    </>
+                  ) : (
+                    <>
+                      <p className="mt-4 text-2xl font-[var(--font-weight-bold)] tracking-[var(--tracking-tight)] text-[var(--color-text-primary)] tabular-nums">
+                        {items.length}
+                      </p>
+                      <p className="mt-1 text-[length:var(--text-xs)] text-[var(--color-text-muted)]">
+                        {items.length === 1 ? 'oportunidade' : 'oportunidades'}
+                      </p>
+                    </>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        )}
       </section>
 
       <footer className="pb-2 text-center text-[length:var(--text-xs)] text-[var(--color-text-muted)]">

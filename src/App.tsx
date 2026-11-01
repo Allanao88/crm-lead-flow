@@ -5,6 +5,7 @@ import FeedbackMessages from './components/FeedbackMessages'
 import { getSectionTitle } from './components/getSectionTitle'
 import Sidebar, { type CrmSection } from './components/Sidebar'
 import MobileNavigation from './components/MobileNavigation'
+import { ModulePageSkeleton, Skeleton } from './components/Skeleton'
 
 import { useAuth } from './features/auth/useAuth'
 import { useCompanies } from './features/companies/useCompanies'
@@ -161,8 +162,22 @@ function App() {
 
   if (!authReady) {
     return (
-      <div className="crm-app-canvas flex min-h-screen items-center justify-center text-[var(--color-text-secondary)]">
-        Verificando sessão...
+      <div
+        role="status"
+        aria-live="polite"
+        className="crm-app-canvas flex min-h-screen items-center justify-center p-6"
+      >
+        <span className="sr-only">Verificando sessão...</span>
+        <div className="glass flex w-full max-w-sm flex-col items-center rounded-[var(--radius-xl)] p-8 text-center">
+          <img
+            src="/brand/lead-flow-icon.svg"
+            alt=""
+            aria-hidden="true"
+            className="h-11 w-11"
+          />
+          <Skeleton className="mt-5 h-5 w-40" />
+          <Skeleton className="mt-2.5 h-3.5 w-56" />
+        </div>
       </div>
     )
   }
@@ -188,10 +203,18 @@ function App() {
     )
   }
 
-  const hasFeedback = Boolean(error || notice)
+  const isAnySaving =
+    saving || contactSaving || companySaving || inventorySaving
 
   return (
     <div className="crm-app-canvas min-h-screen text-[var(--color-text-primary)]">
+      <FeedbackMessages
+        error={showForm ? '' : error}
+        notice={notice}
+        onDismissError={() => setError('')}
+        onDismissNotice={() => setNotice('')}
+      />
+
       <Sidebar
         leadsCount={leadsTotalCount}
         contactsCount={contacts.length}
@@ -211,6 +234,13 @@ function App() {
             isScrolled ? 'crm-topbar--scrolled' : ''
           }`}
         >
+          {isAnySaving && (
+            <div
+              role="progressbar"
+              aria-label="Salvando alterações"
+              className="crm-top-progress"
+            />
+          )}
           <div className="crm-topbar-inner">
             <div className="flex min-w-0 items-center gap-[var(--space-3)]">
               <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--radius-sm)] border border-[var(--glass-border)] bg-[var(--glass-bg-subtle)] lg:hidden">
@@ -294,20 +324,8 @@ function App() {
           </div>
         </header>
 
-        <Suspense
-          fallback={
-            <div className="crm-page text-center text-[length:var(--text-sm)] text-[var(--color-text-secondary)]">
-              Carregando módulo...
-            </div>
-          }
-        >
+        <Suspense fallback={<ModulePageSkeleton />}>
           <div key={activeSection} className="crm-page-transition">
-            {activeSection !== 'leads' && hasFeedback && (
-              <div className="crm-feedback-wrap">
-                <FeedbackMessages error={error} notice={notice} className="mb-0" />
-              </div>
-            )}
-
             {activeSection === 'contacts' ? (
               <ContactsPage
                 contacts={contacts}
@@ -366,11 +384,16 @@ function App() {
                 productsLoading={leadProductsLoading}
                 productsError={leadProductsError}
                 error={error}
-                notice={notice}
                 onSearchChange={setSearch}
                 onStageFilterChange={setStageFilter}
                 onFormChange={setForm}
                 onSubmit={handleCreateLead}
+                onCreateLead={() => {
+                  setLeadProductItems([])
+                  startNewLead()
+                  setError('')
+                  setNotice('')
+                }}
                 onCancelForm={() => {
                   setLeadProductItems([])
                   cancelForm()

@@ -1,5 +1,7 @@
 import Button from '../../components/Button'
+import EmptyState from '../../components/EmptyState'
 import FormField from '../../components/FormField'
+import { TableRowsSkeleton } from '../../components/Skeleton'
 import type { Lead, Stage } from './types'
 import { currency, stages, stageStyles } from './constants'
 
@@ -16,8 +18,35 @@ type LeadsTableProps = {
   onStageFilterChange: (value: string) => void
   onClearFilters: () => void
   onPageChange: (page: number) => void
+  onCreateLead: () => void
   onEditLead: (lead: Lead) => void
   onStageChange: (lead: Lead, stage: Stage) => void | Promise<void>
+}
+
+function buildPageItems(page: number, totalPages: number): Array<number | 'ellipsis-start' | 'ellipsis-end'> {
+  if (totalPages <= 7) {
+    return Array.from({ length: totalPages }, (_, index) => index + 1)
+  }
+
+  const items: Array<number | 'ellipsis-start' | 'ellipsis-end'> = [1]
+
+  if (page > 3) {
+    items.push('ellipsis-start')
+  }
+
+  const start = Math.max(2, page - 1)
+  const end = Math.min(totalPages - 1, page + 1)
+
+  for (let current = start; current <= end; current += 1) {
+    items.push(current)
+  }
+
+  if (page < totalPages - 2) {
+    items.push('ellipsis-end')
+  }
+
+  items.push(totalPages)
+  return items
 }
 
 export default function LeadsTable({
@@ -33,9 +62,12 @@ export default function LeadsTable({
   onStageFilterChange,
   onClearFilters,
   onPageChange,
+  onCreateLead,
   onEditLead,
   onStageChange,
 }: LeadsTableProps) {
+  const hasActiveFilters = Boolean(search) || stageFilter !== 'Todas'
+  const pageItems = buildPageItems(page, totalPages)
   return (
     <section id="leads" className="crm-panel">
       <div className="space-y-4 border-b border-[var(--glass-border)] p-5 sm:p-6">
@@ -91,25 +123,46 @@ export default function LeadsTable({
         </div>
       </div>
 
-      {loading ? (
-        <p className="p-8 text-center text-[length:var(--text-sm)] text-[var(--color-text-secondary)]">
-          Carregando leads...
-        </p>
-      ) : (
-        <div className="crm-table-container">
-          <table className="crm-table min-w-[980px]">
-            <thead>
+      <div className="crm-table-container">
+        <table className="crm-table min-w-[980px]">
+          <thead>
+            <tr>
+              <th>Contato</th>
+              <th>Empresa</th>
+              <th>Etapa</th>
+              <th className="text-right">SETUP</th>
+              <th className="text-right">MRR/mês</th>
+              <th className="text-right">Criado em</th>
+            </tr>
+          </thead>
+          <tbody>
+            {loading ? (
+              <TableRowsSkeleton columns={6} rows={6} />
+            ) : filteredLeads.length === 0 ? (
               <tr>
-                <th>Contato</th>
-                <th>Empresa</th>
-                <th>Etapa</th>
-                <th className="text-right">SETUP</th>
-                <th className="text-right">MRR/mês</th>
-                <th className="text-right">Criado em</th>
+                <td colSpan={6} className="p-0">
+                  {leads.length === 0 && !hasActiveFilters ? (
+                    <EmptyState
+                      icon="leads"
+                      title="Nenhum lead cadastrado"
+                      description="Adicione sua primeira oportunidade comercial para acompanhar propostas, valores de implantação e receita recorrente."
+                      actionLabel="+ Novo lead"
+                      onAction={onCreateLead}
+                    />
+                  ) : (
+                    <EmptyState
+                      icon="search"
+                      title="Nenhum lead encontrado"
+                      description="Nenhuma oportunidade desta página corresponde aos filtros selecionados."
+                      actionLabel="Limpar filtros"
+                      actionVariant="secondary"
+                      onAction={onClearFilters}
+                    />
+                  )}
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              {filteredLeads.map((lead) => (
+            ) : (
+              filteredLeads.map((lead) => (
                 <tr key={lead.id}>
                   <td>
                     <button
@@ -159,28 +212,21 @@ export default function LeadsTable({
                     {new Date(lead.created_at).toLocaleDateString('pt-BR')}
                   </td>
                 </tr>
-              ))}
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
 
-              {filteredLeads.length === 0 && (
-                <tr>
-                  <td colSpan={6} className="px-5 py-12 text-center">
-                    {leads.length === 0
-                      ? 'Nenhum lead cadastrado ainda.'
-                      : 'Nenhum lead corresponde à busca.'}
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      )}
-
-      <div className="flex flex-col items-center justify-between gap-3 border-t border-[var(--glass-border)] px-5 py-4 text-[length:var(--text-xs)] text-[var(--color-text-secondary)] sm:flex-row sm:px-6">
+      <nav
+        aria-label="Paginação de leads"
+        className="flex flex-col items-center justify-between gap-3 border-t border-[var(--glass-border)] px-5 py-4 text-[length:var(--text-xs)] text-[var(--color-text-secondary)] sm:flex-row sm:px-6"
+      >
         <span className="tabular-nums">
           Exibindo {filteredLeads.length} de {totalCount} leads · Página {page} de {totalPages}
         </span>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center justify-center gap-1.5">
           <Button
             variant="secondary"
             size="sm"
@@ -189,6 +235,35 @@ export default function LeadsTable({
           >
             Anterior
           </Button>
+
+          <div className="hidden items-center gap-1 sm:flex">
+            {pageItems.map((item) =>
+              typeof item === 'number' ? (
+                <button
+                  key={item}
+                  type="button"
+                  disabled={loading}
+                  onClick={() => onPageChange(item)}
+                  aria-label={`Ir para página ${item}`}
+                  aria-current={item === page ? 'page' : undefined}
+                  className={`crm-page-pill tabular-nums ${
+                    item === page ? 'crm-page-pill--active' : ''
+                  }`}
+                >
+                  {item}
+                </button>
+              ) : (
+                <span
+                  key={item}
+                  aria-hidden="true"
+                  className="px-1 text-[var(--color-text-muted)]"
+                >
+                  …
+                </span>
+              ),
+            )}
+          </div>
+
           <Button
             variant="secondary"
             size="sm"
@@ -198,7 +273,7 @@ export default function LeadsTable({
             Próxima
           </Button>
         </div>
-      </div>
+      </nav>
     </section>
   )
 }

@@ -1,5 +1,4 @@
 import type { FormEvent } from 'react'
-import FeedbackMessages from '../../components/FeedbackMessages'
 import LeadFormPanel from './LeadFormPanel'
 import LeadsTable from './LeadsTable'
 import SalesPipeline from './SalesPipeline'
@@ -26,11 +25,11 @@ type LeadsPageProps = {
   productsLoading: boolean
   productsError: string
   error: string
-  notice: string
   onSearchChange: (value: string) => void
   onStageFilterChange: (value: string) => void
   onFormChange: (form: LeadForm) => void
   onSubmit: (event: FormEvent<HTMLFormElement>) => void
+  onCreateLead: () => void
   onCancelForm: () => void
   onQuantityChange: (productId: number, quantity: string) => void
   onEditLead: (lead: Lead) => void
@@ -58,11 +57,11 @@ export default function LeadsPage({
   productsLoading,
   productsError,
   error,
-  notice,
   onSearchChange,
   onStageFilterChange,
   onFormChange,
   onSubmit,
+  onCreateLead,
   onCancelForm,
   onQuantityChange,
   onEditLead,
@@ -73,12 +72,6 @@ export default function LeadsPage({
 }: LeadsPageProps) {
   return (
     <div className="crm-page">
-      <FeedbackMessages
-        error={showForm ? '' : error}
-        notice={notice}
-        className="mb-0"
-      />
-
       {showForm && (
         <LeadFormPanel
           open={showForm}
@@ -99,7 +92,7 @@ export default function LeadsPage({
         />
       )}
 
-      <SalesMetricsPanel leads={leads} />
+      <SalesMetricsPanel leads={leads} loading={loading} />
       <SalesPipeline leads={leads} onSelectStage={onSelectStage} />
       <LeadsTable
         leads={leads}
@@ -114,6 +107,7 @@ export default function LeadsPage({
         onStageFilterChange={onStageFilterChange}
         onClearFilters={onClearFilters}
         onPageChange={onPageChange}
+        onCreateLead={onCreateLead}
         onEditLead={onEditLead}
         onStageChange={onStageChange}
       />

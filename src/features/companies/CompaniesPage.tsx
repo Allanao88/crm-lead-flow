@@ -1,7 +1,9 @@
 import { useMemo, useState, type FormEvent } from 'react'
 import Button from '../../components/Button'
+import EmptyState from '../../components/EmptyState'
 import FormField from '../../components/FormField'
 import GlassDialog from '../../components/GlassDialog'
+import { TableRowsSkeleton } from '../../components/Skeleton'
 import type { Company, CompanyForm } from './types'
 import { emptyCompanyForm } from './types'
 
@@ -280,24 +282,52 @@ export default function CompaniesPage({
           </p>
         </div>
 
-        {loading ? (
-          <p className="p-8 text-center text-[length:var(--text-sm)] text-[var(--color-text-secondary)]">
-            Carregando empresas...
-          </p>
-        ) : (
-          <div className="crm-table-container">
-            <table className="crm-table min-w-[900px]">
-              <thead>
+        <div className="crm-table-container">
+          <table className="crm-table min-w-[900px]">
+            <thead>
+              <tr>
+                <th>Empresa</th>
+                <th>Setor</th>
+                <th>Contato</th>
+                <th>CNPJ</th>
+                <th className="text-right">Cadastro</th>
+              </tr>
+            </thead>
+            <tbody>
+              {loading ? (
+                <TableRowsSkeleton columns={5} rows={5} />
+              ) : filteredCompanies.length === 0 ? (
                 <tr>
-                  <th>Empresa</th>
-                  <th>Setor</th>
-                  <th>Contato</th>
-                  <th>CNPJ</th>
-                  <th className="text-right">Cadastro</th>
+                  <td colSpan={5} className="p-0">
+                    {companies.length === 0 ? (
+                      <EmptyState
+                        icon="companies"
+                        title="Nenhuma empresa cadastrada"
+                        description="Centralize CNPJ, setor e canais corporativos das contas atendidas pela equipe."
+                        actionLabel="+ Nova empresa"
+                        onAction={() => {
+                          setForm(emptyCompanyForm)
+                          setEditingCompanyId(null)
+                          setNameTouched(false)
+                          setShowForm(true)
+                          onError('')
+                          onNotice('')
+                        }}
+                      />
+                    ) : (
+                      <EmptyState
+                        icon="search"
+                        title="Nenhuma empresa encontrada"
+                        description="Nenhuma empresa corresponde ao termo pesquisado."
+                        actionLabel="Limpar busca"
+                        actionVariant="secondary"
+                        onAction={() => setSearch('')}
+                      />
+                    )}
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {filteredCompanies.map((company) => (
+              ) : (
+                filteredCompanies.map((company) => (
                   <tr key={company.id}>
                     <td>
                       <button
@@ -340,21 +370,11 @@ export default function CompaniesPage({
                       {new Date(company.created_at).toLocaleDateString('pt-BR')}
                     </td>
                   </tr>
-                ))}
-
-                {filteredCompanies.length === 0 && (
-                  <tr>
-                    <td colSpan={5} className="px-5 py-12 text-center">
-                      {companies.length === 0
-                        ? 'Nenhuma empresa cadastrada ainda.'
-                        : 'Nenhuma empresa corresponde à busca.'}
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        )}
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
 
         <div className="border-t border-[var(--glass-border)] px-5 py-4 text-[length:var(--text-xs)] text-[var(--color-text-secondary)] sm:px-6 tabular-nums">
           Exibindo {filteredCompanies.length} de {companies.length} empresas

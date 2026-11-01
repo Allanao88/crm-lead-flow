@@ -1,5 +1,7 @@
 import Button from '../../components/Button'
+import EmptyState from '../../components/EmptyState'
 import FormField from '../../components/FormField'
+import { TableRowsSkeleton } from '../../components/Skeleton'
 import type { InventoryProduct } from './types'
 
 const currency = new Intl.NumberFormat('pt-BR', {
@@ -16,6 +18,7 @@ type InventoryProductsTableProps = {
   loading: boolean
   search: string
   onSearchChange: (value: string) => void
+  onCreateProduct: () => void
   onEdit: (product: InventoryProduct) => void
 }
 
@@ -24,6 +27,7 @@ export default function InventoryProductsTable({
   loading,
   search,
   onSearchChange,
+  onCreateProduct,
   onEdit,
 }: InventoryProductsTableProps) {
   return (
@@ -57,17 +61,28 @@ export default function InventoryProductsTable({
           </thead>
           <tbody>
             {loading ? (
-              <tr>
-                <td colSpan={7} className="px-5 py-10 text-center">
-                  Carregando estoque...
-                </td>
-              </tr>
+              <TableRowsSkeleton columns={7} rows={5} />
             ) : products.length === 0 ? (
               <tr>
-                <td colSpan={7} className="px-5 py-10 text-center">
-                  {search
-                    ? 'Nenhum produto corresponde à busca.'
-                    : 'Nenhum produto cadastrado. Comece adicionando um produto.'}
+                <td colSpan={7} className="p-0">
+                  {search ? (
+                    <EmptyState
+                      icon="search"
+                      title="Nenhum produto encontrado"
+                      description="Nenhum item do estoque corresponde ao termo pesquisado."
+                      actionLabel="Limpar busca"
+                      actionVariant="secondary"
+                      onAction={() => onSearchChange('')}
+                    />
+                  ) : (
+                    <EmptyState
+                      icon="inventory"
+                      title="Nenhum produto cadastrado"
+                      description="Adicione produtos para controlar saldos, custo médio ponderado e baixas automáticas."
+                      actionLabel="+ Novo produto"
+                      onAction={onCreateProduct}
+                    />
+                  )}
                 </td>
               </tr>
             ) : (

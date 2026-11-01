@@ -1,3 +1,4 @@
+import { Skeleton } from '../../components/Skeleton'
 import type { InventoryProduct } from '../inventory/types'
 import type { LeadProductItem } from './useLeadProducts'
 
@@ -43,13 +44,35 @@ export default function LeadProductsEditor({
       )}
 
       {loading ? (
-        <p className="text-[length:var(--text-sm)] text-[var(--color-text-secondary)]">
-          Carregando produtos vinculados...
-        </p>
+        <div
+          role="status"
+          aria-live="polite"
+          className="grid gap-3 sm:grid-cols-2"
+        >
+          <span className="sr-only">Carregando produtos vinculados...</span>
+          {Array.from({ length: 2 }).map((_, index) => (
+            <div
+              key={index}
+              aria-hidden="true"
+              className="flex items-center justify-between gap-3 rounded-[var(--radius-sm)] border border-[var(--glass-border)] bg-[var(--field-bg)] p-3"
+            >
+              <div className="min-w-0 flex-1 space-y-2">
+                <Skeleton className="h-4 w-32" />
+                <Skeleton className="h-3 w-24" />
+              </div>
+              <Skeleton className="h-11 w-24 rounded-[var(--radius-sm)]" />
+            </div>
+          ))}
+        </div>
       ) : availableProducts.length === 0 ? (
-        <p className="text-[length:var(--text-sm)] text-[var(--color-text-secondary)]">
-          Nenhum produto cadastrado. Cadastre produtos na seção Estoque.
-        </p>
+        <div className="rounded-[var(--radius-sm)] border border-dashed border-[var(--glass-border-strong)] p-4 text-center">
+          <p className="text-[length:var(--text-sm)] font-[var(--font-weight-medium)] text-[var(--color-text-primary)]">
+            Nenhum produto disponível para vincular
+          </p>
+          <p className="mt-1 text-[length:var(--text-xs)] text-[var(--color-text-secondary)]">
+            Cadastre itens ativos na seção Estoque para associá-los aos leads.
+          </p>
+        </div>
       ) : (
         <div className="grid gap-3 sm:grid-cols-2">
           {availableProducts.map((product) => {

@@ -1,5 +1,6 @@
 import { useMemo, useState, type FormEvent } from 'react'
 import Button from '../../components/Button'
+import { MetricCardSkeleton } from '../../components/Skeleton'
 import type {
   InventoryMovement,
   InventoryProduct,
@@ -227,28 +228,39 @@ export default function InventoryPage({
         </div>
       </section>
 
-      <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <InventoryMetricCard
-          label="Produtos cadastrados"
-          value={products.length.toLocaleString('pt-BR')}
-          detail={`${activeProducts.length} ativos`}
-        />
-        <InventoryMetricCard
-          label="Unidades em estoque"
-          value={quantityFormat.format(totalUnits)}
-          detail="Saldo consolidado dos produtos"
-        />
-        <InventoryMetricCard
-          label="Valor do estoque"
-          value={currency.format(inventoryValue)}
-          detail="Quantidade × custo médio atual"
-        />
-        <InventoryMetricCard
-          label="Movimentações recentes"
-          value={movements.length.toLocaleString('pt-BR')}
-          detail="Até 200 registros mais recentes"
-        />
-      </section>
+      {loading && products.length === 0 ? (
+        <section
+          aria-label="Carregando indicadores do estoque"
+          className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4"
+        >
+          {Array.from({ length: 4 }).map((_, index) => (
+            <MetricCardSkeleton key={index} />
+          ))}
+        </section>
+      ) : (
+        <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <InventoryMetricCard
+            label="Produtos cadastrados"
+            value={products.length.toLocaleString('pt-BR')}
+            detail={`${activeProducts.length} ativos`}
+          />
+          <InventoryMetricCard
+            label="Unidades em estoque"
+            value={quantityFormat.format(totalUnits)}
+            detail="Saldo consolidado dos produtos"
+          />
+          <InventoryMetricCard
+            label="Valor do estoque"
+            value={currency.format(inventoryValue)}
+            detail="Quantidade × custo médio atual"
+          />
+          <InventoryMetricCard
+            label="Movimentações recentes"
+            value={movements.length.toLocaleString('pt-BR')}
+            detail="Até 200 registros mais recentes"
+          />
+        </section>
+      )}
 
       {showProductForm && (
         <InventoryProductForm
@@ -330,6 +342,7 @@ export default function InventoryPage({
             loading={loading}
             search={search}
             onSearchChange={setSearch}
+            onCreateProduct={openNewProductForm}
             onEdit={openEditProductForm}
           />
         ) : (
@@ -337,6 +350,12 @@ export default function InventoryPage({
             movements={movements}
             loading={loading}
             saving={saving}
+            hasActiveProducts={activeProducts.length > 0}
+            onCreateEntry={
+              activeProducts.length > 0
+                ? () => openMovementForm('entry')
+                : openNewProductForm
+            }
             onReverse={startReversal}
           />
         )}

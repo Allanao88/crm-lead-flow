@@ -1,7 +1,9 @@
 import { useMemo, useState, type FormEvent } from 'react'
 import Button from '../../components/Button'
+import EmptyState from '../../components/EmptyState'
 import FormField from '../../components/FormField'
 import GlassDialog from '../../components/GlassDialog'
+import { TableRowsSkeleton } from '../../components/Skeleton'
 import type { Lead } from '../leads/types'
 import type { Contact, ContactForm } from './types'
 import { emptyContactForm } from './types'
@@ -299,24 +301,52 @@ export default function ContactsPage({
           </p>
         </div>
 
-        {loading ? (
-          <p className="p-8 text-center text-[length:var(--text-sm)] text-[var(--color-text-secondary)]">
-            Carregando contatos...
-          </p>
-        ) : (
-          <div className="crm-table-container">
-            <table className="crm-table min-w-[900px]">
-              <thead>
+        <div className="crm-table-container">
+          <table className="crm-table min-w-[900px]">
+            <thead>
+              <tr>
+                <th>Contato</th>
+                <th>Empresa / cargo</th>
+                <th>Lead relacionado</th>
+                <th>Origem</th>
+                <th className="text-right">Cadastro</th>
+              </tr>
+            </thead>
+            <tbody>
+              {loading ? (
+                <TableRowsSkeleton columns={5} rows={5} />
+              ) : filteredContacts.length === 0 ? (
                 <tr>
-                  <th>Contato</th>
-                  <th>Empresa / cargo</th>
-                  <th>Lead relacionado</th>
-                  <th>Origem</th>
-                  <th className="text-right">Cadastro</th>
+                  <td colSpan={5} className="p-0">
+                    {contacts.length === 0 ? (
+                      <EmptyState
+                        icon="contacts"
+                        title="Nenhum contato cadastrado"
+                        description="Cadastre decisores e interlocutores para conectá-los às suas oportunidades comerciais."
+                        actionLabel="+ Novo contato"
+                        onAction={() => {
+                          setForm(emptyContactForm)
+                          setEditingContactId(null)
+                          setNameTouched(false)
+                          setShowForm(true)
+                          onError('')
+                          onNotice('')
+                        }}
+                      />
+                    ) : (
+                      <EmptyState
+                        icon="search"
+                        title="Nenhum contato encontrado"
+                        description="Nenhum contato corresponde ao termo pesquisado."
+                        actionLabel="Limpar busca"
+                        actionVariant="secondary"
+                        onAction={() => setSearch('')}
+                      />
+                    )}
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {filteredContacts.map((contact) => {
+              ) : (
+                filteredContacts.map((contact) => {
                   const relatedLead = leads.find(
                     (lead) => lead.id === contact.lead_id,
                   )
@@ -374,21 +404,11 @@ export default function ContactsPage({
                       </td>
                     </tr>
                   )
-                })}
-
-                {filteredContacts.length === 0 && (
-                  <tr>
-                    <td colSpan={5} className="px-5 py-12 text-center">
-                      {contacts.length === 0
-                        ? 'Nenhum contato cadastrado ainda.'
-                        : 'Nenhum contato corresponde à busca.'}
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        )}
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
 
         <div className="border-t border-[var(--glass-border)] px-5 py-4 text-[length:var(--text-xs)] text-[var(--color-text-secondary)] sm:px-6 tabular-nums">
           Exibindo {filteredContacts.length} de {contacts.length} contatos
