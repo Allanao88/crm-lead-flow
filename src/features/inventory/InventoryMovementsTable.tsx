@@ -91,20 +91,22 @@ export default function InventoryMovementsTable({
                       {typeLabel}
                     </span>
                     {movement.lead_id !== null && (
-                      <p className="mt-1 text-xs text-slate-500">
+                      <p className="mt-1 text-xs text-[var(--color-text-secondary)]">
                         Lead #{movement.lead_id}
                       </p>
                     )}
                   </td>
-                  <td
-                    className={`px-5 py-4 text-right tabular-nums ${
-                      movement.quantity_delta < 0
-                        ? "text-rose-600"
-                        : "text-emerald-700"
-                    }`}
-                  >
-                    {movement.quantity_delta > 0 ? "+" : ""}
-                    {quantityFormat.format(movement.quantity_delta)}
+                  <td className="px-5 py-4 text-right tabular-nums">
+                    <span
+                      className={`font-medium ${
+                        movement.quantity_delta < 0
+                          ? "text-[var(--color-negative-text)]"
+                          : "text-[var(--color-positive-text)]"
+                      }`}
+                    >
+                      {movement.quantity_delta > 0 ? "+" : ""}
+                      {quantityFormat.format(movement.quantity_delta)}
+                    </span>
                   </td>
                   <td className="px-5 py-4 text-right tabular-nums text-slate-700">
                     {currency.format(movement.unit_cost)}
@@ -123,7 +125,7 @@ export default function InventoryMovementsTable({
                         type="button"
                         onClick={() => onReverse(movement)}
                         disabled={saving}
-                        className="font-semibold text-[var(--color-brand)] hover:text-[var(--color-brand-hover)] disabled:opacity-50"
+                        className="font-semibold text-[var(--color-action-text)] hover:text-[var(--color-brand-hover)] disabled:opacity-50"
                       >
                         Estornar
                       </button>
