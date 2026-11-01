@@ -129,7 +129,6 @@ export function useCompanies(
         industry: form.industry.trim() || null,
         address: form.address.trim() || null,
         notes: form.notes.trim() || null,
-        updated_at: new Date().toISOString(),
       }
 
       const query =

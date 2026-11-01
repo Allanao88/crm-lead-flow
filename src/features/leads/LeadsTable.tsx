@@ -4,12 +4,16 @@ import { currency, stages, stageStyles } from './constants'
 type LeadsTableProps = {
   leads: Lead[]
   filteredLeads: Lead[]
+  totalCount: number
+  page: number
+  totalPages: number
   loading: boolean
   search: string
   stageFilter: string
   onSearchChange: (value: string) => void
   onStageFilterChange: (value: string) => void
   onClearFilters: () => void
+  onPageChange: (page: number) => void
   onLogout: () => void
   onEditLead: (lead: Lead) => void
   onStageChange: (lead: Lead, stage: Stage) => void | Promise<void>
@@ -18,12 +22,16 @@ type LeadsTableProps = {
 export default function LeadsTable({
   leads,
   filteredLeads,
+  totalCount,
+  page,
+  totalPages,
   loading,
   search,
   stageFilter,
   onSearchChange,
   onStageFilterChange,
   onClearFilters,
+  onPageChange,
   onLogout,
   onEditLead,
   onStageChange,
@@ -167,8 +175,29 @@ export default function LeadsTable({
         </div>
       )}
 
-      <div className="border-t border-slate-100 px-5 py-4 text-xs text-slate-500">
-        Exibindo {filteredLeads.length} de {leads.length} leads
+      <div className="flex flex-col items-center justify-between gap-3 border-t border-slate-100 px-5 py-4 text-xs text-slate-500 sm:flex-row">
+        <span>
+          Exibindo {filteredLeads.length} de {totalCount} leads · Página {page} de {totalPages}
+        </span>
+
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => onPageChange(page - 1)}
+            disabled={loading || page <= 1}
+            className="crm-secondary-button min-h-8 px-3 py-1.5 text-xs disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            Anterior
+          </button>
+          <button
+            type="button"
+            onClick={() => onPageChange(page + 1)}
+            disabled={loading || page >= totalPages}
+            className="crm-secondary-button min-h-8 px-3 py-1.5 text-xs disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            Próxima
+          </button>
+        </div>
       </div>
     </section>
   )

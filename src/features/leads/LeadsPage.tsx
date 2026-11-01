@@ -11,6 +11,9 @@ import type { LeadProductItem } from './useLeadProducts'
 type LeadsPageProps = {
   leads: Lead[]
   filteredLeads: Lead[]
+  totalCount: number
+  page: number
+  totalPages: number
   loading: boolean
   saving: boolean
   search: string
@@ -33,6 +36,7 @@ type LeadsPageProps = {
   onEditLead: (lead: Lead) => void
   onStageChange: (lead: Lead, stage: Stage) => void | Promise<void>
   onClearFilters: () => void
+  onPageChange: (page: number) => void
   onLogout: () => void
   onSelectStage: (stage: string) => void
 }
@@ -40,6 +44,9 @@ type LeadsPageProps = {
 export default function LeadsPage({
   leads,
   filteredLeads,
+  totalCount,
+  page,
+  totalPages,
   loading,
   saving,
   search,
@@ -62,6 +69,7 @@ export default function LeadsPage({
   onEditLead,
   onStageChange,
   onClearFilters,
+  onPageChange,
   onLogout,
   onSelectStage,
 }: LeadsPageProps) {
@@ -95,12 +103,16 @@ export default function LeadsPage({
       <LeadsTable
         leads={leads}
         filteredLeads={filteredLeads}
+        totalCount={totalCount}
+        page={page}
+        totalPages={totalPages}
         loading={loading}
         search={search}
         stageFilter={stageFilter}
         onSearchChange={onSearchChange}
         onStageFilterChange={onStageFilterChange}
         onClearFilters={onClearFilters}
+        onPageChange={onPageChange}
         onLogout={onLogout}
         onEditLead={onEditLead}
         onStageChange={onStageChange}

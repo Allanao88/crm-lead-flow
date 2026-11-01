@@ -21,11 +21,11 @@ export default function InventoryReversalForm({
   onCancel,
 }: InventoryReversalFormProps) {
   return (
-    <section className="rounded-2xl border border-amber-200 bg-amber-50 p-5 sm:p-6">
-      <h3 className="font-bold text-amber-900">
+    <section className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-sm sm:p-6">
+      <h3 className="font-bold text-[var(--color-text-primary)]">
         Confirmar estorno da movimentação #{movementId}
       </h3>
-      <p className="mt-1 text-sm text-amber-800">
+      <p className="mt-1 text-sm text-[var(--color-text-secondary)]">
         O estorno criará um novo registro no histórico. A movimentação original será preservada.
       </p>
       <form onSubmit={onSubmit} className="mt-4 space-y-4">
@@ -54,7 +54,7 @@ export default function InventoryReversalForm({
             type="button"
             onClick={onCancel}
             disabled={saving}
-            className="rounded-xl border border-amber-300 px-5 py-3 text-sm font-semibold text-amber-900 hover:bg-amber-100"
+            className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-muted)] px-5 py-3 text-sm font-semibold text-[var(--color-text-primary)] hover:bg-[var(--color-brand-soft)]"
           >
             Cancelar
           </button>

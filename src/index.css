@@ -22,6 +22,9 @@
   --color-sidebar: #1a1a1a;
   --color-sidebar-text: #cccccc;
   --color-accent: #009933;
+  --color-action-text: #007a29;
+  --color-positive-text: #007a55;
+  --color-negative-text: #be123c;
   --color-focus-ring: rgb(0 153 51 / 28%);
   --shadow-card: 0 1px 3px rgb(15 23 42 / 4%), 0 4px 12px rgb(15 23 42 / 3%);
 }
@@ -43,6 +46,9 @@
   --color-sidebar: #1a1a1a;
   --color-sidebar-text: #cccccc;
   --color-accent: #ccff00;
+  --color-action-text: #ccff00;
+  --color-positive-text: #6ee7b7;
+  --color-negative-text: #fda4af;
   --color-focus-ring: rgb(204 255 0 / 30%);
   --shadow-card: 0 4px 20px rgb(0 0 0 / 30%);
 }

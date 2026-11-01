@@ -14,7 +14,7 @@ import { useInventory } from './features/inventory/useInventory'
 import { useLeadProducts } from './features/leads/useLeadProducts'
 import LeadsPage from './features/leads/LeadsPage'
 import { useLeadForm } from './features/leads/useLeadForm'
-import type { Lead } from './features/leads/types'
+import type { Lead, Stage } from './features/leads/types'
 import { useLeads } from './features/leads/useLeads'
 import { useLeadFilters } from './features/leads/useLeadFilters'
 import { useTheme } from './hooks/useTheme'
@@ -44,7 +44,17 @@ function App() {
     handleLogout,
   } = useAuth(setError, setNotice)
 
-  const { leads, loading, saving, saveLead, handleStageChange } = useLeads(
+  const {
+    leads,
+    totalCount: leadsTotalCount,
+    page: leadsPage,
+    totalPages: leadsTotalPages,
+    setPage: setLeadsPage,
+    loading,
+    saving,
+    saveLead,
+    handleStageChange,
+  } = useLeads(
     session,
     setError,
     setNotice,
@@ -78,10 +88,11 @@ function App() {
     movements: inventoryMovements,
     loading: inventoryLoading,
     saving: inventorySaving,
+    reload: reloadInventory,
     saveProduct,
     registerMovement,
     reverseMovement,
-  } = useInventory(setError, setNotice)
+  } = useInventory(session?.user.id ?? null, setError, setNotice)
 
   const {
     form, setForm, showForm, editingLeadId,
@@ -111,7 +122,16 @@ function App() {
     const saved = await saveLeadForm(
       event, leadProductItems, leadProductsLoading, leadProductsError,
     )
-    if (saved) setLeadProductItems([])
+    if (saved) {
+      setLeadProductItems([])
+      await reloadInventory()
+    }
+  }
+
+  async function handleLeadStageChange(lead: Lead, stage: Stage) {
+    if (lead.stage === stage) return
+    await handleStageChange(lead, stage)
+    await reloadInventory()
   }
 
   function handleEditLead(lead: Lead) {
@@ -152,7 +172,7 @@ function App() {
   return (
     <div className="min-h-screen bg-[var(--color-surface-muted)] text-[var(--color-text-primary)]">
       <Sidebar
-        leadsCount={leads.length}
+        leadsCount={leadsTotalCount}
         contactsCount={contacts.length}
         companiesCount={companies.length}
         userEmail={session.user.email}
@@ -266,6 +286,9 @@ function App() {
           <LeadsPage
             leads={leads}
             filteredLeads={filteredLeads}
+            totalCount={leadsTotalCount}
+            page={leadsPage}
+            totalPages={leadsTotalPages}
             loading={loading}
             saving={saving}
             search={search}
@@ -289,8 +312,9 @@ function App() {
             }}
             onQuantityChange={setProductQuantity}
             onEditLead={handleEditLead}
-            onStageChange={handleStageChange}
+            onStageChange={handleLeadStageChange}
             onClearFilters={resetFilters}
+            onPageChange={setLeadsPage}
             onLogout={() => void handleLogoutAndReset()}
             onSelectStage={(stage) => {
               setStageFilter(stage)
