@@ -11,14 +11,25 @@ import type { Lead, LeadForm, Stage } from './types'
 import type { LeadProductItem } from './useLeadProducts'
 import { validateLeadForm } from './leadValidation'
 
+export const LEADS_PAGE_SIZE = 50
+
 const leadFields =
   'id, name, email, phone, company, stage, setup_value, mrr_value, created_at, updated_at'
 
 type UseLeadsResult = {
   leads: Lead[]
+  totalCount: number
+  page: number
+  pageSize: number
+  totalPages: number
+  setPage: (page: number) => void
   loading: boolean
   saving: boolean
-  saveLead: (form: LeadForm, editingLeadId: number | null, productItems: LeadProductItem[]) => Promise<boolean>
+  saveLead: (
+    form: LeadForm,
+    editingLeadId: number | null,
+    productItems: LeadProductItem[],
+  ) => Promise<boolean>
   handleStageChange: (lead: Lead, stage: Stage) => Promise<void>
 }
 
@@ -27,52 +38,82 @@ export function useLeads(
   setError: Dispatch<SetStateAction<string>>,
   setNotice: Dispatch<SetStateAction<string>>,
 ): UseLeadsResult {
+  const userId = session?.user.id ?? null
+
   const [leadState, setLeadState] = useState<{
     userId: string | null
     items: Lead[]
-  }>({ userId: null, items: [] })
+    totalCount: number
+  }>({ userId: null, items: [], totalCount: 0 })
 
-  const leads = leadState.userId === (session?.user.id ?? null)
-    ? leadState.items
-    : []
+  const [pageState, setPageState] = useState<{
+    userId: string | null
+    page: number
+  }>({ userId: null, page: 1 })
 
-  const setLeads: Dispatch<SetStateAction<Lead[]>> = useCallback((action) => {
-    const userId = session?.user.id ?? null
+  const leads = leadState.userId === userId ? leadState.items : []
+  const totalCount = leadState.userId === userId ? leadState.totalCount : 0
+  const page = pageState.userId === userId ? pageState.page : 1
+  const totalPages = Math.max(1, Math.ceil(totalCount / LEADS_PAGE_SIZE))
 
-    setLeadState((current) => {
-      const currentItems = current.userId === userId ? current.items : []
-      const items = typeof action === 'function'
-        ? action(currentItems)
-        : action
+  const setLeads: Dispatch<SetStateAction<Lead[]>> = useCallback(
+    (action) => {
+      setLeadState((current) => {
+        const currentItems = current.userId === userId ? current.items : []
+        const currentTotal = current.userId === userId ? current.totalCount : 0
+        const items =
+          typeof action === 'function' ? action(currentItems) : action
 
-      return { userId, items }
-    })
-  }, [session?.user.id])
+        return { userId, items, totalCount: currentTotal }
+      })
+    },
+    [userId],
+  )
+
+  const setPage = useCallback(
+    (nextPage: number) => {
+      const clamped = Math.min(
+        Math.max(1, Math.trunc(nextPage)),
+        Math.max(1, Math.ceil(totalCount / LEADS_PAGE_SIZE)),
+      )
+      setPageState({ userId, page: clamped })
+    },
+    [userId, totalCount],
+  )
 
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
-    if (!session) return
+    if (!userId) return
 
     let active = true
+    const from = (page - 1) * LEADS_PAGE_SIZE
+    const to = from + LEADS_PAGE_SIZE - 1
 
     async function loadLeads() {
       setLoading(true)
       setError('')
 
       try {
-        const { data, error } = await supabase
+        const { data, error, count } = await supabase
           .from('leads')
-          .select(leadFields)
+          .select(leadFields, { count: 'exact' })
           .order('created_at', { ascending: false })
+          .order('id', { ascending: false })
+          .range(from, to)
 
         if (!active) return
 
         if (error) {
           setError(`Não foi possível carregar os leads: ${error.message}`)
         } else {
-          setLeads((data ?? []) as Lead[])
+          const items = (data ?? []) as Lead[]
+          setLeadState({
+            userId,
+            items,
+            totalCount: count ?? items.length,
+          })
         }
       } catch (err) {
         if (active) {
@@ -92,7 +133,7 @@ export function useLeads(
     return () => {
       active = false
     }
-  }, [session, setError, setLeads])
+  }, [userId, page, setError])
 
   async function saveLead(
     form: LeadForm,
@@ -118,146 +159,56 @@ export function useLeads(
     setSaving(true)
 
     try {
-      const leadData = {
-        name: form.name.trim(),
-        email: form.email.trim() || null,
-        phone: form.phone.trim() || null,
-        company: form.company.trim() || null,
-        setup_value: setupValue,
-        mrr_value: mrrValue,
+      const { data, error } = await supabase.rpc('save_lead', {
+        p_lead_id: editingLeadId,
+        p_name: form.name.trim(),
+        p_email: form.email.trim() || null,
+        p_phone: form.phone.trim() || null,
+        p_company: form.company.trim() || null,
+        p_stage: form.stage,
+        p_setup_value: setupValue,
+        p_mrr_value: mrrValue,
+        p_items: normalizedProducts,
+      })
+
+      if (error || !data) {
+        setError(
+          editingLeadId !== null
+            ? `Não foi possível atualizar o lead: ${error?.message ?? 'resposta vazia.'}`
+            : `Não foi possível cadastrar o lead: ${error?.message ?? 'resposta vazia.'}`,
+        )
+        return false
       }
 
+      const savedLead = data as Lead
+
       if (editingLeadId !== null) {
-        const { data: updatedLead, error: updateError } = await supabase
-          .from('leads')
-          .update(leadData)
-          .eq('id', editingLeadId)
-          .select(leadFields)
-          .single()
-
-        if (updateError) {
-          setError(`Não foi possível atualizar o lead: ${updateError.message}`)
-          return false
-        }
-
-        if (updatedLead.stage !== 'Ganho') {
-          const { error: productsError } = await supabase.rpc(
-            'set_lead_products',
-            {
-              p_lead_id: editingLeadId,
-              p_items: normalizedProducts,
-            },
-          )
-
-          if (productsError) {
-            setError(
-              `Dados comerciais salvos, mas não foi possível salvar os produtos: ${productsError.message}`,
-            )
-            return false
-          }
-        }
-
-        if (updatedLead.stage !== form.stage) {
-          const { error: stageError } = await supabase.rpc(
-            'set_lead_stage_with_inventory',
-            {
-              p_lead_id: editingLeadId,
-              p_stage: form.stage,
-            },
-          )
-
-          if (stageError) {
-            setError(
-              `Os dados comerciais foram salvos, mas não foi possível alterar a etapa: ${stageError.message}`,
-            )
-            return false
-          }
-        }
-
-        const { data: finalLead, error: reloadError } = await supabase
-          .from('leads')
-          .select(leadFields)
-          .eq('id', editingLeadId)
-          .single()
-
-        if (reloadError) {
-          setError(
-            `Lead salvo, mas não foi possível atualizar a tela: ${reloadError.message}`,
-          )
-          return false
-        }
-
         setLeads((current) =>
           current.map((lead) =>
-            lead.id === editingLeadId ? (finalLead as Lead) : lead,
+            lead.id === editingLeadId ? savedLead : lead,
           ),
         )
         setNotice('Lead atualizado com sucesso.')
       } else {
-        const { data, error } = await supabase
-          .from('leads')
-          .insert({ ...leadData, stage: 'Novo lead' })
-          .select(leadFields)
-          .single()
+        setLeadState((current) => {
+          const currentItems = current.userId === userId ? current.items : []
+          const currentTotal =
+            current.userId === userId ? current.totalCount : 0
 
-        if (error) {
-          setError(`Não foi possível cadastrar o lead: ${error.message}`)
-          return false
-        }
-
-        let savedLead = data as Lead
-
-        const { error: productsError } = await supabase.rpc(
-          'set_lead_products',
-          {
-            p_lead_id: savedLead.id,
-            p_items: normalizedProducts,
-          },
-        )
-
-        if (productsError) {
-          setLeads((current) => [savedLead, ...current])
-          setError(
-            `Lead cadastrado, mas não foi possível salvar os produtos: ${productsError.message}`,
-          )
-          return false
-        }
-
-        if (form.stage !== 'Novo lead') {
-          const { error: stageError } = await supabase.rpc(
-            'set_lead_stage_with_inventory',
-            {
-              p_lead_id: savedLead.id,
-              p_stage: form.stage,
-            },
-          )
-
-          if (stageError) {
-            setLeads((current) => [savedLead, ...current])
-            setError(
-              `Lead cadastrado em "Novo lead", mas não foi possível alterar a etapa: ${stageError.message}`,
-            )
-            return false
+          return {
+            userId,
+            items:
+              page === 1
+                ? [savedLead, ...currentItems].slice(0, LEADS_PAGE_SIZE)
+                : currentItems,
+            totalCount: currentTotal + 1,
           }
+        })
 
-          const { data: finalLead, error: reloadError } = await supabase
-            .from('leads')
-            .select(leadFields)
-            .eq('id', savedLead.id)
-            .single()
-
-          if (reloadError) {
-            setLeads((current) => [savedLead, ...current])
-            setError(
-              `Lead cadastrado, mas não foi possível atualizar a tela: ${reloadError.message}`,
-            )
-            return false
-          }
-
-          savedLead = finalLead as Lead
+        if (page !== 1) {
+          setPageState({ userId, page: 1 })
         }
 
-        setLeads((current) => [savedLead, ...current])
         setNotice('Lead cadastrado com sucesso.')
       }
 
@@ -327,7 +278,12 @@ export function useLeads(
 
   return {
     leads,
-    loading: session ? loading : false,
+    totalCount,
+    page,
+    pageSize: LEADS_PAGE_SIZE,
+    totalPages,
+    setPage,
+    loading: userId ? loading : false,
     saving,
     saveLead,
     handleStageChange,

@@ -44,7 +44,17 @@ function App() {
     handleLogout,
   } = useAuth(setError, setNotice)
 
-  const { leads, loading, saving, saveLead, handleStageChange } = useLeads(
+  const {
+    leads,
+    totalCount: leadsTotalCount,
+    page: leadsPage,
+    totalPages: leadsTotalPages,
+    setPage: setLeadsPage,
+    loading,
+    saving,
+    saveLead,
+    handleStageChange,
+  } = useLeads(
     session,
     setError,
     setNotice,
@@ -162,7 +172,7 @@ function App() {
   return (
     <div className="min-h-screen bg-[var(--color-surface-muted)] text-[var(--color-text-primary)]">
       <Sidebar
-        leadsCount={leads.length}
+        leadsCount={leadsTotalCount}
         contactsCount={contacts.length}
         companiesCount={companies.length}
         userEmail={session.user.email}
@@ -276,6 +286,9 @@ function App() {
           <LeadsPage
             leads={leads}
             filteredLeads={filteredLeads}
+            totalCount={leadsTotalCount}
+            page={leadsPage}
+            totalPages={leadsTotalPages}
             loading={loading}
             saving={saving}
             search={search}
@@ -301,6 +314,7 @@ function App() {
             onEditLead={handleEditLead}
             onStageChange={handleLeadStageChange}
             onClearFilters={resetFilters}
+            onPageChange={setLeadsPage}
             onLogout={() => void handleLogoutAndReset()}
             onSelectStage={(stage) => {
               setStageFilter(stage)
