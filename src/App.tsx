@@ -142,7 +142,7 @@ function App() {
 
   if (!authReady) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[var(--color-surface-muted)] text-[var(--color-text-secondary)]">
+      <div className="crm-app-canvas flex min-h-screen items-center justify-center text-[var(--color-text-secondary)]">
         Verificando sessão...
       </div>
     )
@@ -170,7 +170,7 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-[var(--color-surface-muted)] text-[var(--color-text-primary)]">
+    <div className="crm-app-canvas min-h-screen text-[var(--color-text-primary)]">
       <Sidebar
         leadsCount={leadsTotalCount}
         contactsCount={contacts.length}
