@@ -462,22 +462,22 @@ textarea::placeholder {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  :root,
-  :root[data-theme="light"],
-  :root[data-theme="dark"] {
-    --duration-instant: 0.01ms;
-    --duration-fast: 0.01ms;
-    --duration-normal: 0.01ms;
-    --duration-slow: 0.01ms;
+  html {
+    scroll-behavior: auto !important;
   }
 
   *,
   *::before,
   *::after {
     scroll-behavior: auto !important;
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
+    animation: none !important;
+    transition-property: color, background-color, border-color !important;
+    transition-duration: 120ms !important;
+  }
+
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
   }
 
   .glass-interactive:hover:not(:disabled),

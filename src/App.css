@@ -746,12 +746,105 @@
   box-shadow: var(--shadow-xs);
 }
 
-/* Transição suave entre módulos */
+/* Transição suave entre módulos (CSS + View Transitions API opcional) */
 .crm-page-transition {
+  view-transition-name: crm-section-content;
   animation: crm-page-enter var(--duration-normal) var(--ease-out) both;
 }
 
+html.crm-vt-active .crm-page-transition {
+  animation: none;
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+}
+
+::view-transition-old(crm-section-content) {
+  animation: crm-vt-fade-out var(--duration-fast) var(--ease-standard) both;
+}
+
+::view-transition-new(crm-section-content) {
+  animation: crm-page-enter var(--duration-normal) var(--ease-out) both;
+}
+
+@keyframes crm-vt-fade-out {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  to {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+}
+
 @keyframes crm-page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Entrada escalonada de cards e linhas (máximo 6 itens, total <= 250ms) */
+.crm-stagger-cards > *:nth-child(-n + 6) {
+  animation: crm-stagger-enter 160ms var(--ease-out) both;
+}
+
+.crm-stagger-rows > tr:not([aria-hidden="true"]):nth-child(-n + 6) {
+  animation: crm-stagger-row-enter 160ms var(--ease-out) both;
+}
+
+.crm-stagger-cards > *:nth-child(1),
+.crm-stagger-rows > tr:not([aria-hidden="true"]):nth-child(1) {
+  animation-delay: 0ms;
+}
+
+.crm-stagger-cards > *:nth-child(2),
+.crm-stagger-rows > tr:not([aria-hidden="true"]):nth-child(2) {
+  animation-delay: 18ms;
+}
+
+.crm-stagger-cards > *:nth-child(3),
+.crm-stagger-rows > tr:not([aria-hidden="true"]):nth-child(3) {
+  animation-delay: 36ms;
+}
+
+.crm-stagger-cards > *:nth-child(4),
+.crm-stagger-rows > tr:not([aria-hidden="true"]):nth-child(4) {
+  animation-delay: 54ms;
+}
+
+.crm-stagger-cards > *:nth-child(5),
+.crm-stagger-rows > tr:not([aria-hidden="true"]):nth-child(5) {
+  animation-delay: 72ms;
+}
+
+.crm-stagger-cards > *:nth-child(6),
+.crm-stagger-rows > tr:not([aria-hidden="true"]):nth-child(6) {
+  animation-delay: 90ms;
+}
+
+@keyframes crm-stagger-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes crm-stagger-row-enter {
   from {
     opacity: 0;
     transform: translateY(6px);
@@ -760,6 +853,39 @@
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+/* Feedback curto nas colunas do SalesPipeline ao mover lead (<= 250ms) */
+.crm-pipeline-card--selected {
+  border-color: var(--color-brand-border);
+  background: var(--color-brand-soft);
+}
+
+.crm-pipeline-card--moved-in {
+  border-color: var(--color-brand) !important;
+  background: var(--color-brand-soft) !important;
+  box-shadow:
+    var(--glass-highlight),
+    0 0 0 2px var(--color-focus-ring);
+  animation: crm-pipeline-pulse 240ms var(--ease-out) both;
+}
+
+.crm-pipeline-card--moved-out {
+  border-color: var(--glass-border-strong);
+}
+
+@keyframes crm-pipeline-pulse {
+  0% {
+    transform: scale(1);
+  }
+
+  45% {
+    transform: translateY(-2px) scale(1.015);
+  }
+
+  100% {
+    transform: scale(1);
   }
 }
 
@@ -778,8 +904,12 @@
   .crm-dialog-panel,
   .crm-drawer-panel,
   .crm-toast,
-  .crm-toast--leaving {
+  .crm-toast--leaving,
+  .crm-pipeline-card--moved-in,
+  .crm-stagger-cards > *,
+  .crm-stagger-rows > tr {
     animation: none !important;
+    animation-delay: 0ms !important;
   }
 
   .crm-skeleton::after {

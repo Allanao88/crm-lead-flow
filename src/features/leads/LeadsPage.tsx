@@ -1,4 +1,4 @@
-import type { FormEvent } from 'react'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
 import LeadFormPanel from './LeadFormPanel'
 import LeadsTable from './LeadsTable'
 import SalesPipeline from './SalesPipeline'
@@ -70,6 +70,35 @@ export default function LeadsPage({
   onPageChange,
   onSelectStage,
 }: LeadsPageProps) {
+  const [movedTransition, setMovedTransition] = useState<{
+    from: Stage
+    to: Stage
+  } | null>(null)
+  const movedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    return () => {
+      if (movedTimerRef.current) {
+        clearTimeout(movedTimerRef.current)
+      }
+    }
+  }, [])
+
+  function handleStageMove(lead: Lead, nextStage: Stage) {
+    if (lead.stage === nextStage) return
+
+    if (movedTimerRef.current) {
+      clearTimeout(movedTimerRef.current)
+    }
+
+    setMovedTransition({ from: lead.stage, to: nextStage })
+    movedTimerRef.current = setTimeout(() => {
+      setMovedTransition(null)
+    }, 240)
+
+    void onStageChange(lead, nextStage)
+  }
+
   return (
     <div className="crm-page">
       {showForm && (
@@ -93,7 +122,12 @@ export default function LeadsPage({
       )}
 
       <SalesMetricsPanel leads={leads} loading={loading} />
-      <SalesPipeline leads={leads} onSelectStage={onSelectStage} />
+      <SalesPipeline
+        leads={leads}
+        activeStage={stageFilter}
+        movedTransition={movedTransition}
+        onSelectStage={onSelectStage}
+      />
       <LeadsTable
         leads={leads}
         filteredLeads={filteredLeads}
@@ -109,7 +143,7 @@ export default function LeadsPage({
         onPageChange={onPageChange}
         onCreateLead={onCreateLead}
         onEditLead={onEditLead}
-        onStageChange={onStageChange}
+        onStageChange={handleStageMove}
       />
       <footer className="pb-2 text-center text-[length:var(--text-xs)] text-[var(--color-text-muted)]">
         LeadFlow CRM · AKS - Tech

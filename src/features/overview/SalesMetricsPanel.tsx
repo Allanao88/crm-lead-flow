@@ -43,7 +43,7 @@ export default function SalesMetricsPanel({
       ) : (
         <section
           aria-label="Indicadores comerciais"
-          className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3"
+          className="crm-stagger-cards grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3"
         >
           <MetricCard
             label="Leads nesta página"

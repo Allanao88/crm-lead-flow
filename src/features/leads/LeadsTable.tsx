@@ -135,7 +135,7 @@ export default function LeadsTable({
               <th className="text-right">Criado em</th>
             </tr>
           </thead>
-          <tbody>
+          <tbody className="crm-stagger-rows">
             {loading ? (
               <TableRowsSkeleton columns={6} rows={6} />
             ) : filteredLeads.length === 0 ? (

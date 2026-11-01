@@ -59,7 +59,7 @@ export default function InventoryProductsTable({
               <th className="text-right">Ações</th>
             </tr>
           </thead>
-          <tbody>
+          <tbody className="crm-stagger-rows">
             {loading ? (
               <TableRowsSkeleton columns={7} rows={5} />
             ) : products.length === 0 ? (

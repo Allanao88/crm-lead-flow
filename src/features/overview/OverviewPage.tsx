@@ -52,7 +52,7 @@ export default function OverviewPage({
       ) : (
         <section
           aria-label="Indicadores comerciais"
-          className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3"
+          className="crm-stagger-cards grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3"
         >
           <MetricCard
             label="Total de leads"
@@ -128,7 +128,7 @@ export default function OverviewPage({
             />
           </div>
         ) : (
-          <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-5">
+          <div className="crm-stagger-cards mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-5">
             {stages.map((stage) => {
               const items = leads.filter((lead) => lead.stage === stage)
 

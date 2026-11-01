@@ -293,7 +293,7 @@ export default function CompaniesPage({
                 <th className="text-right">Cadastro</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="crm-stagger-rows">
               {loading ? (
                 <TableRowsSkeleton columns={5} rows={5} />
               ) : filteredCompanies.length === 0 ? (

@@ -312,7 +312,7 @@ export default function ContactsPage({
                 <th className="text-right">Cadastro</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="crm-stagger-rows">
               {loading ? (
                 <TableRowsSkeleton columns={5} rows={5} />
               ) : filteredContacts.length === 0 ? (

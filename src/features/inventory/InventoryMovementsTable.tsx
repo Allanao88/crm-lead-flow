@@ -49,7 +49,7 @@ export default function InventoryMovementsTable({
             <th className="text-right">Ações</th>
           </tr>
         </thead>
-        <tbody>
+        <tbody className="crm-stagger-rows">
           {loading ? (
             <TableRowsSkeleton columns={8} rows={5} />
           ) : movements.length === 0 ? (

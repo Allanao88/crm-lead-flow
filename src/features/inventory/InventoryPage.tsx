@@ -238,7 +238,7 @@ export default function InventoryPage({
           ))}
         </section>
       ) : (
-        <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <section className="crm-stagger-cards grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <InventoryMetricCard
             label="Produtos cadastrados"
             value={products.length.toLocaleString('pt-BR')}

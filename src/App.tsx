@@ -1,4 +1,5 @@
 import { lazy, Suspense, useEffect, useState, type FormEvent } from 'react'
+import { flushSync } from 'react-dom'
 
 import AuthScreen from './components/AuthScreen'
 import FeedbackMessages from './components/FeedbackMessages'
@@ -150,14 +151,46 @@ function App() {
   }
 
   function handleNavigateSection(section: CrmSection) {
-    setActiveSection(section)
-    setError('')
-    setNotice('')
-    if (section !== 'leads') {
-      resetForm()
-      setLeadProductItems([])
+    if (section === activeSection) {
+      window.scrollTo({ top: 0, behavior: 'auto' })
+      return
     }
-    window.scrollTo({ top: 0, behavior: 'auto' })
+
+    const applyNavigation = () => {
+      setActiveSection(section)
+      setError('')
+      setNotice('')
+      if (section !== 'leads') {
+        resetForm()
+        setLeadProductItems([])
+      }
+      window.scrollTo({ top: 0, behavior: 'auto' })
+    }
+
+    const prefersReducedMotion = window.matchMedia(
+      '(prefers-reduced-motion: reduce)',
+    ).matches
+    const docWithVT = document as Document & {
+      startViewTransition?: (callback: () => void) => {
+        finished: Promise<void>
+      }
+    }
+
+    if (
+      !prefersReducedMotion &&
+      typeof docWithVT.startViewTransition === 'function'
+    ) {
+      document.documentElement.classList.add('crm-vt-active')
+      const transition = docWithVT.startViewTransition(() => {
+        flushSync(applyNavigation)
+      })
+      void transition.finished.finally(() => {
+        document.documentElement.classList.remove('crm-vt-active')
+      })
+      return
+    }
+
+    applyNavigation()
   }
 
   if (!authReady) {
@@ -404,8 +437,15 @@ function App() {
                 onClearFilters={resetFilters}
                 onPageChange={setLeadsPage}
                 onSelectStage={(stage) => {
-                  setStageFilter(stage)
-                  document.getElementById('leads')?.scrollIntoView({ behavior: 'smooth' })
+                  setStageFilter((current) =>
+                    current === stage ? 'Todas' : stage,
+                  )
+                  const prefersReducedMotion = window.matchMedia(
+                    '(prefers-reduced-motion: reduce)',
+                  ).matches
+                  document.getElementById('leads')?.scrollIntoView({
+                    behavior: prefersReducedMotion ? 'auto' : 'smooth',
+                  })
                 }}
               />
             )}
