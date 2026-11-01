@@ -73,12 +73,12 @@ export default function LeadFormPanel({
 
         <label className="crm-field-label">
           SETUP — desenvolvimento (R$)
-          <input type="number" min="0" step="0.01" inputMode="decimal" value={form.setup_value} onChange={(event) => onFormChange({ ...form, setup_value: event.target.value })} className="crm-field mt-1.5" />
+          <input type="text" inputMode="decimal" value={form.setup_value} onChange={(event) => onFormChange({ ...form, setup_value: event.target.value })} className="crm-field mt-1.5" />
         </label>
 
         <label className="crm-field-label">
           MRR — mensalidade (R$/mês)
-          <input type="number" min="0" step="0.01" inputMode="decimal" value={form.mrr_value} onChange={(event) => onFormChange({ ...form, mrr_value: event.target.value })} className="crm-field mt-1.5" />
+          <input type="text" inputMode="decimal" value={form.mrr_value} onChange={(event) => onFormChange({ ...form, mrr_value: event.target.value })} className="crm-field mt-1.5" />
         </label>
 
         <LeadProductsEditor

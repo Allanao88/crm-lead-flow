@@ -73,10 +73,7 @@ export default function LeadProductsEditor({
                     Quantidade
                   </span>
                   <input
-                    type="number"
-                    min="0"
-                    max="999999999"
-                    step="0.001"
+                    type="text"
                     inputMode="decimal"
                     aria-label={`Quantidade de ${product.name}`}
                     disabled={disabled}

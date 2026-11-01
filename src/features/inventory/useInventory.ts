@@ -155,7 +155,6 @@ export function useInventory(
       sku: form.sku.trim() || null,
       description: form.description.trim() || null,
       unit: form.unit.trim(),
-      updated_at: new Date().toISOString(),
     }
 
     const result = productId === null

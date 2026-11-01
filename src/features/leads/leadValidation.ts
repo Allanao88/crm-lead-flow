@@ -18,15 +18,41 @@ export type LeadValidationResult =
       error: string
     }
 
+export function parseBrazilianNumber(raw: string): number {
+  const trimmed = raw.trim()
+  if (!trimmed) return Number.NaN
+
+  if (trimmed.includes(',')) {
+    const validWithThousands = /^[+-]?\d{1,3}(\.\d{3})+,\d+$/.test(trimmed)
+    const validSimpleComma = /^[+-]?\d+,\d+$/.test(trimmed)
+
+    if (!validWithThousands && !validSimpleComma) {
+      return Number.NaN
+    }
+
+    return Number(trimmed.replace(/\./g, '').replace(',', '.'))
+  }
+
+  if (/^[+-]?\d{1,3}(\.\d{3}){2,}$/.test(trimmed)) {
+    return Number(trimmed.replace(/\./g, ''))
+  }
+
+  if (!/^[+-]?\d+(\.\d+)?$/.test(trimmed)) {
+    return Number.NaN
+  }
+
+  return Number(trimmed)
+}
+
 export function validateLeadForm(
   form: LeadForm,
   productItems: LeadProductItem[],
 ): LeadValidationResult {
-  const setupValue = Number(form.setup_value.replace(',', '.'))
-  const mrrValue = Number(form.mrr_value.replace(',', '.'))
+  const setupValue = parseBrazilianNumber(form.setup_value)
+  const mrrValue = parseBrazilianNumber(form.mrr_value)
 
   if (!form.name.trim()) {
-    return { valid: false, error: 'Informe o nome do contato.' }
+    return { valid: false, error: 'Informe o nome do lead.' }
   }
 
   if (
@@ -55,14 +81,14 @@ export function validateLeadForm(
   const seenProductIds = new Set<number>()
 
   for (const item of productItems) {
-    const quantity = Number(item.quantity.replace(',', '.'))
+    const quantity = parseBrazilianNumber(item.quantity)
 
     if (
       !Number.isInteger(item.product_id) ||
       item.product_id <= 0 ||
       !Number.isFinite(quantity) ||
       quantity <= 0 ||
-      Math.round(quantity * 1000) !== quantity * 1000
+      Math.abs(Math.round(quantity * 1000) - quantity * 1000) > 1e-6
     ) {
       return {
         valid: false,
@@ -78,7 +104,10 @@ export function validateLeadForm(
     }
 
     seenProductIds.add(item.product_id)
-    products.push({ product_id: item.product_id, quantity })
+    products.push({
+      product_id: item.product_id,
+      quantity: Math.round(quantity * 1000) / 1000,
+    })
   }
 
   return {
