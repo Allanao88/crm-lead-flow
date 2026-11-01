@@ -26,9 +26,9 @@ export const currency = (value: number) =>
   }).format(value)
 
 export const stageStyles: Record<Stage, string> = {
-  'Novo lead': 'bg-slate-100 text-slate-600',
-  Qualificação: 'bg-blue-50 text-blue-700',
-  Proposta: 'bg-violet-50 text-violet-700',
-  Negociação: 'bg-amber-50 text-amber-700',
-  Ganho: 'bg-emerald-50 text-emerald-700',
+  'Novo lead': 'crm-badge crm-badge--neutral',
+  Qualificação: 'crm-badge crm-badge--info',
+  Proposta: 'crm-badge crm-badge--violet',
+  Negociação: 'crm-badge crm-badge--warning',
+  Ganho: 'crm-badge crm-badge--success',
 }

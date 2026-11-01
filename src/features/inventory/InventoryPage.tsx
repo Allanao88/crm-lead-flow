@@ -1,4 +1,5 @@
 import { useMemo, useState, type FormEvent } from 'react'
+import Button from '../../components/Button'
 import type {
   InventoryMovement,
   InventoryProduct,
@@ -45,7 +46,6 @@ const currency = new Intl.NumberFormat('pt-BR', {
 const quantityFormat = new Intl.NumberFormat('pt-BR', {
   maximumFractionDigits: 3,
 })
-
 
 export default function InventoryPage({
   products,
@@ -129,7 +129,6 @@ export default function InventoryPage({
     setEditingProductId(product.id)
     setShowProductForm(true)
     clearMessages()
-    window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   function updateProductField(field: keyof ProductForm, value: string) {
@@ -198,40 +197,33 @@ export default function InventoryPage({
     <div className="crm-page">
       <section className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div>
-
-          <h2 className="mt-1 text-2xl font-bold text-slate-900">
-            Gestão de estoque
-          </h2>
-          <p className="mt-1 text-sm text-slate-500">
+          <p className="text-[length:var(--text-sm)] text-[var(--color-text-secondary)]">
             Controle produtos, custos médios e movimentações do estoque compartilhado.
           </p>
         </div>
 
         <div className="flex flex-wrap gap-2">
-          <button
-            type="button"
+          <Button
+            variant="secondary"
             onClick={() => openMovementForm('entry')}
             disabled={activeProducts.length === 0 || saving}
-            className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
           >
             + Entrada
-          </button>
-          <button
-            type="button"
+          </Button>
+          <Button
+            variant="secondary"
             onClick={() => openMovementForm('exit')}
             disabled={activeProducts.length === 0 || saving}
-            className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
           >
             − Saída
-          </button>
-          <button
-            type="button"
-            onClick={showProductForm ? closeProductForm : openNewProductForm}
+          </Button>
+          <Button
+            variant="primary"
+            onClick={openNewProductForm}
             disabled={saving}
-            className="rounded-xl bg-[var(--color-brand)] px-4 py-2.5 text-sm font-semibold text-[var(--color-brand-text)] hover:bg-[var(--color-brand-hover)] disabled:opacity-50"
           >
-            {showProductForm ? 'Cancelar produto' : '+ Novo produto'}
-          </button>
+            + Novo produto
+          </Button>
         </div>
       </section>
 
@@ -260,6 +252,8 @@ export default function InventoryPage({
 
       {showProductForm && (
         <InventoryProductForm
+          open={showProductForm}
+          key={editingProductId ?? 'new-product'}
           form={productForm}
           editingProductId={editingProductId}
           saving={saving}
@@ -271,6 +265,8 @@ export default function InventoryPage({
 
       {showMovementForm && (
         <InventoryMovementForm
+          open={showMovementForm}
+          key={movementType}
           form={movementForm}
           products={activeProducts}
           movementType={movementType}
@@ -285,34 +281,42 @@ export default function InventoryPage({
         />
       )}
 
-      <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-        <div className="flex flex-col justify-between gap-4 border-b border-slate-100 p-5 sm:flex-row sm:items-center sm:p-6">
+      <section className="crm-panel">
+        <div className="flex flex-col justify-between gap-4 border-b border-[var(--glass-border)] p-5 sm:flex-row sm:items-center sm:p-6">
           <div>
-            <h3 className="font-bold text-slate-900">Controle de estoque</h3>
-            <p className="mt-1 text-sm text-slate-500">
+            <h2 className="crm-section-title">Controle de estoque</h2>
+            <p className="mt-1 text-[length:var(--text-sm)] text-[var(--color-text-secondary)]">
               Consulte produtos, saldos e histórico de movimentações.
             </p>
           </div>
 
-          <div className="flex gap-2">
+          <div
+            role="tablist"
+            aria-label="Visualização do estoque"
+            className="glass-subtle inline-flex self-start rounded-full p-1 sm:self-auto"
+          >
             <button
               type="button"
+              role="tab"
+              aria-selected={tab === 'products'}
               onClick={() => setTab('products')}
-              className={`rounded-xl px-4 py-2 text-sm font-semibold ${
+              className={`min-h-9 rounded-full px-4 py-1.5 text-[length:var(--text-xs)] font-[var(--font-weight-semibold)] ${
                 tab === 'products'
-                  ? 'bg-[var(--color-brand)] text-[var(--color-brand-text)]'
-                  : 'border border-slate-200 text-slate-600 hover:bg-slate-50'
+                  ? 'bg-[var(--color-brand)] text-[var(--color-brand-text)] shadow-[var(--shadow-xs)]'
+                  : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]'
               }`}
             >
               Produtos
             </button>
             <button
               type="button"
+              role="tab"
+              aria-selected={tab === 'movements'}
               onClick={() => setTab('movements')}
-              className={`rounded-xl px-4 py-2 text-sm font-semibold ${
+              className={`min-h-9 rounded-full px-4 py-1.5 text-[length:var(--text-xs)] font-[var(--font-weight-semibold)] ${
                 tab === 'movements'
-                  ? 'bg-[var(--color-brand)] text-[var(--color-brand-text)]'
-                  : 'border border-slate-200 text-slate-600 hover:bg-slate-50'
+                  ? 'bg-[var(--color-brand)] text-[var(--color-brand-text)] shadow-[var(--shadow-xs)]'
+                  : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]'
               }`}
             >
               Movimentações
@@ -340,6 +344,8 @@ export default function InventoryPage({
 
       {reversingMovementId !== null && (
         <InventoryReversalForm
+          open={reversingMovementId !== null}
+          key={reversingMovementId}
           movementId={reversingMovementId}
           reason={reversalReason}
           saving={saving}

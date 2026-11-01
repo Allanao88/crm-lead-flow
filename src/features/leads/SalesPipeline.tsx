@@ -12,8 +12,8 @@ export default function SalesPipeline({
 }: SalesPipelineProps) {
   return (
     <section id="pipeline" className="crm-panel p-5 sm:p-6">
-      <h2 className="font-bold text-slate-900">Pipeline de vendas</h2>
-      <p className="mt-1 text-sm text-slate-500">
+      <h2 className="crm-section-title">Pipeline de vendas</h2>
+      <p className="mt-1 text-[length:var(--text-sm)] text-[var(--color-text-secondary)]">
         Selecione uma etapa para filtrar os leads.
       </p>
 
@@ -32,21 +32,20 @@ export default function SalesPipeline({
           return (
             <button
               key={stage}
+              type="button"
               onClick={() => onSelectStage(stage)}
-              className="rounded-xl border border-slate-100 bg-slate-50 p-4 text-left hover:border-[var(--color-brand)]"
+              className="glass-subtle glass-interactive rounded-[var(--radius-md)] p-4 text-left"
             >
-              <span
-                className={`rounded-full px-2 py-1 text-xs font-semibold ${stageStyles[stage]}`}
-              >
+              <span className={stageStyles[stage]}>
                 {stage}
               </span>
-              <p className="mt-4 text-2xl font-bold text-slate-900">
+              <p className="mt-4 text-2xl font-[var(--font-weight-bold)] tracking-[var(--tracking-tight)] text-[var(--color-text-primary)] tabular-nums">
                 {items.length}
               </p>
-              <p className="mt-2 text-sm text-slate-600">
+              <p className="mt-2 text-[length:var(--text-xs)] text-[var(--color-text-secondary)] tabular-nums">
                 SETUP: {currency(setupTotal)}
               </p>
-              <p className="mt-1 text-sm text-slate-600">
+              <p className="mt-1 text-[length:var(--text-xs)] text-[var(--color-text-muted)] tabular-nums">
                 MRR: {currency(mrrTotal)}/mês
               </p>
             </button>

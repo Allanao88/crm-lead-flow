@@ -1,3 +1,4 @@
+import Button from '../../components/Button'
 import MetricCard from '../../components/MetricCard'
 import { currency, stages, stageStyles } from '../leads/constants'
 import type { Lead } from '../leads/types'
@@ -26,16 +27,16 @@ export default function OverviewPage({
   return (
     <div className="crm-page">
       <section>
-        <p className="text-sm text-slate-500">
+        <p className="text-[length:var(--text-sm)] text-[var(--color-text-secondary)]">
           Acompanhe os principais indicadores comerciais da AKS - Tech.
         </p>
-        <h2 className="mt-1 text-2xl font-bold text-slate-900">
+        <h2 className="crm-page-title mt-1">
           Resumo comercial
         </h2>
       </section>
 
       {loading ? (
-        <p className="rounded-xl border border-slate-200 bg-white p-6 text-sm text-slate-500">
+        <p className="crm-panel p-6 text-[length:var(--text-sm)] text-[var(--color-text-secondary)]">
           Carregando indicadores...
         </p>
       ) : (
@@ -91,21 +92,17 @@ export default function OverviewPage({
         </section>
       )}
 
-      <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+      <section className="crm-panel p-5 sm:p-6">
         <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
           <div>
-            <h2 className="font-bold text-slate-900">Pipeline de vendas</h2>
-            <p className="mt-1 text-sm text-slate-500">
+            <h2 className="crm-section-title">Pipeline de vendas</h2>
+            <p className="mt-1 text-[length:var(--text-sm)] text-[var(--color-text-secondary)]">
               Distribuição das oportunidades por etapa.
             </p>
           </div>
-          <button
-            type="button"
-            onClick={onOpenLeads}
-            className="rounded-lg bg-[var(--color-brand)] px-4 py-2.5 text-sm font-semibold text-[var(--color-brand-text)] hover:bg-[var(--color-brand-hover)]"
-          >
+          <Button variant="primary" onClick={onOpenLeads}>
             Acessar leads
-          </button>
+          </Button>
         </div>
 
         <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-5">
@@ -115,17 +112,15 @@ export default function OverviewPage({
             return (
               <div
                 key={stage}
-                className="rounded-xl border border-slate-100 bg-slate-50 p-4"
+                className="glass-subtle rounded-[var(--radius-md)] p-4"
               >
-                <span
-                  className={`rounded-full px-2 py-1 text-xs font-semibold ${stageStyles[stage]}`}
-                >
+                <span className={stageStyles[stage]}>
                   {stage}
                 </span>
-                <p className="mt-4 text-2xl font-bold text-slate-900">
+                <p className="mt-4 text-2xl font-[var(--font-weight-bold)] tracking-[var(--tracking-tight)] text-[var(--color-text-primary)] tabular-nums">
                   {items.length}
                 </p>
-                <p className="mt-1 text-sm text-slate-500">
+                <p className="mt-1 text-[length:var(--text-xs)] text-[var(--color-text-muted)]">
                   {items.length === 1 ? 'oportunidade' : 'oportunidades'}
                 </p>
               </div>
@@ -134,7 +129,7 @@ export default function OverviewPage({
         </div>
       </section>
 
-      <footer className="pb-2 text-center text-xs text-slate-400">
+      <footer className="pb-2 text-center text-[length:var(--text-xs)] text-[var(--color-text-muted)]">
         LeadFlow CRM · AKS - Tech
       </footer>
     </div>

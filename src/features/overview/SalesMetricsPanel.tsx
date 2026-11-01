@@ -18,10 +18,10 @@ export default function SalesMetricsPanel({ leads }: SalesMetricsPanelProps) {
   return (
     <>
       <section>
-        <p className="text-sm text-slate-500">
-          Dados carregados do banco compartilhado.
+        <p className="text-[length:var(--text-sm)] text-[var(--color-text-secondary)]">
+          Indicadores calculados sobre a página atual de oportunidades.
         </p>
-        <h2 className="mt-1 text-2xl font-bold text-slate-900">
+        <h2 className="crm-page-title mt-1">
           Resumo comercial
         </h2>
       </section>
@@ -31,9 +31,9 @@ export default function SalesMetricsPanel({ leads }: SalesMetricsPanelProps) {
         className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3"
       >
         <MetricCard
-          label="Total de leads"
+          label="Leads nesta página"
           value={String(leads.length)}
-          detail="Contatos cadastrados"
+          detail="Contatos listados abaixo"
         />
         <MetricCard
           label="SETUP potencial"

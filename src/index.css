@@ -96,8 +96,46 @@
   --color-action-text: #006b24;
   --color-positive-text: #066949;
   --color-negative-text: #b41138;
-  --color-warning-text: #8f4900;
+  --color-warning-text: #803f00;
   --color-focus-ring: rgb(0 122 41 / 30%);
+
+  /* Botões destrutivos, campos, cabeçalho de tabela e overlay (tema claro) */
+  --color-danger-solid: #be123c;
+  --color-danger-solid-hover: #9f1239;
+  --color-danger-text-on-solid: #ffffff;
+  --color-danger-border: rgb(180 17 56 / 68%);
+  --color-danger-soft: rgb(190 18 60 / 9%);
+
+  --field-bg: rgb(255 255 255 / 78%);
+  --field-bg-focus: #ffffff;
+  --field-bg-disabled: rgb(226 234 228 / 72%);
+  --table-header-bg: #eef4f0;
+  --overlay-backdrop: rgb(15 24 18 / 38%);
+
+  /* Tokens de badges semânticos (contraste >= 4.5:1 no claro) */
+  --badge-neutral-bg: #e4ebe6;
+  --badge-neutral-text: #334038;
+  --badge-neutral-border: rgb(51 64 56 / 28%);
+
+  --badge-info-bg: #dff0fe;
+  --badge-info-text: #0b4f8a;
+  --badge-info-border: rgb(11 79 138 / 28%);
+
+  --badge-violet-bg: #efe8ff;
+  --badge-violet-text: #5628a8;
+  --badge-violet-border: rgb(86 40 168 / 28%);
+
+  --badge-warning-bg: #fdeed3;
+  --badge-warning-text: #803f00;
+  --badge-warning-border: rgb(128 63 0 / 32%);
+
+  --badge-success-bg: #dcf5e6;
+  --badge-success-text: #065f3e;
+  --badge-success-border: rgb(6 95 62 / 30%);
+
+  --badge-danger-bg: #ffe2e8;
+  --badge-danger-text: #9f1239;
+  --badge-danger-border: rgb(159 18 57 / 30%);
 
   /* Superfícies Liquid Glass (tema claro) */
   --glass-bg: rgb(255 255 255 / 72%);
@@ -171,6 +209,44 @@
   --color-negative-text: #fda4af;
   --color-warning-text: #fcd34d;
   --color-focus-ring: rgb(204 255 0 / 34%);
+
+  /* Botões destrutivos, campos, cabeçalho de tabela e overlay (tema escuro) */
+  --color-danger-solid: #be123c;
+  --color-danger-solid-hover: #e11d48;
+  --color-danger-text-on-solid: #ffffff;
+  --color-danger-border: rgb(253 164 175 / 62%);
+  --color-danger-soft: rgb(244 63 94 / 14%);
+
+  --field-bg: rgb(18 23 20 / 74%);
+  --field-bg-focus: rgb(22 28 24 / 94%);
+  --field-bg-disabled: rgb(255 255 255 / 6%);
+  --table-header-bg: #171d19;
+  --overlay-backdrop: rgb(5 8 6 / 62%);
+
+  /* Tokens de badges semânticos (contraste >= 4.5:1 no escuro) */
+  --badge-neutral-bg: rgb(148 163 184 / 16%);
+  --badge-neutral-text: #dce4df;
+  --badge-neutral-border: rgb(220 228 223 / 28%);
+
+  --badge-info-bg: rgb(56 189 248 / 16%);
+  --badge-info-text: #93d5ff;
+  --badge-info-border: rgb(147 213 255 / 32%);
+
+  --badge-violet-bg: rgb(167 139 250 / 18%);
+  --badge-violet-text: #d8b4fe;
+  --badge-violet-border: rgb(216 180 254 / 32%);
+
+  --badge-warning-bg: rgb(245 158 11 / 16%);
+  --badge-warning-text: #fcd34d;
+  --badge-warning-border: rgb(252 211 77 / 32%);
+
+  --badge-success-bg: rgb(16 185 129 / 16%);
+  --badge-success-text: #6ee7b7;
+  --badge-success-border: rgb(110 231 183 / 32%);
+
+  --badge-danger-bg: rgb(244 63 94 / 16%);
+  --badge-danger-text: #fda4af;
+  --badge-danger-border: rgb(253 164 175 / 32%);
 
   /* Superfícies Liquid Glass (tema escuro) */
   --glass-bg: rgb(24 30 26 / 68%);
@@ -452,10 +528,15 @@ textarea::placeholder {
   background-color: var(--color-brand-soft);
 }
 
-:root[data-theme="dark"] input,
-:root[data-theme="dark"] select,
-:root[data-theme="dark"] textarea {
+:root[data-theme="dark"] input:not(.crm-field),
+:root[data-theme="dark"] select:not(.crm-field):not(.crm-stage-select),
+:root[data-theme="dark"] textarea:not(.crm-field) {
   background-color: var(--color-surface);
   color: var(--color-text-primary);
   border-color: var(--color-border-strong);
+}
+
+select option {
+  background-color: var(--color-surface);
+  color: var(--color-text-primary);
 }

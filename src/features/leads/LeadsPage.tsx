@@ -74,13 +74,15 @@ export default function LeadsPage({
   return (
     <div className="crm-page">
       <FeedbackMessages
-        error={error}
+        error={showForm ? '' : error}
         notice={notice}
         className="mb-0"
       />
 
       {showForm && (
         <LeadFormPanel
+          open={showForm}
+          key={editingLeadId ?? 'new'}
           form={form}
           editingLeadId={editingLeadId}
           leads={leads}
@@ -89,6 +91,7 @@ export default function LeadsPage({
           saving={saving}
           productsLoading={productsLoading}
           productsError={productsError}
+          error={error}
           onFormChange={onFormChange}
           onSubmit={onSubmit}
           onCancel={onCancelForm}
@@ -114,7 +117,7 @@ export default function LeadsPage({
         onEditLead={onEditLead}
         onStageChange={onStageChange}
       />
-      <footer className="pb-2 text-center text-xs text-slate-400">
+      <footer className="pb-2 text-center text-[length:var(--text-xs)] text-[var(--color-text-muted)]">
         LeadFlow CRM · AKS - Tech
       </footer>
     </div>

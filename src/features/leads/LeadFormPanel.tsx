@@ -1,11 +1,16 @@
-import type { FormEvent } from 'react'
+import { useState, type FormEvent } from 'react'
+import Button from '../../components/Button'
+import FormField from '../../components/FormField'
+import GlassDialog from '../../components/GlassDialog'
 import type { InventoryProduct } from '../inventory/types'
 import LeadProductsEditor from './LeadProductsEditor'
 import { stages } from './constants'
+import { parseBrazilianNumber } from './leadValidation'
 import type { Lead, LeadForm, Stage } from './types'
 import type { LeadProductItem } from './useLeadProducts'
 
 type LeadFormPanelProps = {
+  open: boolean
   form: LeadForm
   editingLeadId: number | null
   leads: Lead[]
@@ -14,13 +19,21 @@ type LeadFormPanelProps = {
   saving: boolean
   productsLoading: boolean
   productsError: string
+  error?: string
   onFormChange: (form: LeadForm) => void
   onSubmit: (event: FormEvent<HTMLFormElement>) => void
   onCancel: () => void
   onQuantityChange: (productId: number, quantity: string) => void
 }
 
+type TouchedFields = {
+  name?: boolean
+  setup_value?: boolean
+  mrr_value?: boolean
+}
+
 export default function LeadFormPanel({
+  open,
   form,
   editingLeadId,
   leads,
@@ -29,57 +42,171 @@ export default function LeadFormPanel({
   saving,
   productsLoading,
   productsError,
+  error = '',
   onFormChange,
   onSubmit,
   onCancel,
   onQuantityChange,
 }: LeadFormPanelProps) {
-  const wonLead = editingLeadId !== null &&
+  const [touched, setTouched] = useState<TouchedFields>({})
+
+  const wonLead =
+    editingLeadId !== null &&
     leads.some((lead) => lead.id === editingLeadId && lead.stage === 'Ganho')
 
+  const setupParsed = parseBrazilianNumber(form.setup_value)
+  const mrrParsed = parseBrazilianNumber(form.mrr_value)
+
+  const nameError =
+    touched.name && !form.name.trim() ? 'Informe o nome do lead.' : undefined
+  const setupError =
+    touched.setup_value &&
+    (!form.setup_value.trim() || !Number.isFinite(setupParsed) || setupParsed < 0)
+      ? 'Informe um valor válido (ex.: 1.250,00).'
+      : undefined
+  const mrrError =
+    touched.mrr_value &&
+    (!form.mrr_value.trim() || !Number.isFinite(mrrParsed) || mrrParsed < 0)
+      ? 'Informe um valor válido (ex.: 450,00).'
+      : undefined
+
+  function handleFormSubmit(event: FormEvent<HTMLFormElement>) {
+    setTouched({ name: true, setup_value: true, mrr_value: true })
+    onSubmit(event)
+  }
+
   return (
-    <section className="crm-panel p-5 sm:p-6">
-      <h2 className="text-lg font-bold text-slate-900">
-        {editingLeadId !== null ? 'Editar lead' : 'Cadastrar lead'}
-      </h2>
+    <GlassDialog
+      open={open}
+      variant="drawer"
+      busy={saving}
+      title={editingLeadId !== null ? 'Editar lead' : 'Cadastrar lead'}
+      description="Preencha os dados comerciais e produtos vinculados da oportunidade."
+      onClose={onCancel}
+    >
+      <form
+        noValidate
+        onSubmit={handleFormSubmit}
+        className="grid gap-4 sm:grid-cols-2"
+      >
+        {error && (
+          <div role="alert" className="crm-callout crm-callout--danger sm:col-span-2">
+            {error}
+          </div>
+        )}
 
-      <form onSubmit={onSubmit} className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <label className="crm-field-label">
-          Nome *
-          <input required value={form.name} onChange={(event) => onFormChange({ ...form, name: event.target.value })} className="crm-field mt-1.5" />
-        </label>
+        <FormField label="Nome *" error={nameError} className="sm:col-span-2">
+          {(fieldProps) => (
+            <input
+              {...fieldProps}
+              data-autofocus
+              required
+              value={form.name}
+              onBlur={() => setTouched((cur) => ({ ...cur, name: true }))}
+              onChange={(event) =>
+                onFormChange({ ...form, name: event.target.value })
+              }
+              placeholder="Nome completo do contato"
+            />
+          )}
+        </FormField>
 
-        <label className="crm-field-label">
-          E-mail
-          <input type="email" value={form.email} onChange={(event) => onFormChange({ ...form, email: event.target.value })} className="crm-field mt-1.5" />
-        </label>
+        <FormField label="E-mail">
+          {(fieldProps) => (
+            <input
+              {...fieldProps}
+              type="email"
+              value={form.email}
+              onChange={(event) =>
+                onFormChange({ ...form, email: event.target.value })
+              }
+              placeholder="contato@empresa.com.br"
+            />
+          )}
+        </FormField>
 
-        <label className="crm-field-label">
-          Telefone
-          <input value={form.phone} onChange={(event) => onFormChange({ ...form, phone: event.target.value })} className="crm-field mt-1.5" />
-        </label>
+        <FormField label="Telefone">
+          {(fieldProps) => (
+            <input
+              {...fieldProps}
+              type="tel"
+              value={form.phone}
+              onChange={(event) =>
+                onFormChange({ ...form, phone: event.target.value })
+              }
+              placeholder="(11) 99999-9999"
+            />
+          )}
+        </FormField>
 
-        <label className="crm-field-label">
-          Empresa
-          <input value={form.company} onChange={(event) => onFormChange({ ...form, company: event.target.value })} className="crm-field mt-1.5" />
-        </label>
+        <FormField label="Empresa">
+          {(fieldProps) => (
+            <input
+              {...fieldProps}
+              value={form.company}
+              onChange={(event) =>
+                onFormChange({ ...form, company: event.target.value })
+              }
+              placeholder="Razão social ou nome fantasia"
+            />
+          )}
+        </FormField>
 
-        <label className="crm-field-label">
-          Etapa
-          <select value={form.stage} onChange={(event) => onFormChange({ ...form, stage: event.target.value as Stage })} className="crm-field mt-1.5">
-            {stages.map((stage) => <option key={stage} value={stage}>{stage}</option>)}
-          </select>
-        </label>
+        <FormField label="Etapa">
+          {(fieldProps) => (
+            <select
+              {...fieldProps}
+              value={form.stage}
+              onChange={(event) =>
+                onFormChange({ ...form, stage: event.target.value as Stage })
+              }
+            >
+              {stages.map((stage) => (
+                <option key={stage} value={stage}>
+                  {stage}
+                </option>
+              ))}
+            </select>
+          )}
+        </FormField>
 
-        <label className="crm-field-label">
-          SETUP — desenvolvimento (R$)
-          <input type="text" inputMode="decimal" value={form.setup_value} onChange={(event) => onFormChange({ ...form, setup_value: event.target.value })} className="crm-field mt-1.5" />
-        </label>
+        <FormField
+          label="SETUP — desenvolvimento (R$)"
+          error={setupError}
+          hint="Aceita formato pt-BR (ex.: 1.250,00)"
+        >
+          {(fieldProps) => (
+            <input
+              {...fieldProps}
+              type="text"
+              inputMode="decimal"
+              value={form.setup_value}
+              onBlur={() => setTouched((cur) => ({ ...cur, setup_value: true }))}
+              onChange={(event) =>
+                onFormChange({ ...form, setup_value: event.target.value })
+              }
+            />
+          )}
+        </FormField>
 
-        <label className="crm-field-label">
-          MRR — mensalidade (R$/mês)
-          <input type="text" inputMode="decimal" value={form.mrr_value} onChange={(event) => onFormChange({ ...form, mrr_value: event.target.value })} className="crm-field mt-1.5" />
-        </label>
+        <FormField
+          label="MRR — mensalidade (R$/mês)"
+          error={mrrError}
+          hint="Aceita formato pt-BR (ex.: 450,00)"
+        >
+          {(fieldProps) => (
+            <input
+              {...fieldProps}
+              type="text"
+              inputMode="decimal"
+              value={form.mrr_value}
+              onBlur={() => setTouched((cur) => ({ ...cur, mrr_value: true }))}
+              onChange={(event) =>
+                onFormChange({ ...form, mrr_value: event.target.value })
+              }
+            />
+          )}
+        </FormField>
 
         <LeadProductsEditor
           products={products}
@@ -91,23 +218,22 @@ export default function LeadFormPanel({
         />
 
         {wonLead && (
-          <p className="text-sm text-amber-700 sm:col-span-2 lg:col-span-3">
+          <p className="crm-callout crm-callout--warning sm:col-span-2">
             Este lead já foi ganho. Os produtos vinculados ficam bloqueados
             para preservar o histórico de estoque.
           </p>
         )}
 
-        <div className="flex flex-wrap gap-3 sm:col-span-2 lg:col-span-3">
-          <button type="submit" disabled={saving} className="crm-primary-button disabled:cursor-not-allowed disabled:opacity-60">
-            {saving ? 'Salvando...' : editingLeadId !== null ? 'Salvar alterações' : 'Cadastrar lead'}
-          </button>
-
-          <button type="button" disabled={saving} onClick={onCancel} className="crm-secondary-button disabled:cursor-not-allowed disabled:opacity-60">
+        <div className="flex flex-wrap justify-end gap-3 border-t border-[var(--glass-border)] pt-4 sm:col-span-2">
+          <Button variant="secondary" disabled={saving} onClick={onCancel}>
             Cancelar
-          </button>
+          </Button>
+
+          <Button type="submit" variant="primary" loading={saving}>
+            {editingLeadId !== null ? 'Salvar alterações' : 'Cadastrar lead'}
+          </Button>
         </div>
       </form>
-    </section>
+    </GlassDialog>
   )
 }
-
