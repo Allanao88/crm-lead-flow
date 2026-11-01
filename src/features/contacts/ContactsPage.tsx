@@ -283,8 +283,20 @@ export default function ContactsPage({
       </GlassDialog>
 
       <section className="crm-panel">
-        <div className="flex flex-col justify-between gap-4 border-b border-[var(--glass-border)] p-5 sm:flex-row sm:items-end sm:p-6">
-          <FormField label="Buscar contatos" className="flex-1">
+        <div className="space-y-4 border-b border-[var(--glass-border)] p-5 sm:p-6">
+          <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-center">
+            <div>
+              <h2 className="crm-section-title">Todos os contatos</h2>
+              <p className="mt-1 text-[length:var(--text-sm)] text-[var(--color-text-secondary)]">
+                Consulte interlocutores, empresas e vínculos com oportunidades.
+              </p>
+            </div>
+            <p className="text-[length:var(--text-xs)] font-[var(--font-weight-semibold)] text-[var(--color-text-muted)] tabular-nums">
+              {filteredContacts.length} resultado(s)
+            </p>
+          </div>
+
+          <FormField label="Buscar contatos" className="sm:max-w-lg">
             {(fieldProps) => (
               <input
                 {...fieldProps}
@@ -295,10 +307,6 @@ export default function ContactsPage({
               />
             )}
           </FormField>
-
-          <p className="text-[length:var(--text-xs)] font-[var(--font-weight-semibold)] text-[var(--color-text-muted)] tabular-nums">
-            {filteredContacts.length} resultado(s)
-          </p>
         </div>
 
         <div className="crm-table-container">
@@ -414,6 +422,10 @@ export default function ContactsPage({
           Exibindo {filteredContacts.length} de {contacts.length} contatos
         </div>
       </section>
+
+      <footer className="pb-2 text-center text-[length:var(--text-xs)] text-[var(--color-text-muted)]">
+        LeadFlow CRM · AKS - Tech
+      </footer>
     </div>
   )
 }

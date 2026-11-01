@@ -19,7 +19,7 @@ export default function MobileNavigation({
 }: MobileNavigationProps) {
   return (
     <nav
-      aria-label="Navegação principal"
+      aria-label="Navegação móvel"
       className="crm-mobile-nav fixed inset-x-0 bottom-0 z-30 lg:hidden"
     >
       <div className="mx-auto grid max-w-lg grid-cols-5 px-1.5 py-1">

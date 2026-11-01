@@ -308,9 +308,11 @@ export default function InventoryPage({
             className="glass-subtle inline-flex self-start rounded-full p-1 sm:self-auto"
           >
             <button
+              id="inventory-tab-products"
               type="button"
               role="tab"
               aria-selected={tab === 'products'}
+              aria-controls="inventory-panel-products"
               onClick={() => setTab('products')}
               className={`min-h-9 rounded-full px-4 py-1.5 text-[length:var(--text-xs)] font-[var(--font-weight-semibold)] ${
                 tab === 'products'
@@ -321,9 +323,11 @@ export default function InventoryPage({
               Produtos
             </button>
             <button
+              id="inventory-tab-movements"
               type="button"
               role="tab"
               aria-selected={tab === 'movements'}
+              aria-controls="inventory-panel-movements"
               onClick={() => setTab('movements')}
               className={`min-h-9 rounded-full px-4 py-1.5 text-[length:var(--text-xs)] font-[var(--font-weight-semibold)] ${
                 tab === 'movements'
@@ -337,27 +341,39 @@ export default function InventoryPage({
         </div>
 
         {tab === 'products' ? (
-          <InventoryProductsTable
-            products={filteredProducts}
-            loading={loading}
-            search={search}
-            onSearchChange={setSearch}
-            onCreateProduct={openNewProductForm}
-            onEdit={openEditProductForm}
-          />
+          <div
+            id="inventory-panel-products"
+            role="tabpanel"
+            aria-labelledby="inventory-tab-products"
+          >
+            <InventoryProductsTable
+              products={filteredProducts}
+              loading={loading}
+              search={search}
+              onSearchChange={setSearch}
+              onCreateProduct={openNewProductForm}
+              onEdit={openEditProductForm}
+            />
+          </div>
         ) : (
-          <InventoryMovementsTable
-            movements={movements}
-            loading={loading}
-            saving={saving}
-            hasActiveProducts={activeProducts.length > 0}
-            onCreateEntry={
-              activeProducts.length > 0
-                ? () => openMovementForm('entry')
-                : openNewProductForm
-            }
-            onReverse={startReversal}
-          />
+          <div
+            id="inventory-panel-movements"
+            role="tabpanel"
+            aria-labelledby="inventory-tab-movements"
+          >
+            <InventoryMovementsTable
+              movements={movements}
+              loading={loading}
+              saving={saving}
+              hasActiveProducts={activeProducts.length > 0}
+              onCreateEntry={
+                activeProducts.length > 0
+                  ? () => openMovementForm('entry')
+                  : openNewProductForm
+              }
+              onReverse={startReversal}
+            />
+          </div>
         )}
       </section>
 
@@ -377,6 +393,9 @@ export default function InventoryPage({
           }}
         />
       )}
+      <footer className="pb-2 text-center text-[length:var(--text-xs)] text-[var(--color-text-muted)]">
+        LeadFlow CRM · AKS - Tech
+      </footer>
     </div>
   )
 }

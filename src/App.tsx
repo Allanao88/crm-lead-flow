@@ -13,7 +13,6 @@ import { useCompanies } from './features/companies/useCompanies'
 import { useContacts } from './features/contacts/useContacts'
 import { useInventory } from './features/inventory/useInventory'
 import { useLeadProducts } from './features/leads/useLeadProducts'
-import LeadsPage from './features/leads/LeadsPage'
 import { useLeadForm } from './features/leads/useLeadForm'
 import type { Lead, Stage } from './features/leads/types'
 import { useLeads } from './features/leads/useLeads'
@@ -23,6 +22,7 @@ import { useTheme } from './hooks/useTheme'
 const CompaniesPage = lazy(() => import('./features/companies/CompaniesPage'))
 const ContactsPage = lazy(() => import('./features/contacts/ContactsPage'))
 const InventoryPage = lazy(() => import('./features/inventory/InventoryPage'))
+const LeadsPage = lazy(() => import('./features/leads/LeadsPage'))
 const OverviewPage = lazy(() => import('./features/overview/OverviewPage'))
 
 function App() {
@@ -55,6 +55,29 @@ function App() {
     handleAuth,
     handleLogout,
   } = useAuth(setError, setNotice)
+
+  useEffect(() => {
+    const meta = document.querySelector('meta[name="theme-color"]')
+    if (meta) {
+      meta.setAttribute('content', theme === 'light' ? '#edf3ee' : '#0f1311')
+    }
+  }, [theme])
+
+  useEffect(() => {
+    if (!authReady) {
+      document.title = 'LeadFlow CRM | AKS - Tech'
+      return
+    }
+
+    if (!session) {
+      document.title = `${
+        authMode === 'login' ? 'Entrar' : 'Criar conta'
+      } · LeadFlow CRM | AKS - Tech`
+      return
+    }
+
+    document.title = `${getSectionTitle(activeSection)} · LeadFlow CRM | AKS - Tech`
+  }, [authReady, session, authMode, activeSection])
 
   const {
     leads,
@@ -224,6 +247,8 @@ function App() {
         error={error}
         notice={notice}
         saving={authSaving}
+        theme={theme}
+        onToggleTheme={toggleTheme}
         onEmailChange={setAuthEmail}
         onPasswordChange={setAuthPassword}
         onSubmit={handleAuth}

@@ -1,4 +1,7 @@
 import type { FormEvent } from 'react'
+import type { Theme } from '../hooks/useTheme'
+import Button from './Button'
+import FormField from './FormField'
 
 type AuthScreenProps = {
   authMode: 'login' | 'signup'
@@ -7,6 +10,8 @@ type AuthScreenProps = {
   error: string
   notice: string
   saving: boolean
+  theme: Theme
+  onToggleTheme: () => void
   onEmailChange: (value: string) => void
   onPasswordChange: (value: string) => void
   onSubmit: (event: FormEvent<HTMLFormElement>) => void
@@ -20,93 +25,171 @@ export default function AuthScreen({
   error,
   notice,
   saving,
+  theme,
+  onToggleTheme,
   onEmailChange,
   onPasswordChange,
   onSubmit,
   onToggleMode,
 }: AuthScreenProps) {
   return (
-    <main className="flex min-h-screen items-center justify-center bg-[var(--color-surface-muted)] px-5 py-10">
-      <section className="w-full max-w-md rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-8 shadow-sm">
-        <div className="mb-7 flex items-center gap-3">
-          <div>
+    <main className="crm-app-canvas relative flex min-h-screen flex-col items-center justify-center px-4 py-10 sm:px-6">
+      <div className="mb-4 flex w-full max-w-md justify-end">
+        <Button
+          variant="secondary"
+          size="sm"
+          onClick={onToggleTheme}
+          aria-label={theme === 'dark' ? 'Ativar tema claro' : 'Ativar tema escuro'}
+          title={theme === 'dark' ? 'Ativar tema claro' : 'Ativar tema escuro'}
+        >
+          {theme === 'dark' ? (
+            <svg
+              aria-hidden="true"
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.8"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <circle cx="12" cy="12" r="4" />
+              <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" />
+            </svg>
+          ) : (
+            <svg
+              aria-hidden="true"
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.8"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" />
+            </svg>
+          )}
+          <span>{theme === 'dark' ? 'Tema claro' : 'Tema escuro'}</span>
+        </Button>
+      </div>
+
+      <section className="glass-strong crm-page-transition relative w-full max-w-md overflow-hidden rounded-[var(--radius-xl)] p-7 sm:p-9">
+        {saving && (
+          <div
+            role="progressbar"
+            aria-label="Autenticando"
+            className="crm-top-progress"
+          />
+        )}
+
+        <div className="mb-7 flex items-center gap-3.5">
+          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[var(--radius-md)] border border-[var(--glass-border)] bg-[var(--glass-bg-subtle)] shadow-[var(--shadow-xs)]">
             <img
-              src="/brand/lead-flow.svg"
-              alt="Lead Flow — CRM da AKS-Tech"
-              className="h-auto w-44 max-w-full"
+              src="/brand/lead-flow-icon.svg"
+              alt=""
+              aria-hidden="true"
+              className="h-8 w-8 shrink-0"
             />
+          </span>
+          <div className="min-w-0">
+            <p className="text-[length:var(--text-lg)] font-[var(--font-weight-bold)] tracking-[var(--tracking-tight)] text-[var(--color-text-primary)]">
+              LeadFlow
+            </p>
+            <p className="mt-0.5 text-[length:var(--text-2xs)] font-[var(--font-weight-semibold)] uppercase tracking-[var(--tracking-wide)] text-[var(--color-text-muted)]">
+              CRM Comercial · AKS - Tech
+            </p>
           </div>
         </div>
 
-        <h2 className="text-2xl font-bold text-[var(--color-text-primary)]">
+        <h1 className="text-[length:var(--text-xl)] font-[var(--font-weight-bold)] tracking-[var(--tracking-tight)] text-[var(--color-text-primary)]">
           {authMode === 'login' ? 'Entrar na sua conta' : 'Criar conta'}
-        </h2>
-        <p className="mt-2 text-sm text-[var(--color-text-secondary)]">
-          Acesse o ambiente comercial compartilhado.
+        </h1>
+        <p className="mt-1.5 text-[length:var(--text-sm)] text-[var(--color-text-secondary)]">
+          {authMode === 'login'
+            ? 'Acesse o ambiente comercial compartilhado da equipe.'
+            : 'Cadastre seu e-mail corporativo autorizado para acessar o CRM.'}
         </p>
 
         {error && (
-          <p role="alert" className="mt-4 rounded-lg bg-red-50 p-3 text-sm text-red-700">
+          <p role="alert" className="crm-callout crm-callout--danger mt-5">
             {error}
           </p>
         )}
+
         {notice && (
-          <p role="status" className="mt-4 rounded-lg bg-emerald-50 p-3 text-sm text-emerald-700">
+          <p role="status" className="crm-callout crm-callout--success mt-5">
             {notice}
           </p>
         )}
 
         <form onSubmit={onSubmit} className="mt-6 space-y-4">
-          <label className="block text-sm font-medium text-[var(--color-text-primary)]">
-            E-mail
-            <input
-              required
-              type="email"
-              autoComplete="email"
-              value={authEmail}
-              onChange={(event) => onEmailChange(event.target.value)}
-              className="mt-1.5 w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-3 text-[var(--color-text-primary)] outline-none focus:border-[var(--color-brand)] focus:ring-2 focus:ring-[var(--color-focus-ring)]"
-            />
-          </label>
+          <FormField label="E-mail corporativo">
+            {(fieldProps) => (
+              <input
+                {...fieldProps}
+                required
+                type="email"
+                autoComplete="email"
+                placeholder="nome@empresa.com.br"
+                value={authEmail}
+                onChange={(event) => onEmailChange(event.target.value)}
+              />
+            )}
+          </FormField>
 
-          <label className="block text-sm font-medium text-[var(--color-text-primary)]">
-            Senha
-            <input
-              required
-              type="password"
-              minLength={6}
-              autoComplete={authMode === 'login' ? 'current-password' : 'new-password'}
-              value={authPassword}
-              onChange={(event) => onPasswordChange(event.target.value)}
-              className="mt-1.5 w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-3 text-[var(--color-text-primary)] outline-none focus:border-[var(--color-brand)] focus:ring-2 focus:ring-[var(--color-focus-ring)]"
-            />
-            <span className="mt-1 block text-xs text-[var(--color-text-secondary)]">
-              Mínimo de 6 caracteres; use uma senha forte e exclusiva.
-            </span>
-          </label>
-
-          <button
-            disabled={saving}
-            className="w-full rounded-xl bg-[var(--color-brand)] px-4 py-3 font-semibold text-[#1a1a1a] hover:bg-[var(--color-brand-hover)] disabled:opacity-60"
+          <FormField
+            label="Senha"
+            hint="Mínimo de 6 caracteres; use uma senha forte e exclusiva."
           >
-            {saving
-              ? 'Aguarde...'
-              : authMode === 'login'
-                ? 'Entrar'
-                : 'Criar conta'}
-          </button>
+            {(fieldProps) => (
+              <input
+                {...fieldProps}
+                required
+                type="password"
+                minLength={6}
+                placeholder="••••••••"
+                autoComplete={
+                  authMode === 'login' ? 'current-password' : 'new-password'
+                }
+                value={authPassword}
+                onChange={(event) => onPasswordChange(event.target.value)}
+              />
+            )}
+          </FormField>
+
+          <div className="pt-1">
+            <Button
+              type="submit"
+              variant="primary"
+              loading={saving}
+              className="w-full"
+            >
+              {authMode === 'login' ? 'Entrar' : 'Criar conta'}
+            </Button>
+          </div>
         </form>
 
-        <button
-          type="button"
-          onClick={onToggleMode}
-          className="mt-5 w-full text-sm font-medium text-[var(--color-brand)] hover:opacity-80"
-        >
-          {authMode === 'login'
-            ? 'Primeiro acesso? Criar conta'
-            : 'Já possui conta? Entrar'}
-        </button>
+        <div className="mt-5 border-t border-[var(--glass-border)] pt-4 text-center">
+          <Button
+            variant="ghost"
+            size="sm"
+            disabled={saving}
+            onClick={onToggleMode}
+            className="w-full"
+          >
+            {authMode === 'login'
+              ? 'Primeiro acesso? Criar conta'
+              : 'Já possui conta? Entrar'}
+          </Button>
+        </div>
       </section>
+
+      <footer className="mt-6 text-center text-[length:var(--text-xs)] text-[var(--color-text-muted)]">
+        LeadFlow CRM · AKS - Tech
+      </footer>
     </main>
   )
 }
