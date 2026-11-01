@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import type {
   InventoryMovement,
@@ -24,90 +24,124 @@ function getErrorMessage(error: InventoryRpcError) {
 }
 
 export function useInventory(
+  userId: string | null,
   onError: (message: string) => void,
   onNotice: (message: string) => void,
 ) {
-  const [products, setProducts] = useState<InventoryProduct[]>([])
-  const [movements, setMovements] = useState<InventoryMovement[]>([])
-  const [loading, setLoading] = useState(true)
+  const [inventoryState, setInventoryState] = useState<{
+    userId: string | null
+    products: InventoryProduct[]
+    movements: InventoryMovement[]
+  }>({ userId: null, products: [], movements: [] })
+
+  const products =
+    inventoryState.userId === userId ? inventoryState.products : []
+  const movements =
+    inventoryState.userId === userId ? inventoryState.movements : []
+
+  const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
+  const requestId = useRef(0)
 
   const loadInventory = useCallback(async () => {
-    setLoading(true)
-
-    const [productsResult, balancesResult, movementsResult] =
-      await Promise.all([
-        supabase
-          .from('inventory_products')
-          .select(
-            'id, name, sku, description, unit, average_cost, is_active, created_at, updated_at',
-          )
-          .order('name'),
-        supabase
-          .from('inventory_stock_balances')
-          .select('product_id, quantity_on_hand'),
-        supabase
-          .from('inventory_movements')
-          .select(
-            'id, product_id, lead_id, movement_type, quantity_delta, unit_cost, total_cost, reason, reference_movement_id, created_at',
-          )
-          .order('created_at', { ascending: false })
-          .limit(200),
-      ])
-
-    const loadError =
-      productsResult.error || balancesResult.error || movementsResult.error
-
-    if (loadError) {
-      onError(`Não foi possível carregar o estoque: ${loadError.message}`)
-      setLoading(false)
+    if (!userId) {
       return
     }
 
-    const balances = new Map(
-      (balancesResult.data ?? []).map((balance) => [
-        balance.product_id,
-        Number(balance.quantity_on_hand),
-      ]),
-    )
+    const currentRequestId = ++requestId.current
+    setLoading(true)
 
-    const productNames = new Map(
-      (productsResult.data ?? []).map((product) => [
-        product.id,
-        product.name,
-      ]),
-    )
+    try {
+      const [productsResult, balancesResult, movementsResult] =
+        await Promise.all([
+          supabase
+            .from('inventory_products')
+            .select(
+              'id, name, sku, description, unit, average_cost, is_active, created_at, updated_at',
+            )
+            .order('name'),
+          supabase
+            .from('inventory_stock_balances')
+            .select('product_id, quantity_on_hand'),
+          supabase
+            .from('inventory_movements')
+            .select(
+              'id, product_id, lead_id, movement_type, quantity_delta, unit_cost, total_cost, reason, reference_movement_id, created_at',
+            )
+            .order('created_at', { ascending: false })
+            .limit(200),
+        ])
 
-    setProducts(
-      (productsResult.data ?? []).map((product) => ({
-        ...product,
-        average_cost: Number(product.average_cost),
-        quantity_on_hand: balances.get(product.id) ?? 0,
-      })),
-    )
+      if (currentRequestId !== requestId.current) return
 
-    setMovements(
-      (movementsResult.data ?? []).map((movement) => ({
-        ...movement,
-        quantity_delta: Number(movement.quantity_delta),
-        unit_cost: Number(movement.unit_cost),
-        total_cost: Number(movement.total_cost),
-        product: {
-          name: productNames.get(movement.product_id) ?? 'Produto removido',
-        },
-      })),
-    )
+      const loadError =
+        productsResult.error || balancesResult.error || movementsResult.error
 
-    setLoading(false)
-  }, [onError])
+      if (loadError) {
+        onError(`Não foi possível carregar o estoque: ${loadError.message}`)
+        return
+      }
+
+      const balances = new Map(
+        (balancesResult.data ?? []).map((balance) => [
+          balance.product_id,
+          Number(balance.quantity_on_hand),
+        ]),
+      )
+
+      const productNames = new Map(
+        (productsResult.data ?? []).map((product) => [
+          product.id,
+          product.name,
+        ]),
+      )
+
+      setInventoryState({
+        userId,
+        products: (productsResult.data ?? []).map((product) => ({
+          ...product,
+          average_cost: Number(product.average_cost),
+          quantity_on_hand: balances.get(product.id) ?? 0,
+        })),
+        movements: (movementsResult.data ?? []).map((movement) => ({
+          ...movement,
+          quantity_delta: Number(movement.quantity_delta),
+          unit_cost: Number(movement.unit_cost),
+          total_cost: Number(movement.total_cost),
+          product: {
+            name: productNames.get(movement.product_id) ?? 'Produto removido',
+          },
+        })),
+      })
+    } catch (err) {
+      if (currentRequestId !== requestId.current) return
+      onError(
+        err instanceof Error
+          ? `Não foi possível carregar o estoque: ${err.message}`
+          : 'Não foi possível carregar o estoque.',
+      )
+    } finally {
+      if (currentRequestId === requestId.current) {
+        setLoading(false)
+      }
+    }
+  }, [userId, onError])
 
   useEffect(() => {
+    if (!userId) {
+      requestId.current += 1
+      return
+    }
+
     const timeoutId = setTimeout(() => {
       void loadInventory()
     }, 0)
 
-    return () => clearTimeout(timeoutId)
-  }, [loadInventory])
+    return () => {
+      clearTimeout(timeoutId)
+      requestId.current += 1
+    }
+  }, [userId, loadInventory])
 
   async function saveProduct(
     form: ProductForm,
@@ -235,9 +269,9 @@ export function useInventory(
   return {
     products,
     movements,
-    loading,
+    loading: userId ? loading : false,
     saving,
-    loadInventory,
+    reload: loadInventory,
     saveProduct,
     registerMovement,
     reverseMovement,

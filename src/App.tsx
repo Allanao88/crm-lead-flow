@@ -14,7 +14,7 @@ import { useInventory } from './features/inventory/useInventory'
 import { useLeadProducts } from './features/leads/useLeadProducts'
 import LeadsPage from './features/leads/LeadsPage'
 import { useLeadForm } from './features/leads/useLeadForm'
-import type { Lead } from './features/leads/types'
+import type { Lead, Stage } from './features/leads/types'
 import { useLeads } from './features/leads/useLeads'
 import { useLeadFilters } from './features/leads/useLeadFilters'
 import { useTheme } from './hooks/useTheme'
@@ -78,10 +78,11 @@ function App() {
     movements: inventoryMovements,
     loading: inventoryLoading,
     saving: inventorySaving,
+    reload: reloadInventory,
     saveProduct,
     registerMovement,
     reverseMovement,
-  } = useInventory(setError, setNotice)
+  } = useInventory(session?.user.id ?? null, setError, setNotice)
 
   const {
     form, setForm, showForm, editingLeadId,
@@ -111,7 +112,16 @@ function App() {
     const saved = await saveLeadForm(
       event, leadProductItems, leadProductsLoading, leadProductsError,
     )
-    if (saved) setLeadProductItems([])
+    if (saved) {
+      setLeadProductItems([])
+      await reloadInventory()
+    }
+  }
+
+  async function handleLeadStageChange(lead: Lead, stage: Stage) {
+    if (lead.stage === stage) return
+    await handleStageChange(lead, stage)
+    await reloadInventory()
   }
 
   function handleEditLead(lead: Lead) {
@@ -289,7 +299,7 @@ function App() {
             }}
             onQuantityChange={setProductQuantity}
             onEditLead={handleEditLead}
-            onStageChange={handleStageChange}
+            onStageChange={handleLeadStageChange}
             onClearFilters={resetFilters}
             onLogout={() => void handleLogoutAndReset()}
             onSelectStage={(stage) => {
