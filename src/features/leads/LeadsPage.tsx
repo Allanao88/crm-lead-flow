@@ -12,6 +12,7 @@ type LeadsPageProps = {
   filteredLeads: Lead[]
   summary: LeadStageSummary
   summaryLoading: boolean
+  summaryError: string
   totalCount: number
   page: number
   totalPages: number
@@ -39,6 +40,7 @@ type LeadsPageProps = {
   onClearFilters: () => void
   onPageChange: (page: number) => void
   onSelectStage: (stage: string) => void
+  onRetrySummary: () => void
 }
 
 export default function LeadsPage({
@@ -46,6 +48,7 @@ export default function LeadsPage({
   filteredLeads,
   summary,
   summaryLoading,
+  summaryError,
   totalCount,
   page,
   totalPages,
@@ -73,6 +76,7 @@ export default function LeadsPage({
   onClearFilters,
   onPageChange,
   onSelectStage,
+  onRetrySummary,
 }: LeadsPageProps) {
   const [movedTransition, setMovedTransition] = useState<{
     from: Stage
@@ -125,9 +129,16 @@ export default function LeadsPage({
         />
       )}
 
-      <SalesMetricsPanel summary={summary} loading={summaryLoading} />
+      <SalesMetricsPanel
+        summary={summary}
+        loading={summaryLoading}
+        error={summaryError}
+        onRetry={onRetrySummary}
+      />
       <SalesPipeline
         summary={summary}
+        loading={summaryLoading}
+        error={summaryError}
         activeStage={stageFilter}
         movedTransition={movedTransition}
         onSelectStage={onSelectStage}

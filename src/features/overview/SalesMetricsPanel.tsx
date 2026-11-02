@@ -2,16 +2,21 @@ import MetricCard from '../../components/MetricCard'
 import { MetricCardSkeleton } from '../../components/Skeleton'
 import { currency } from '../leads/constants'
 import type { LeadStageSummary } from '../leads/types'
+import SummaryErrorState from './SummaryErrorState'
 import { useSalesMetrics } from './useSalesMetrics'
 
 type SalesMetricsPanelProps = {
   summary: LeadStageSummary
   loading?: boolean
+  error?: string
+  onRetry?: () => void
 }
 
 export default function SalesMetricsPanel({
   summary,
   loading = false,
+  error = '',
+  onRetry = () => {},
 }: SalesMetricsPanelProps) {
   const {
     totalLeads,
@@ -35,13 +40,18 @@ export default function SalesMetricsPanel({
 
       {loading ? (
         <section
+          role="status"
+          aria-live="polite"
           aria-label="Carregando indicadores comerciais"
           className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3"
         >
+          <span className="sr-only">Carregando indicadores...</span>
           {Array.from({ length: 6 }).map((_, index) => (
             <MetricCardSkeleton key={index} />
           ))}
         </section>
+      ) : error ? (
+        <SummaryErrorState message={error} onRetry={onRetry} />
       ) : (
         <section
           aria-label="Indicadores comerciais"

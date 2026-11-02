@@ -84,8 +84,9 @@ function App() {
   const {
     summary: leadSummary,
     loading: leadSummaryLoading,
+    error: leadSummaryError,
     reload: reloadLeadSummary,
-  } = useLeadSummary(session, setError)
+  } = useLeadSummary(session)
 
   const { totalLeads: summaryTotalLeads } = useSalesMetrics(leadSummary)
 
@@ -285,7 +286,11 @@ function App() {
       />
 
       <Sidebar
-        leadsCount={leadSummaryLoading ? leadsTotalCount : summaryTotalLeads}
+        leadsCount={
+          leadSummaryLoading || leadSummaryError
+            ? undefined
+            : summaryTotalLeads
+        }
         contactsCount={contacts.length}
         companiesCount={companies.length}
         userEmail={session.user.email}
@@ -432,6 +437,8 @@ function App() {
                 contactsCount={contacts.length}
                 companiesCount={companies.length}
                 loading={leadSummaryLoading || contactsLoading || companiesLoading}
+                summaryError={leadSummaryError}
+                onRetrySummary={() => void reloadLeadSummary()}
                 onOpenLeads={() => handleNavigateSection('leads')}
               />
             ) : (
@@ -440,6 +447,7 @@ function App() {
                 filteredLeads={filteredLeads}
                 summary={leadSummary}
                 summaryLoading={leadSummaryLoading}
+                summaryError={leadSummaryError}
                 totalCount={leadsTotalCount}
                 page={leadsPage}
                 totalPages={leadsTotalPages}
@@ -474,6 +482,7 @@ function App() {
                 onStageChange={handleLeadStageChange}
                 onClearFilters={resetFilters}
                 onPageChange={setLeadsPage}
+                onRetrySummary={() => void reloadLeadSummary()}
                 onSelectStage={(stage) => {
                   setStageFilter((current) =>
                     current === stage ? 'Todas' : stage,

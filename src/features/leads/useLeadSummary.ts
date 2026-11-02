@@ -3,8 +3,6 @@ import {
   useEffect,
   useRef,
   useState,
-  type Dispatch,
-  type SetStateAction,
 } from 'react'
 import type { Session } from '@supabase/supabase-js'
 import { supabase } from '../../lib/supabase'
@@ -61,24 +59,37 @@ export function buildLeadStageSummary(
   return summary
 }
 
+function formatSummaryError(rawMessage?: string): string {
+  const trimmed = rawMessage?.trim() ?? ''
+
+  if (
+    !trimmed ||
+    /failed to fetch|networkerror|load failed|fetch/i.test(trimmed)
+  ) {
+    return 'Não foi possível carregar o resumo comercial. Verifique sua conexão e tente novamente.'
+  }
+
+  return `Não foi possível carregar o resumo comercial: ${trimmed}`
+}
+
 type UseLeadSummaryResult = {
   summary: LeadStageSummary
   loading: boolean
+  error: string
   reload: () => Promise<void>
 }
 
-export function useLeadSummary(
-  session: Session | null,
-  setError?: Dispatch<SetStateAction<string>>,
-): UseLeadSummaryResult {
+export function useLeadSummary(session: Session | null): UseLeadSummaryResult {
   const userId = session?.user.id ?? null
 
   const [summaryState, setSummaryState] = useState<{
     userId: string | null
     summary: LeadStageSummary
+    error: string
   }>({
     userId: null,
     summary: createEmptyLeadSummary(),
+    error: '',
   })
 
   const [fetching, setFetching] = useState(false)
@@ -88,6 +99,7 @@ export function useLeadSummary(
   const summary = isCurrentUser
     ? summaryState.summary
     : createEmptyLeadSummary()
+  const error = isCurrentUser ? summaryState.error : ''
 
   const loadSummary = useCallback(async () => {
     if (!userId) return
@@ -96,21 +108,16 @@ export function useLeadSummary(
     setFetching(true)
 
     try {
-      const { data, error } = await supabase.rpc('lead_stage_summary')
+      const { data, error: rpcError } = await supabase.rpc('lead_stage_summary')
 
       if (currentRequestId !== requestId.current) return
 
-      if (error) {
-        setSummaryState((current) => ({
+      if (rpcError) {
+        setSummaryState({
           userId,
-          summary:
-            current.userId === userId
-              ? current.summary
-              : createEmptyLeadSummary(),
-        }))
-        setError?.(
-          `Não foi possível carregar o resumo comercial: ${error.message}`,
-        )
+          summary: createEmptyLeadSummary(),
+          error: formatSummaryError(rpcError.message),
+        })
         return
       }
 
@@ -119,28 +126,24 @@ export function useLeadSummary(
         summary: buildLeadStageSummary(
           (data ?? []) as LeadStageSummaryRow[],
         ),
+        error: '',
       })
     } catch (err) {
       if (currentRequestId !== requestId.current) return
 
-      setSummaryState((current) => ({
+      setSummaryState({
         userId,
-        summary:
-          current.userId === userId
-            ? current.summary
-            : createEmptyLeadSummary(),
-      }))
-      setError?.(
-        err instanceof Error
-          ? `Não foi possível carregar o resumo comercial: ${err.message}`
-          : 'Não foi possível carregar o resumo comercial.',
-      )
+        summary: createEmptyLeadSummary(),
+        error: formatSummaryError(
+          err instanceof Error ? err.message : undefined,
+        ),
+      })
     } finally {
       if (currentRequestId === requestId.current) {
         setFetching(false)
       }
     }
-  }, [userId, setError])
+  }, [userId])
 
   useEffect(() => {
     if (!userId) {
@@ -161,7 +164,7 @@ export function useLeadSummary(
   return {
     summary,
     loading: Boolean(userId) && (fetching || !isCurrentUser),
+    error,
     reload: loadSummary,
   }
 }
-

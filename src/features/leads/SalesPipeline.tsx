@@ -1,8 +1,11 @@
+import { Skeleton } from '../../components/Skeleton'
 import { currency, stageStyles, stages } from './constants'
 import type { LeadStageSummary, Stage } from './types'
 
 type SalesPipelineProps = {
   summary: LeadStageSummary
+  loading?: boolean
+  error?: string
   activeStage?: string
   movedTransition?: {
     from: Stage
@@ -13,12 +16,18 @@ type SalesPipelineProps = {
 
 export default function SalesPipeline({
   summary,
+  loading = false,
+  error = '',
   activeStage = 'Todas',
   movedTransition = null,
   onSelectStage,
 }: SalesPipelineProps) {
   return (
-    <section id="pipeline" className="crm-panel p-5 sm:p-6">
+    <section
+      id="pipeline"
+      aria-busy={loading || undefined}
+      className="crm-panel p-5 sm:p-6"
+    >
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
           <h2 className="crm-section-title">Pipeline de vendas</h2>
@@ -68,15 +77,30 @@ export default function SalesPipeline({
                   </span>
                 )}
               </div>
-              <p className="mt-4 text-2xl font-[var(--font-weight-bold)] tracking-[var(--tracking-tight)] text-[var(--color-text-primary)] tabular-nums">
-                {leadCount}
-              </p>
-              <p className="mt-2 text-[length:var(--text-xs)] text-[var(--color-text-secondary)] tabular-nums">
-                SETUP: {currency(setupTotal)}
-              </p>
-              <p className="mt-1 text-[length:var(--text-xs)] text-[var(--color-text-muted)] tabular-nums">
-                MRR: {currency(mrrTotal)}/mês
-              </p>
+
+              {loading ? (
+                <>
+                  <Skeleton className="mt-4 h-7 w-12" />
+                  <Skeleton className="mt-2 h-3.5 w-28" />
+                  <Skeleton className="mt-1.5 h-3.5 w-32" />
+                </>
+              ) : error ? (
+                <p className="mt-4 text-[length:var(--text-xs)] text-[var(--color-text-muted)]">
+                  Resumo indisponível
+                </p>
+              ) : (
+                <>
+                  <p className="mt-4 text-2xl font-[var(--font-weight-bold)] tracking-[var(--tracking-tight)] text-[var(--color-text-primary)] tabular-nums">
+                    {leadCount}
+                  </p>
+                  <p className="mt-2 text-[length:var(--text-xs)] text-[var(--color-text-secondary)] tabular-nums">
+                    SETUP: {currency(setupTotal)}
+                  </p>
+                  <p className="mt-1 text-[length:var(--text-xs)] text-[var(--color-text-muted)] tabular-nums">
+                    MRR: {currency(mrrTotal)}/mês
+                  </p>
+                </>
+              )}
             </button>
           )
         })}
