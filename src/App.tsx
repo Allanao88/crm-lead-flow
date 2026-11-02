@@ -16,7 +16,9 @@ import { useLeadProducts } from './features/leads/useLeadProducts'
 import { useLeadForm } from './features/leads/useLeadForm'
 import type { Lead, Stage } from './features/leads/types'
 import { useLeads } from './features/leads/useLeads'
+import { useLeadSummary } from './features/leads/useLeadSummary'
 import { useLeadFilters } from './features/leads/useLeadFilters'
+import { useSalesMetrics } from './features/overview/useSalesMetrics'
 import { useTheme } from './hooks/useTheme'
 
 const CompaniesPage = lazy(() => import('./features/companies/CompaniesPage'))
@@ -80,6 +82,14 @@ function App() {
   }, [authReady, session, authMode, activeSection])
 
   const {
+    summary: leadSummary,
+    loading: leadSummaryLoading,
+    reload: reloadLeadSummary,
+  } = useLeadSummary(session, setError)
+
+  const { totalLeads: summaryTotalLeads } = useSalesMetrics(leadSummary)
+
+  const {
     leads,
     totalCount: leadsTotalCount,
     page: leadsPage,
@@ -93,6 +103,7 @@ function App() {
     session,
     setError,
     setNotice,
+    reloadLeadSummary,
   )
 
   const {
@@ -274,7 +285,7 @@ function App() {
       />
 
       <Sidebar
-        leadsCount={leadsTotalCount}
+        leadsCount={leadSummaryLoading ? leadsTotalCount : summaryTotalLeads}
         contactsCount={contacts.length}
         companiesCount={companies.length}
         userEmail={session.user.email}
@@ -417,16 +428,18 @@ function App() {
               />
             ) : activeSection === 'overview' ? (
               <OverviewPage
-                leads={leads}
+                summary={leadSummary}
                 contactsCount={contacts.length}
                 companiesCount={companies.length}
-                loading={loading || contactsLoading || companiesLoading}
+                loading={leadSummaryLoading || contactsLoading || companiesLoading}
                 onOpenLeads={() => handleNavigateSection('leads')}
               />
             ) : (
               <LeadsPage
                 leads={leads}
                 filteredLeads={filteredLeads}
+                summary={leadSummary}
+                summaryLoading={leadSummaryLoading}
                 totalCount={leadsTotalCount}
                 page={leadsPage}
                 totalPages={leadsTotalPages}

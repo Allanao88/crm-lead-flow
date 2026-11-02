@@ -37,6 +37,7 @@ export function useLeads(
   session: Session | null,
   setError: Dispatch<SetStateAction<string>>,
   setNotice: Dispatch<SetStateAction<string>>,
+  onChanged?: () => void | Promise<void>,
 ): UseLeadsResult {
   const userId = session?.user.id ?? null
 
@@ -212,6 +213,7 @@ export function useLeads(
         setNotice('Lead cadastrado com sucesso.')
       }
 
+      void onChanged?.()
       return true
     } catch (err) {
       setError(
@@ -259,6 +261,7 @@ export function useLeads(
         setError(`Não foi possível atualizar a etapa: ${error.message}`)
       } else {
         setNotice('Etapa do lead atualizada.')
+        void onChanged?.()
       }
     } catch (err) {
       setLeads((current) =>

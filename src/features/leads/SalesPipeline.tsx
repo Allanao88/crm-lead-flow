@@ -1,8 +1,8 @@
 import { currency, stageStyles, stages } from './constants'
-import type { Lead, Stage } from './types'
+import type { LeadStageSummary, Stage } from './types'
 
 type SalesPipelineProps = {
-  leads: Lead[]
+  summary: LeadStageSummary
   activeStage?: string
   movedTransition?: {
     from: Stage
@@ -12,7 +12,7 @@ type SalesPipelineProps = {
 }
 
 export default function SalesPipeline({
-  leads,
+  summary,
   activeStage = 'Todas',
   movedTransition = null,
   onSelectStage,
@@ -38,15 +38,7 @@ export default function SalesPipeline({
 
       <div className="crm-stagger-cards mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-5">
         {stages.map((stage) => {
-          const items = leads.filter((lead) => lead.stage === stage)
-          const setupTotal = items.reduce(
-            (sum, lead) => sum + Number(lead.setup_value),
-            0,
-          )
-          const mrrTotal = items.reduce(
-            (sum, lead) => sum + Number(lead.mrr_value),
-            0,
-          )
+          const { leadCount, setupTotal, mrrTotal } = summary[stage]
           const isSelected = activeStage === stage
           const isMovedIn = movedTransition?.to === stage
           const isMovedOut = movedTransition?.from === stage
@@ -77,7 +69,7 @@ export default function SalesPipeline({
                 )}
               </div>
               <p className="mt-4 text-2xl font-[var(--font-weight-bold)] tracking-[var(--tracking-tight)] text-[var(--color-text-primary)] tabular-nums">
-                {items.length}
+                {leadCount}
               </p>
               <p className="mt-2 text-[length:var(--text-xs)] text-[var(--color-text-secondary)] tabular-nums">
                 SETUP: {currency(setupTotal)}

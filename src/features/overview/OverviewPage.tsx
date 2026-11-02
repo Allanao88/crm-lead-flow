@@ -3,11 +3,11 @@ import EmptyState from '../../components/EmptyState'
 import MetricCard from '../../components/MetricCard'
 import { MetricCardSkeleton, Skeleton } from '../../components/Skeleton'
 import { currency, stages, stageStyles } from '../leads/constants'
-import type { Lead } from '../leads/types'
+import type { LeadStageSummary } from '../leads/types'
 import { useSalesMetrics } from './useSalesMetrics'
 
 type OverviewPageProps = {
-  leads: Lead[]
+  summary: LeadStageSummary
   contactsCount: number
   companiesCount: number
   loading: boolean
@@ -15,16 +15,21 @@ type OverviewPageProps = {
 }
 
 export default function OverviewPage({
-  leads,
+  summary,
   contactsCount,
   companiesCount,
   loading,
   onOpenLeads,
 }: OverviewPageProps) {
-  const openLeads = leads.filter((lead) => lead.stage !== 'Ganho')
-  const wonLeads = leads.filter((lead) => lead.stage === 'Ganho')
-  const { pipelineSetup, pipelineMrr, wonSetup, wonMrr } =
-    useSalesMetrics(leads)
+  const {
+    totalLeads,
+    openLeadsCount,
+    wonLeadsCount,
+    pipelineSetup,
+    pipelineMrr,
+    wonSetup,
+    wonMrr,
+  } = useSalesMetrics(summary)
 
   return (
     <div className="crm-page">
@@ -56,17 +61,17 @@ export default function OverviewPage({
         >
           <MetricCard
             label="Total de leads"
-            value={String(leads.length)}
+            value={String(totalLeads)}
             detail="Oportunidades cadastradas"
           />
           <MetricCard
             label="Leads em aberto"
-            value={String(openLeads.length)}
+            value={String(openLeadsCount)}
             detail="Oportunidades ainda não ganhas"
           />
           <MetricCard
             label="Negócios ganhos"
-            value={String(wonLeads.length)}
+            value={String(wonLeadsCount)}
             detail="Oportunidades convertidas"
           />
           <MetricCard
@@ -110,14 +115,14 @@ export default function OverviewPage({
               Distribuição das oportunidades por etapa.
             </p>
           </div>
-          {leads.length > 0 && (
+          {!loading && totalLeads > 0 && (
             <Button variant="primary" onClick={onOpenLeads}>
               Acessar leads
             </Button>
           )}
         </div>
 
-        {!loading && leads.length === 0 ? (
+        {!loading && totalLeads === 0 ? (
           <div className="mt-4">
             <EmptyState
               icon="leads"
@@ -130,7 +135,7 @@ export default function OverviewPage({
         ) : (
           <div className="crm-stagger-cards mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-5">
             {stages.map((stage) => {
-              const items = leads.filter((lead) => lead.stage === stage)
+              const stageCount = summary[stage].leadCount
 
               return (
                 <div
@@ -148,10 +153,10 @@ export default function OverviewPage({
                   ) : (
                     <>
                       <p className="mt-4 text-2xl font-[var(--font-weight-bold)] tracking-[var(--tracking-tight)] text-[var(--color-text-primary)] tabular-nums">
-                        {items.length}
+                        {stageCount}
                       </p>
                       <p className="mt-1 text-[length:var(--text-xs)] text-[var(--color-text-muted)]">
-                        {items.length === 1 ? 'oportunidade' : 'oportunidades'}
+                        {stageCount === 1 ? 'oportunidade' : 'oportunidades'}
                       </p>
                     </>
                   )}

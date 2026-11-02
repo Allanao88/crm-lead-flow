@@ -4,12 +4,14 @@ import LeadsTable from './LeadsTable'
 import SalesPipeline from './SalesPipeline'
 import SalesMetricsPanel from '../overview/SalesMetricsPanel'
 import type { InventoryProduct } from '../inventory/types'
-import type { Lead, LeadForm, Stage } from './types'
+import type { Lead, LeadForm, LeadStageSummary, Stage } from './types'
 import type { LeadProductItem } from './useLeadProducts'
 
 type LeadsPageProps = {
   leads: Lead[]
   filteredLeads: Lead[]
+  summary: LeadStageSummary
+  summaryLoading: boolean
   totalCount: number
   page: number
   totalPages: number
@@ -42,6 +44,8 @@ type LeadsPageProps = {
 export default function LeadsPage({
   leads,
   filteredLeads,
+  summary,
+  summaryLoading,
   totalCount,
   page,
   totalPages,
@@ -121,9 +125,9 @@ export default function LeadsPage({
         />
       )}
 
-      <SalesMetricsPanel leads={leads} loading={loading} />
+      <SalesMetricsPanel summary={summary} loading={summaryLoading} />
       <SalesPipeline
-        leads={leads}
+        summary={summary}
         activeStage={stageFilter}
         movedTransition={movedTransition}
         onSelectStage={onSelectStage}

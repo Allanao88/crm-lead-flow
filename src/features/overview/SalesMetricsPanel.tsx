@@ -1,37 +1,39 @@
 import MetricCard from '../../components/MetricCard'
 import { MetricCardSkeleton } from '../../components/Skeleton'
 import { currency } from '../leads/constants'
-import type { Lead } from '../leads/types'
+import type { LeadStageSummary } from '../leads/types'
 import { useSalesMetrics } from './useSalesMetrics'
 
 type SalesMetricsPanelProps = {
-  leads: Lead[]
+  summary: LeadStageSummary
   loading?: boolean
 }
 
 export default function SalesMetricsPanel({
-  leads,
+  summary,
   loading = false,
 }: SalesMetricsPanelProps) {
-  const { pipelineSetup, pipelineMrr, wonSetup, wonMrr } =
-    useSalesMetrics(leads)
-
-  const negotiationCount = leads.filter(
-    (lead) => lead.stage === 'Negociação',
-  ).length
+  const {
+    totalLeads,
+    negotiationCount,
+    pipelineSetup,
+    pipelineMrr,
+    wonSetup,
+    wonMrr,
+  } = useSalesMetrics(summary)
 
   return (
     <>
       <section>
         <p className="text-[length:var(--text-sm)] text-[var(--color-text-secondary)]">
-          Indicadores calculados sobre a página atual de oportunidades.
+          Acompanhe os indicadores comerciais de todas as oportunidades.
         </p>
         <h2 className="crm-page-title mt-1">
           Resumo comercial
         </h2>
       </section>
 
-      {loading && leads.length === 0 ? (
+      {loading ? (
         <section
           aria-label="Carregando indicadores comerciais"
           className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3"
@@ -46,9 +48,9 @@ export default function SalesMetricsPanel({
           className="crm-stagger-cards grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3"
         >
           <MetricCard
-            label="Leads nesta página"
-            value={String(leads.length)}
-            detail="Contatos listados abaixo"
+            label="Total de leads"
+            value={String(totalLeads)}
+            detail="Oportunidades cadastradas"
           />
           <MetricCard
             label="SETUP potencial"
