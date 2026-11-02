@@ -1,75 +1,135 @@
-# React + TypeScript + Vite
+# LeadFlow CRM — AKS Tech
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Aplicação web de CRM comercial e controle de estoque construída com **React 19**, **TypeScript**, **Vite 8**, **Tailwind CSS 4** e **Supabase** (Auth, Postgres, RLS e RPCs).
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Pré-requisitos
 
-## React Compiler
+- **Node.js 22+** e **npm**
+- Projeto **Supabase** configurado (ou CLI do Supabase para inspeção de migrations)
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+---
 
-## Expanding the ESLint configuration
+## Setup local
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+1. Clone o repositório e instale as dependências:
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+   ```bash
+   git clone https://github.com/Allanao88/crm-lead-flow.git
+   cd crm-lead-flow
+   npm ci
+   ```
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+2. Crie o arquivo `.env.local` na raiz do projeto (ignorado pelo Git) com as variáveis públicas do Supabase:
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+   ```dotenv
+   VITE_SUPABASE_URL=https://<seu-project-ref>.supabase.co
+   VITE_SUPABASE_PUBLISHABLE_KEY=<sua-publishable-ou-anon-key>
+   ```
 
+   > **Importante:** utilize apenas a chave pública (`publishable` / `anon`) no frontend. Nunca exponha a `service_role` key em variáveis `VITE_*`.
+
+3. Inicie o servidor de desenvolvimento:
+
+   ```bash
+   npm run dev
+   ```
+
+---
+
+## Scripts disponíveis
+
+| Script | Comando | Descrição |
+| --- | --- | --- |
+| `npm run dev` | `vite` | Inicia o servidor local de desenvolvimento com HMR |
+| `npm run build` | `tsc -b && vite build` | Checa tipos TypeScript e gera o bundle de produção em `dist/` |
+| `npm run lint` | `eslint .` | Analisa o código com ESLint (TypeScript + React Hooks) |
+| `npm test` | `vitest run` | Executa a suíte de testes automatizados (Vitest + Testing Library) |
+| `npm run preview` | `vite preview` | Serve localmente o build gerado em `dist/` |
+
+---
+
+## Estrutura de pastas
+
+```text
+.
+├── .github/
+│   └── workflows/
+│       └── ci.yml                  # Pipeline de CI (lint, build e testes em Node 22)
+├── public/                         # Arquivos estáticos públicos
+├── src/
+│   ├── assets/                     # Imagens e recursos visuais
+│   ├── components/                 # Componentes de UI reutilizáveis (Button, MetricCard, Sidebar, Skeleton, etc.)
+│   ├── features/                   # Módulos organizados por domínio
+│   │   ├── auth/                   # Sessão, autenticação e fluxo de senha
+│   │   ├── companies/              # Cadastro e listagem de empresas
+│   │   ├── contacts/               # Cadastro e listagem de contatos
+│   │   ├── inventory/              # Catálogo de produtos e movimentações de estoque
+│   │   ├── leads/                  # Funil comercial, paginação/filtros no servidor, validação e resumo RPC
+│   │   └── overview/               # Visão geral executiva e cálculo de indicadores comerciais
+│   ├── hooks/                      # Hooks compartilhados (ex.: tema claro/escuro)
+│   ├── lib/                        # Cliente Supabase e utilitários compartilhados
+│   ├── test/                       # Configuração global do Vitest + Testing Library
+│   ├── App.tsx                     # Shell principal da aplicação e navegação entre seções
+│   ├── App.css                     # Estilos de layout e responsividade do shell
+│   └── index.css                   # Design tokens, superfícies em vidro (glass) e animações
+└── supabase/
+    ├── config.toml                 # Configuração do ambiente local do Supabase CLI
+    └── migrations/                 # Histórico sequencial e imutável de migrations SQL
 ```
 
-You can also install [eslint-plugin-react-x](https://npmx.dev/package/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://npmx.dev/package/eslint-plugin-react-dom) for React-specific lint rules:
+---
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## Como trabalhar e aplicar migrations com segurança
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+1. **Nunca edite migrations já aplicadas.** Toda alteração de banco (tabelas, views, policies RLS, triggers ou funções RPC) deve entrar como **um novo arquivo** em `supabase/migrations/<timestamp>_<descricao>.sql`.
+2. **Escreva SQL idempotente e seguro:**
+   - Use `drop ... if exists` / `create or replace` sempre que aplicável.
+   - Em funções SQL/PLpgSQL, defina explicitamente `set search_path = public, pg_temp`.
+   - Revogue permissões implícitas (`revoke all ... from public, anon`) e conceda apenas o necessário (`grant ... to authenticated`).
+3. **Confira o estado antes de aplicar no projeto remoto:**
 
-```
+   ```bash
+   # Lista quais migrations locais já estão aplicadas ou pendentes no banco vinculado
+   npx supabase migration list
+
+   # Simula a aplicação (dry-run) mostrando o que seria executado sem alterar o banco
+   npx supabase db push --dry-run
+   ```
+
+4. **Aplique somente após revisar o SQL e o dry-run:**
+
+   ```bash
+   npx supabase db push
+   ```
+
+   Evite rodar `supabase migration repair` ou `supabase db reset` contra ambientes compartilhados sem diagnóstico prévio de drift.
+
+---
+
+## Fluxo de branch e Pull Request
+
+1. Atualize a `main` local antes de iniciar qualquer trabalho:
+
+   ```bash
+   git checkout main
+   git pull
+   git status --short
+   ```
+
+2. Crie uma branch descritiva a partir da `main` (ex.: `feat/nome-da-entrega` ou `fix/descricao-curta`):
+
+   ```bash
+   git checkout -b fix/minha-correcao
+   ```
+
+3. Faça commits pequenos e atômicos em português (`fix(escopo): ...`, `feat(escopo): ...`, `chore(escopo): ...`), validando localmente antes de cada commit:
+
+   ```bash
+   npm run lint
+   npm run build
+   npm test
+   ```
+
+4. Envie a branch para o GitHub, abra um **Pull Request** para `main`, aguarde o workflow **CI** ficar verde e revise eventuais migrations pendentes antes do merge.
