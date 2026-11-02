@@ -31,7 +31,7 @@ CREATE POLICY contacts_delete_authenticated
     TO authenticated
     USING (true);
 
-REVOKE ALL ON TABLE public.contacts FROM PUBLIC, anon;
+REVOKE ALL ON TABLE public.contacts FROM PUBLIC, anon, authenticated;
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.contacts TO authenticated;
 
 DO $$
