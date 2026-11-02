@@ -47,6 +47,18 @@
   gap: var(--space-3);
 }
 
+.crm-topbar-title {
+  min-width: 0;
+  color: var(--color-text-primary);
+  font-size: var(--text-xl);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: var(--tracking-tight);
+  line-height: var(--leading-tight);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 /* Sidebar lateral e navegação mobile em vidro */
 .crm-sidebar {
   background: var(--color-sidebar);
@@ -570,6 +582,24 @@
   .crm-topbar-inner {
     min-height: 4rem;
     padding: var(--space-2) var(--space-4);
+    gap: var(--space-2);
+  }
+
+  .crm-topbar-title {
+    font-size: var(--text-md);
+    white-space: normal;
+    overflow-wrap: break-word;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
+
+  .crm-topbar .crm-secondary-button {
+    padding-inline: var(--space-3);
+  }
+
+  .crm-topbar .crm-primary-button {
+    padding-inline: 14px;
   }
 
   .crm-table thead th,

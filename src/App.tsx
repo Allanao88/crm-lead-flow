@@ -311,7 +311,7 @@ function App() {
             />
           )}
           <div className="crm-topbar-inner">
-            <div className="flex min-w-0 items-center gap-[var(--space-3)]">
+            <div className="flex min-w-0 flex-1 items-center gap-[var(--space-2)] sm:gap-[var(--space-3)]">
               <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--radius-sm)] border border-[var(--glass-border)] bg-[var(--glass-bg-subtle)] lg:hidden">
                 <img
                   src="/brand/lead-flow-icon.svg"
@@ -320,7 +320,7 @@ function App() {
                   className="h-6 w-6"
                 />
               </span>
-              <h1 className="truncate text-[length:var(--text-lg)] font-[var(--font-weight-bold)] tracking-[var(--tracking-tight)] text-[var(--color-text-primary)] sm:text-[length:var(--text-xl)]">
+              <h1 className="crm-topbar-title">
                 {getSectionTitle(activeSection)}
               </h1>
             </div>
