@@ -1,12 +1,16 @@
 import type { FormEvent } from 'react'
+import { MIN_PASSWORD_LENGTH } from '../features/auth/useAuth'
 import type { Theme } from '../hooks/useTheme'
 import Button from './Button'
 import FormField from './FormField'
 
 type AuthScreenProps = {
   authMode: 'login' | 'signup'
+  passwordRecovery?: boolean
   authEmail: string
   authPassword: string
+  recoveryPassword?: string
+  recoveryPasswordConfirm?: string
   error: string
   notice: string
   saving: boolean
@@ -14,14 +18,22 @@ type AuthScreenProps = {
   onToggleTheme: () => void
   onEmailChange: (value: string) => void
   onPasswordChange: (value: string) => void
+  onRecoveryPasswordChange?: (value: string) => void
+  onRecoveryPasswordConfirmChange?: (value: string) => void
   onSubmit: (event: FormEvent<HTMLFormElement>) => void
+  onForgotPassword?: () => void
+  onSubmitRecovery?: (event: FormEvent<HTMLFormElement>) => void
+  onCancelRecovery?: () => void
   onToggleMode: () => void
 }
 
 export default function AuthScreen({
   authMode,
+  passwordRecovery = false,
   authEmail,
   authPassword,
+  recoveryPassword = '',
+  recoveryPasswordConfirm = '',
   error,
   notice,
   saving,
@@ -29,9 +41,26 @@ export default function AuthScreen({
   onToggleTheme,
   onEmailChange,
   onPasswordChange,
+  onRecoveryPasswordChange = () => {},
+  onRecoveryPasswordConfirmChange = () => {},
   onSubmit,
+  onForgotPassword = () => {},
+  onSubmitRecovery = () => {},
+  onCancelRecovery = () => {},
   onToggleMode,
 }: AuthScreenProps) {
+  const heading = passwordRecovery
+    ? 'Definir nova senha'
+    : authMode === 'login'
+      ? 'Entrar na sua conta'
+      : 'Criar conta'
+
+  const description = passwordRecovery
+    ? `Escolha uma nova senha com no mínimo ${MIN_PASSWORD_LENGTH} caracteres para concluir a recuperação.`
+    : authMode === 'login'
+      ? 'Acesse o ambiente comercial compartilhado da equipe.'
+      : 'Cadastre seu e-mail corporativo autorizado para acessar o CRM.'
+
   return (
     <main className="crm-app-canvas relative flex min-h-screen flex-col items-center justify-center px-4 py-10 sm:px-6">
       <div className="mb-4 flex w-full max-w-md justify-end">
@@ -105,12 +134,10 @@ export default function AuthScreen({
         </div>
 
         <h1 className="text-[length:var(--text-xl)] font-[var(--font-weight-bold)] tracking-[var(--tracking-tight)] text-[var(--color-text-primary)]">
-          {authMode === 'login' ? 'Entrar na sua conta' : 'Criar conta'}
+          {heading}
         </h1>
         <p className="mt-1.5 text-[length:var(--text-sm)] text-[var(--color-text-secondary)]">
-          {authMode === 'login'
-            ? 'Acesse o ambiente comercial compartilhado da equipe.'
-            : 'Cadastre seu e-mail corporativo autorizado para acessar o CRM.'}
+          {description}
         </p>
 
         {error && (
@@ -125,66 +152,153 @@ export default function AuthScreen({
           </p>
         )}
 
-        <form onSubmit={onSubmit} className="mt-6 space-y-4">
-          <FormField label="E-mail corporativo">
-            {(fieldProps) => (
-              <input
-                {...fieldProps}
-                required
-                type="email"
-                autoComplete="email"
-                placeholder="nome@empresa.com.br"
-                value={authEmail}
-                onChange={(event) => onEmailChange(event.target.value)}
-              />
-            )}
-          </FormField>
+        {passwordRecovery ? (
+          <>
+            <form onSubmit={onSubmitRecovery} className="mt-6 space-y-4">
+              <FormField
+                label="Nova senha"
+                hint={`Mínimo de ${MIN_PASSWORD_LENGTH} caracteres; use uma senha forte e exclusiva.`}
+              >
+                {(fieldProps) => (
+                  <input
+                    {...fieldProps}
+                    required
+                    type="password"
+                    minLength={MIN_PASSWORD_LENGTH}
+                    placeholder="••••••••••"
+                    autoComplete="new-password"
+                    value={recoveryPassword}
+                    onChange={(event) =>
+                      onRecoveryPasswordChange(event.target.value)
+                    }
+                  />
+                )}
+              </FormField>
 
-          <FormField
-            label="Senha"
-            hint="Mínimo de 6 caracteres; use uma senha forte e exclusiva."
-          >
-            {(fieldProps) => (
-              <input
-                {...fieldProps}
-                required
-                type="password"
-                minLength={6}
-                placeholder="••••••••"
-                autoComplete={
-                  authMode === 'login' ? 'current-password' : 'new-password'
+              <FormField label="Confirmar nova senha">
+                {(fieldProps) => (
+                  <input
+                    {...fieldProps}
+                    required
+                    type="password"
+                    minLength={MIN_PASSWORD_LENGTH}
+                    placeholder="••••••••••"
+                    autoComplete="new-password"
+                    value={recoveryPasswordConfirm}
+                    onChange={(event) =>
+                      onRecoveryPasswordConfirmChange(event.target.value)
+                    }
+                  />
+                )}
+              </FormField>
+
+              <div className="pt-1">
+                <Button
+                  type="submit"
+                  variant="primary"
+                  loading={saving}
+                  className="w-full"
+                >
+                  Salvar nova senha
+                </Button>
+              </div>
+            </form>
+
+            <div className="mt-5 border-t border-[var(--glass-border)] pt-4 text-center">
+              <Button
+                variant="ghost"
+                size="sm"
+                disabled={saving}
+                onClick={onCancelRecovery}
+                className="w-full"
+              >
+                Voltar para o login
+              </Button>
+            </div>
+          </>
+        ) : (
+          <>
+            <form onSubmit={onSubmit} className="mt-6 space-y-4">
+              <FormField label="E-mail corporativo">
+                {(fieldProps) => (
+                  <input
+                    {...fieldProps}
+                    required
+                    type="email"
+                    autoComplete="email"
+                    placeholder="nome@empresa.com.br"
+                    value={authEmail}
+                    onChange={(event) => onEmailChange(event.target.value)}
+                  />
+                )}
+              </FormField>
+
+              <FormField
+                label="Senha"
+                hint={
+                  authMode === 'signup'
+                    ? `Mínimo de ${MIN_PASSWORD_LENGTH} caracteres; use uma senha forte e exclusiva.`
+                    : undefined
                 }
-                value={authPassword}
-                onChange={(event) => onPasswordChange(event.target.value)}
-              />
-            )}
-          </FormField>
+              >
+                {(fieldProps) => (
+                  <input
+                    {...fieldProps}
+                    required
+                    type="password"
+                    minLength={
+                      authMode === 'signup' ? MIN_PASSWORD_LENGTH : undefined
+                    }
+                    placeholder="••••••••••"
+                    autoComplete={
+                      authMode === 'login' ? 'current-password' : 'new-password'
+                    }
+                    value={authPassword}
+                    onChange={(event) => onPasswordChange(event.target.value)}
+                  />
+                )}
+              </FormField>
 
-          <div className="pt-1">
-            <Button
-              type="submit"
-              variant="primary"
-              loading={saving}
-              className="w-full"
-            >
-              {authMode === 'login' ? 'Entrar' : 'Criar conta'}
-            </Button>
-          </div>
-        </form>
+              {authMode === 'login' && (
+                <div className="flex justify-end">
+                  <button
+                    type="button"
+                    disabled={saving}
+                    onClick={onForgotPassword}
+                    className="text-[length:var(--text-xs)] font-[var(--font-weight-semibold)] text-[var(--color-brand)] transition-colors hover:underline focus-visible:outline-none focus-visible:underline disabled:opacity-50"
+                  >
+                    Esqueci a senha
+                  </button>
+                </div>
+              )}
 
-        <div className="mt-5 border-t border-[var(--glass-border)] pt-4 text-center">
-          <Button
-            variant="ghost"
-            size="sm"
-            disabled={saving}
-            onClick={onToggleMode}
-            className="w-full"
-          >
-            {authMode === 'login'
-              ? 'Primeiro acesso? Criar conta'
-              : 'Já possui conta? Entrar'}
-          </Button>
-        </div>
+              <div className="pt-1">
+                <Button
+                  type="submit"
+                  variant="primary"
+                  loading={saving}
+                  className="w-full"
+                >
+                  {authMode === 'login' ? 'Entrar' : 'Criar conta'}
+                </Button>
+              </div>
+            </form>
+
+            <div className="mt-5 border-t border-[var(--glass-border)] pt-4 text-center">
+              <Button
+                variant="ghost"
+                size="sm"
+                disabled={saving}
+                onClick={onToggleMode}
+                className="w-full"
+              >
+                {authMode === 'login'
+                  ? 'Primeiro acesso? Criar conta'
+                  : 'Já possui conta? Entrar'}
+              </Button>
+            </div>
+          </>
+        )}
       </section>
 
       <footer className="mt-6 text-center text-[length:var(--text-xs)] text-[var(--color-text-muted)]">

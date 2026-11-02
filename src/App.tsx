@@ -48,14 +48,24 @@ function App() {
     authReady,
     authSaving,
     authMode,
+    passwordRecovery,
     authEmail,
     authPassword,
+    recoveryPassword,
+    recoveryPasswordConfirm,
     setAuthEmail,
     setAuthPassword,
+    setRecoveryPassword,
+    setRecoveryPasswordConfirm,
     setAuthMode,
     handleAuth,
+    handleForgotPassword,
+    handlePasswordUpdate,
+    handleCancelRecovery,
     handleLogout,
   } = useAuth(setError, setNotice)
+
+  const activeSession = passwordRecovery ? null : session
 
   useEffect(() => {
     const meta = document.querySelector('meta[name="theme-color"]')
@@ -70,6 +80,11 @@ function App() {
       return
     }
 
+    if (passwordRecovery) {
+      document.title = 'Definir nova senha · LeadFlow CRM | AKS - Tech'
+      return
+    }
+
     if (!session) {
       document.title = `${
         authMode === 'login' ? 'Entrar' : 'Criar conta'
@@ -78,14 +93,14 @@ function App() {
     }
 
     document.title = `${getSectionTitle(activeSection)} · LeadFlow CRM | AKS - Tech`
-  }, [authReady, session, authMode, activeSection])
+  }, [authReady, passwordRecovery, session, authMode, activeSection])
 
   const {
     summary: leadSummary,
     loading: leadSummaryLoading,
     error: leadSummaryError,
     reload: reloadLeadSummary,
-  } = useLeadSummary(session)
+  } = useLeadSummary(activeSession)
 
   const { totalLeads: summaryTotalLeads } = useSalesMetrics(leadSummary)
 
@@ -105,7 +120,7 @@ function App() {
     saveLead,
     handleStageChange,
   } = useLeads(
-    session,
+    activeSession,
     setError,
     setNotice,
     reloadLeadSummary,
@@ -116,14 +131,14 @@ function App() {
     loading: contactsLoading,
     saving: contactSaving,
     saveContact,
-  } = useContacts(session, setError, setNotice)
+  } = useContacts(activeSession, setError, setNotice)
 
   const {
     companies,
     loading: companiesLoading,
     saving: companySaving,
     saveCompany,
-  } = useCompanies(session, setError, setNotice)
+  } = useCompanies(activeSession, setError, setNotice)
 
   const {
     products: inventoryProducts,
@@ -134,7 +149,7 @@ function App() {
     saveProduct,
     registerMovement,
     reverseMovement,
-  } = useInventory(session?.user.id ?? null, setError, setNotice)
+  } = useInventory(activeSession?.user.id ?? null, setError, setNotice)
 
   const {
     form, setForm, showForm, editingLeadId,
@@ -245,12 +260,15 @@ function App() {
     )
   }
 
-  if (!session) {
+  if (!session || passwordRecovery) {
     return (
       <AuthScreen
         authMode={authMode}
+        passwordRecovery={passwordRecovery}
         authEmail={authEmail}
         authPassword={authPassword}
+        recoveryPassword={recoveryPassword}
+        recoveryPasswordConfirm={recoveryPasswordConfirm}
         error={error}
         notice={notice}
         saving={authSaving}
@@ -258,7 +276,12 @@ function App() {
         onToggleTheme={toggleTheme}
         onEmailChange={setAuthEmail}
         onPasswordChange={setAuthPassword}
+        onRecoveryPasswordChange={setRecoveryPassword}
+        onRecoveryPasswordConfirmChange={setRecoveryPasswordConfirm}
         onSubmit={handleAuth}
+        onForgotPassword={() => void handleForgotPassword()}
+        onSubmitRecovery={(event) => void handlePasswordUpdate(event)}
+        onCancelRecovery={() => void handleCancelRecovery()}
         onToggleMode={() => {
           setAuthMode((mode) => mode === 'login' ? 'signup' : 'login')
           setError('')
