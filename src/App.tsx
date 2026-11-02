@@ -17,7 +17,6 @@ import { useLeadForm } from './features/leads/useLeadForm'
 import type { Lead, Stage } from './features/leads/types'
 import { useLeads } from './features/leads/useLeads'
 import { useLeadSummary } from './features/leads/useLeadSummary'
-import { useLeadFilters } from './features/leads/useLeadFilters'
 import { useSalesMetrics } from './features/overview/useSalesMetrics'
 import { useTheme } from './hooks/useTheme'
 
@@ -96,6 +95,11 @@ function App() {
     page: leadsPage,
     totalPages: leadsTotalPages,
     setPage: setLeadsPage,
+    search,
+    setSearch,
+    stageFilter,
+    setStageFilter,
+    resetFilters,
     loading,
     saving,
     saveLead,
@@ -106,15 +110,6 @@ function App() {
     setNotice,
     reloadLeadSummary,
   )
-
-  const {
-    search,
-    setSearch,
-    stageFilter,
-    setStageFilter,
-    filteredLeads,
-    resetFilters,
-  } = useLeadFilters(leads)
 
   const {
     contacts,
@@ -146,7 +141,7 @@ function App() {
     resetForm, startNewLead, cancelForm,
     handleCreateLead: saveLeadForm,
     handleEditLead: editLeadForm,
-  } = useLeadForm({ saveLead, setError, setNotice, setSearch, setStageFilter })
+  } = useLeadForm({ saveLead, setError, setNotice, resetFilters })
 
   const {
     items: leadProductItems,
@@ -444,7 +439,6 @@ function App() {
             ) : (
               <LeadsPage
                 leads={leads}
-                filteredLeads={filteredLeads}
                 summary={leadSummary}
                 summaryLoading={leadSummaryLoading}
                 summaryError={leadSummaryError}

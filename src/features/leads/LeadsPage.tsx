@@ -9,7 +9,6 @@ import type { LeadProductItem } from './useLeadProducts'
 
 type LeadsPageProps = {
   leads: Lead[]
-  filteredLeads: Lead[]
   summary: LeadStageSummary
   summaryLoading: boolean
   summaryError: string
@@ -45,7 +44,6 @@ type LeadsPageProps = {
 
 export default function LeadsPage({
   leads,
-  filteredLeads,
   summary,
   summaryLoading,
   summaryError,
@@ -145,7 +143,6 @@ export default function LeadsPage({
       />
       <LeadsTable
         leads={leads}
-        filteredLeads={filteredLeads}
         totalCount={totalCount}
         page={page}
         totalPages={totalPages}

@@ -12,9 +12,44 @@ import type { LeadProductItem } from './useLeadProducts'
 import { validateLeadForm } from './leadValidation'
 
 export const LEADS_PAGE_SIZE = 50
+export const LEADS_SEARCH_DEBOUNCE_MS = 300
 
 const leadFields =
   'id, name, email, phone, company, stage, setup_value, mrr_value, created_at, updated_at'
+
+export function escapeIlikePattern(value: string): string {
+  return value.replace(/[\\%_]/g, '\\$&')
+}
+
+export function buildLeadsSearchOrFilter(rawSearch: string): string | null {
+  const trimmed = rawSearch.trim()
+  if (!trimmed) return null
+
+  const pattern = `%${escapeIlikePattern(trimmed)}%`
+  const quoted = `"${pattern.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`
+
+  return `name.ilike.${quoted},company.ilike.${quoted},email.ilike.${quoted}`
+}
+
+type QueryState = {
+  userId: string | null
+  search: string
+  debouncedSearch: string
+  stageFilter: string
+  page: number
+  reloadKey: number
+}
+
+function createInitialQueryState(userId: string | null): QueryState {
+  return {
+    userId,
+    search: '',
+    debouncedSearch: '',
+    stageFilter: 'Todas',
+    page: 1,
+    reloadKey: 0,
+  }
+}
 
 type UseLeadsResult = {
   leads: Lead[]
@@ -23,6 +58,11 @@ type UseLeadsResult = {
   pageSize: number
   totalPages: number
   setPage: (page: number) => void
+  search: string
+  setSearch: (value: string) => void
+  stageFilter: string
+  setStageFilter: Dispatch<SetStateAction<string>>
+  resetFilters: () => void
   loading: boolean
   saving: boolean
   saveLead: (
@@ -47,14 +87,19 @@ export function useLeads(
     totalCount: number
   }>({ userId: null, items: [], totalCount: 0 })
 
-  const [pageState, setPageState] = useState<{
-    userId: string | null
-    page: number
-  }>({ userId: null, page: 1 })
+  const [queryState, setQueryState] = useState<QueryState>(() =>
+    createInitialQueryState(null),
+  )
+
+  const isSameUser = queryState.userId === userId
+  const search = isSameUser ? queryState.search : ''
+  const debouncedSearch = isSameUser ? queryState.debouncedSearch : ''
+  const stageFilter = isSameUser ? queryState.stageFilter : 'Todas'
+  const page = isSameUser ? queryState.page : 1
+  const reloadKey = isSameUser ? queryState.reloadKey : 0
 
   const leads = leadState.userId === userId ? leadState.items : []
   const totalCount = leadState.userId === userId ? leadState.totalCount : 0
-  const page = pageState.userId === userId ? pageState.page : 1
   const totalPages = Math.max(1, Math.ceil(totalCount / LEADS_PAGE_SIZE))
 
   const setLeads: Dispatch<SetStateAction<Lead[]>> = useCallback(
@@ -71,16 +116,105 @@ export function useLeads(
     [userId],
   )
 
+  const setSearch = useCallback(
+    (nextSearch: string) => {
+      setQueryState((current) => {
+        const base =
+          current.userId === userId
+            ? current
+            : createInitialQueryState(userId)
+
+        return {
+          ...base,
+          search: nextSearch,
+        }
+      })
+    },
+    [userId],
+  )
+
+  const setStageFilter: Dispatch<SetStateAction<string>> = useCallback(
+    (action) => {
+      setQueryState((current) => {
+        const base =
+          current.userId === userId
+            ? current
+            : createInitialQueryState(userId)
+        const nextStage =
+          typeof action === 'function' ? action(base.stageFilter) : action
+
+        if (nextStage === base.stageFilter) return base
+
+        return {
+          ...base,
+          stageFilter: nextStage,
+          page: 1,
+        }
+      })
+    },
+    [userId],
+  )
+
+  const resetFilters = useCallback(() => {
+    setQueryState((current) => {
+      const base =
+        current.userId === userId
+          ? current
+          : createInitialQueryState(userId)
+
+      return {
+        ...base,
+        search: '',
+        debouncedSearch: '',
+        stageFilter: 'Todas',
+        page: 1,
+      }
+    })
+  }, [userId])
+
   const setPage = useCallback(
     (nextPage: number) => {
       const clamped = Math.min(
         Math.max(1, Math.trunc(nextPage)),
         Math.max(1, Math.ceil(totalCount / LEADS_PAGE_SIZE)),
       )
-      setPageState({ userId, page: clamped })
+      setQueryState((current) => {
+        const base =
+          current.userId === userId
+            ? current
+            : createInitialQueryState(userId)
+
+        return {
+          ...base,
+          page: clamped,
+        }
+      })
     },
     [userId, totalCount],
   )
+
+  useEffect(() => {
+    if (!userId) return
+
+    const normalizedSearch = search.trim()
+    if (normalizedSearch === debouncedSearch) return
+
+    const timeoutId = setTimeout(() => {
+      setQueryState((current) => {
+        if (current.userId !== userId) return current
+        const nextDebounced = current.search.trim()
+        if (nextDebounced === current.debouncedSearch) return current
+
+        return {
+          ...current,
+          debouncedSearch: nextDebounced,
+          page: 1,
+        }
+      })
+    }, LEADS_SEARCH_DEBOUNCE_MS)
+
+    return () => clearTimeout(timeoutId)
+  }, [userId, search, debouncedSearch])
 
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -97,9 +231,20 @@ export function useLeads(
       setError('')
 
       try {
-        const { data, error, count } = await supabase
+        let query = supabase
           .from('leads')
           .select(leadFields, { count: 'exact' })
+
+        if (stageFilter !== 'Todas') {
+          query = query.eq('stage', stageFilter)
+        }
+
+        const searchOrFilter = buildLeadsSearchOrFilter(debouncedSearch)
+        if (searchOrFilter) {
+          query = query.or(searchOrFilter)
+        }
+
+        const { data, error, count } = await query
           .order('created_at', { ascending: false })
           .order('id', { ascending: false })
           .range(from, to)
@@ -110,10 +255,22 @@ export function useLeads(
           setError(`Não foi possível carregar os leads: ${error.message}`)
         } else {
           const items = (data ?? []) as Lead[]
+          const exactCount = count ?? items.length
+          const maxPage = Math.max(1, Math.ceil(exactCount / LEADS_PAGE_SIZE))
+
+          if (items.length === 0 && exactCount > 0 && page > maxPage) {
+            setQueryState((current) =>
+              current.userId === userId
+                ? { ...current, page: maxPage }
+                : current,
+            )
+            return
+          }
+
           setLeadState({
             userId,
             items,
-            totalCount: count ?? items.length,
+            totalCount: exactCount,
           })
         }
       } catch (err) {
@@ -134,7 +291,7 @@ export function useLeads(
     return () => {
       active = false
     }
-  }, [userId, page, setError])
+  }, [userId, page, debouncedSearch, stageFilter, reloadKey, setError])
 
   async function saveLead(
     form: LeadForm,
@@ -191,27 +348,24 @@ export function useLeads(
         )
         setNotice('Lead atualizado com sucesso.')
       } else {
-        setLeadState((current) => {
-          const currentItems = current.userId === userId ? current.items : []
-          const currentTotal =
-            current.userId === userId ? current.totalCount : 0
-
-          return {
-            userId,
-            items:
-              page === 1
-                ? [savedLead, ...currentItems].slice(0, LEADS_PAGE_SIZE)
-                : currentItems,
-            totalCount: currentTotal + 1,
-          }
-        })
-
-        if (page !== 1) {
-          setPageState({ userId, page: 1 })
-        }
-
         setNotice('Lead cadastrado com sucesso.')
       }
+
+      setQueryState((current) => {
+        const base =
+          current.userId === userId
+            ? current
+            : createInitialQueryState(userId)
+
+        return {
+          ...base,
+          search: '',
+          debouncedSearch: '',
+          stageFilter: 'Todas',
+          page: editingLeadId !== null ? base.page : 1,
+          reloadKey: base.reloadKey + 1,
+        }
+      })
 
       void onChanged?.()
       return true
@@ -261,6 +415,17 @@ export function useLeads(
         setError(`Não foi possível atualizar a etapa: ${error.message}`)
       } else {
         setNotice('Etapa do lead atualizada.')
+        setQueryState((current) => {
+          const base =
+            current.userId === userId
+              ? current
+              : createInitialQueryState(userId)
+
+          return {
+            ...base,
+            reloadKey: base.reloadKey + 1,
+          }
+        })
         void onChanged?.()
       }
     } catch (err) {
@@ -286,6 +451,11 @@ export function useLeads(
     pageSize: LEADS_PAGE_SIZE,
     totalPages,
     setPage,
+    search,
+    setSearch,
+    stageFilter,
+    setStageFilter,
+    resetFilters,
     loading: userId ? loading : false,
     saving,
     saveLead,
