@@ -16,7 +16,8 @@ import { useLeadProducts } from './features/leads/useLeadProducts'
 import { useLeadForm } from './features/leads/useLeadForm'
 import type { Lead, Stage } from './features/leads/types'
 import { useLeads } from './features/leads/useLeads'
-import { useLeadFilters } from './features/leads/useLeadFilters'
+import { useLeadSummary } from './features/leads/useLeadSummary'
+import { useSalesMetrics } from './features/overview/useSalesMetrics'
 import { useTheme } from './hooks/useTheme'
 
 const CompaniesPage = lazy(() => import('./features/companies/CompaniesPage'))
@@ -47,14 +48,24 @@ function App() {
     authReady,
     authSaving,
     authMode,
+    passwordRecovery,
     authEmail,
     authPassword,
+    recoveryPassword,
+    recoveryPasswordConfirm,
     setAuthEmail,
     setAuthPassword,
+    setRecoveryPassword,
+    setRecoveryPasswordConfirm,
     setAuthMode,
     handleAuth,
+    handleForgotPassword,
+    handlePasswordUpdate,
+    handleCancelRecovery,
     handleLogout,
   } = useAuth(setError, setNotice)
+
+  const activeSession = passwordRecovery ? null : session
 
   useEffect(() => {
     const meta = document.querySelector('meta[name="theme-color"]')
@@ -69,6 +80,11 @@ function App() {
       return
     }
 
+    if (passwordRecovery) {
+      document.title = 'Definir nova senha · LeadFlow CRM | AKS - Tech'
+      return
+    }
+
     if (!session) {
       document.title = `${
         authMode === 'login' ? 'Entrar' : 'Criar conta'
@@ -77,7 +93,16 @@ function App() {
     }
 
     document.title = `${getSectionTitle(activeSection)} · LeadFlow CRM | AKS - Tech`
-  }, [authReady, session, authMode, activeSection])
+  }, [authReady, passwordRecovery, session, authMode, activeSection])
+
+  const {
+    summary: leadSummary,
+    loading: leadSummaryLoading,
+    error: leadSummaryError,
+    reload: reloadLeadSummary,
+  } = useLeadSummary(activeSession)
+
+  const { totalLeads: summaryTotalLeads } = useSalesMetrics(leadSummary)
 
   const {
     leads,
@@ -85,38 +110,35 @@ function App() {
     page: leadsPage,
     totalPages: leadsTotalPages,
     setPage: setLeadsPage,
+    search,
+    setSearch,
+    stageFilter,
+    setStageFilter,
+    resetFilters,
     loading,
     saving,
     saveLead,
     handleStageChange,
   } = useLeads(
-    session,
+    activeSession,
     setError,
     setNotice,
+    reloadLeadSummary,
   )
-
-  const {
-    search,
-    setSearch,
-    stageFilter,
-    setStageFilter,
-    filteredLeads,
-    resetFilters,
-  } = useLeadFilters(leads)
 
   const {
     contacts,
     loading: contactsLoading,
     saving: contactSaving,
     saveContact,
-  } = useContacts(session, setError, setNotice)
+  } = useContacts(activeSession, setError, setNotice)
 
   const {
     companies,
     loading: companiesLoading,
     saving: companySaving,
     saveCompany,
-  } = useCompanies(session, setError, setNotice)
+  } = useCompanies(activeSession, setError, setNotice)
 
   const {
     products: inventoryProducts,
@@ -127,14 +149,14 @@ function App() {
     saveProduct,
     registerMovement,
     reverseMovement,
-  } = useInventory(session?.user.id ?? null, setError, setNotice)
+  } = useInventory(activeSession?.user.id ?? null, setError, setNotice)
 
   const {
     form, setForm, showForm, editingLeadId,
     resetForm, startNewLead, cancelForm,
     handleCreateLead: saveLeadForm,
     handleEditLead: editLeadForm,
-  } = useLeadForm({ saveLead, setError, setNotice, setSearch, setStageFilter })
+  } = useLeadForm({ saveLead, setError, setNotice, resetFilters })
 
   const {
     items: leadProductItems,
@@ -238,12 +260,15 @@ function App() {
     )
   }
 
-  if (!session) {
+  if (!session || passwordRecovery) {
     return (
       <AuthScreen
         authMode={authMode}
+        passwordRecovery={passwordRecovery}
         authEmail={authEmail}
         authPassword={authPassword}
+        recoveryPassword={recoveryPassword}
+        recoveryPasswordConfirm={recoveryPasswordConfirm}
         error={error}
         notice={notice}
         saving={authSaving}
@@ -251,7 +276,12 @@ function App() {
         onToggleTheme={toggleTheme}
         onEmailChange={setAuthEmail}
         onPasswordChange={setAuthPassword}
+        onRecoveryPasswordChange={setRecoveryPassword}
+        onRecoveryPasswordConfirmChange={setRecoveryPasswordConfirm}
         onSubmit={handleAuth}
+        onForgotPassword={() => void handleForgotPassword()}
+        onSubmitRecovery={(event) => void handlePasswordUpdate(event)}
+        onCancelRecovery={() => void handleCancelRecovery()}
         onToggleMode={() => {
           setAuthMode((mode) => mode === 'login' ? 'signup' : 'login')
           setError('')
@@ -274,7 +304,11 @@ function App() {
       />
 
       <Sidebar
-        leadsCount={leadsTotalCount}
+        leadsCount={
+          leadSummaryLoading || leadSummaryError
+            ? undefined
+            : summaryTotalLeads
+        }
         contactsCount={contacts.length}
         companiesCount={companies.length}
         userEmail={session.user.email}
@@ -300,7 +334,7 @@ function App() {
             />
           )}
           <div className="crm-topbar-inner">
-            <div className="flex min-w-0 items-center gap-[var(--space-3)]">
+            <div className="flex min-w-0 flex-1 items-center gap-[var(--space-2)] sm:gap-[var(--space-3)]">
               <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--radius-sm)] border border-[var(--glass-border)] bg-[var(--glass-bg-subtle)] lg:hidden">
                 <img
                   src="/brand/lead-flow-icon.svg"
@@ -309,7 +343,7 @@ function App() {
                   className="h-6 w-6"
                 />
               </span>
-              <h1 className="truncate text-[length:var(--text-lg)] font-[var(--font-weight-bold)] tracking-[var(--tracking-tight)] text-[var(--color-text-primary)] sm:text-[length:var(--text-xl)]">
+              <h1 className="crm-topbar-title">
                 {getSectionTitle(activeSection)}
               </h1>
             </div>
@@ -417,16 +451,20 @@ function App() {
               />
             ) : activeSection === 'overview' ? (
               <OverviewPage
-                leads={leads}
+                summary={leadSummary}
                 contactsCount={contacts.length}
                 companiesCount={companies.length}
-                loading={loading || contactsLoading || companiesLoading}
+                loading={leadSummaryLoading || contactsLoading || companiesLoading}
+                summaryError={leadSummaryError}
+                onRetrySummary={() => void reloadLeadSummary()}
                 onOpenLeads={() => handleNavigateSection('leads')}
               />
             ) : (
               <LeadsPage
                 leads={leads}
-                filteredLeads={filteredLeads}
+                summary={leadSummary}
+                summaryLoading={leadSummaryLoading}
+                summaryError={leadSummaryError}
                 totalCount={leadsTotalCount}
                 page={leadsPage}
                 totalPages={leadsTotalPages}
@@ -461,6 +499,7 @@ function App() {
                 onStageChange={handleLeadStageChange}
                 onClearFilters={resetFilters}
                 onPageChange={setLeadsPage}
+                onRetrySummary={() => void reloadLeadSummary()}
                 onSelectStage={(stage) => {
                   setStageFilter((current) =>
                     current === stage ? 'Todas' : stage,

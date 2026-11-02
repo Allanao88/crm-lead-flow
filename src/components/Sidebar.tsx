@@ -3,7 +3,7 @@ import type { ReactNode } from 'react'
 export type CrmSection = 'overview' | 'leads' | 'contacts' | 'companies' | 'inventory'
 
 type SidebarProps = {
-  leadsCount: number
+  leadsCount?: number
   contactsCount?: number
   companiesCount?: number
   userEmail: string | undefined

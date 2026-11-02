@@ -1,21 +1,38 @@
 import { useMemo } from 'react'
-import type { Lead } from '../leads/types'
+import { stages } from '../leads/constants'
+import type { LeadStageSummary } from '../leads/types'
 
-export function useSalesMetrics(leads: Lead[]) {
-  return useMemo(() => {
-    const openLeads = leads.filter((lead) => lead.stage !== 'Ganho')
-    const wonLeads = leads.filter((lead) => lead.stage === 'Ganho')
+export function calculateSalesMetrics(summary: LeadStageSummary) {
+  let totalLeads = 0
+  let openLeadsCount = 0
+  let pipelineSetup = 0
+  let pipelineMrr = 0
 
-    const sumField = (
-      items: Lead[],
-      field: 'setup_value' | 'mrr_value',
-    ) => items.reduce((total, lead) => total + Number(lead[field]), 0)
+  for (const stage of stages) {
+    const item = summary[stage]
+    totalLeads += item.leadCount
 
-    return {
-      pipelineSetup: sumField(openLeads, 'setup_value'),
-      pipelineMrr: sumField(openLeads, 'mrr_value'),
-      wonSetup: sumField(wonLeads, 'setup_value'),
-      wonMrr: sumField(wonLeads, 'mrr_value'),
+    if (stage !== 'Ganho') {
+      openLeadsCount += item.leadCount
+      pipelineSetup += item.setupTotal
+      pipelineMrr += item.mrrTotal
     }
-  }, [leads])
+  }
+
+  const won = summary.Ganho
+
+  return {
+    totalLeads,
+    openLeadsCount,
+    wonLeadsCount: won.leadCount,
+    negotiationCount: summary['Negociação'].leadCount,
+    pipelineSetup,
+    pipelineMrr,
+    wonSetup: won.setupTotal,
+    wonMrr: won.mrrTotal,
+  }
+}
+
+export function useSalesMetrics(summary: LeadStageSummary) {
+  return useMemo(() => calculateSalesMetrics(summary), [summary])
 }

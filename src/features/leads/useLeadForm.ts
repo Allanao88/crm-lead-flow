@@ -4,14 +4,22 @@ import type { Lead, LeadForm } from './types'
 import type { LeadProductItem } from './useLeadProducts'
 
 type UseLeadFormParams = {
-  saveLead: (form: LeadForm, editingLeadId: number | null, productItems: LeadProductItem[]) => Promise<boolean>
+  saveLead: (
+    form: LeadForm,
+    editingLeadId: number | null,
+    productItems: LeadProductItem[],
+  ) => Promise<boolean>
   setError: (message: string) => void
   setNotice: (message: string) => void
-  setSearch: (value: string) => void
-  setStageFilter: (value: string) => void
+  resetFilters: () => void
 }
 
-export function useLeadForm({ saveLead, setError, setNotice, setSearch, setStageFilter }: UseLeadFormParams) {
+export function useLeadForm({
+  saveLead,
+  setError,
+  setNotice,
+  resetFilters,
+}: UseLeadFormParams) {
   const [form, setForm] = useState<LeadForm>(emptyForm)
   const [showForm, setShowForm] = useState(false)
   const [editingLeadId, setEditingLeadId] = useState<number | null>(null)
@@ -50,8 +58,7 @@ export function useLeadForm({ saveLead, setError, setNotice, setSearch, setStage
     if (!saved) return false
 
     resetForm()
-    setSearch('')
-    setStageFilter('Todas')
+    resetFilters()
     return true
   }
 
@@ -79,7 +86,15 @@ export function useLeadForm({ saveLead, setError, setNotice, setSearch, setStage
   }
 
   return {
-    form, setForm, showForm, setShowForm, editingLeadId,
-    resetForm, startNewLead, cancelForm, handleCreateLead, handleEditLead,
+    form,
+    setForm,
+    showForm,
+    setShowForm,
+    editingLeadId,
+    resetForm,
+    startNewLead,
+    cancelForm,
+    handleCreateLead,
+    handleEditLead,
   }
 }

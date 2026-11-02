@@ -7,7 +7,6 @@ import { currency, stages, stageStyles } from './constants'
 
 type LeadsTableProps = {
   leads: Lead[]
-  filteredLeads: Lead[]
   totalCount: number
   page: number
   totalPages: number
@@ -23,7 +22,10 @@ type LeadsTableProps = {
   onStageChange: (lead: Lead, stage: Stage) => void | Promise<void>
 }
 
-function buildPageItems(page: number, totalPages: number): Array<number | 'ellipsis-start' | 'ellipsis-end'> {
+function buildPageItems(
+  page: number,
+  totalPages: number,
+): Array<number | 'ellipsis-start' | 'ellipsis-end'> {
   if (totalPages <= 7) {
     return Array.from({ length: totalPages }, (_, index) => index + 1)
   }
@@ -51,7 +53,6 @@ function buildPageItems(page: number, totalPages: number): Array<number | 'ellip
 
 export default function LeadsTable({
   leads,
-  filteredLeads,
   totalCount,
   page,
   totalPages,
@@ -66,8 +67,9 @@ export default function LeadsTable({
   onEditLead,
   onStageChange,
 }: LeadsTableProps) {
-  const hasActiveFilters = Boolean(search) || stageFilter !== 'Todas'
+  const hasActiveFilters = Boolean(search.trim()) || stageFilter !== 'Todas'
   const pageItems = buildPageItems(page, totalPages)
+
   return (
     <section id="leads" className="crm-panel">
       <div className="space-y-4 border-b border-[var(--glass-border)] p-5 sm:p-6">
@@ -79,7 +81,7 @@ export default function LeadsTable({
             </p>
           </div>
           <span className="text-[length:var(--text-xs)] font-[var(--font-weight-semibold)] text-[var(--color-text-muted)] tabular-nums">
-            {filteredLeads.length} resultado(s)
+            {totalCount} resultado(s)
           </span>
         </div>
 
@@ -91,7 +93,7 @@ export default function LeadsTable({
                 type="search"
                 value={search}
                 onChange={(event) => onSearchChange(event.target.value)}
-                placeholder="Nome, empresa, e-mail ou telefone"
+                placeholder="Nome, empresa ou e-mail"
               />
             )}
           </FormField>
@@ -138,10 +140,10 @@ export default function LeadsTable({
           <tbody className="crm-stagger-rows">
             {loading ? (
               <TableRowsSkeleton columns={6} rows={6} />
-            ) : filteredLeads.length === 0 ? (
+            ) : leads.length === 0 ? (
               <tr>
                 <td colSpan={6} className="p-0">
-                  {leads.length === 0 && !hasActiveFilters ? (
+                  {!hasActiveFilters ? (
                     <EmptyState
                       icon="leads"
                       title="Nenhum lead cadastrado"
@@ -153,7 +155,7 @@ export default function LeadsTable({
                     <EmptyState
                       icon="search"
                       title="Nenhum lead encontrado"
-                      description="Nenhuma oportunidade desta página corresponde aos filtros selecionados."
+                      description="Nenhuma oportunidade corresponde aos filtros selecionados."
                       actionLabel="Limpar filtros"
                       actionVariant="secondary"
                       onAction={onClearFilters}
@@ -162,7 +164,7 @@ export default function LeadsTable({
                 </td>
               </tr>
             ) : (
-              filteredLeads.map((lead) => (
+              leads.map((lead) => (
                 <tr key={lead.id}>
                   <td>
                     <button
@@ -223,7 +225,7 @@ export default function LeadsTable({
         className="flex flex-col items-center justify-between gap-3 border-t border-[var(--glass-border)] px-5 py-4 text-[length:var(--text-xs)] text-[var(--color-text-secondary)] sm:flex-row sm:px-6"
       >
         <span className="tabular-nums">
-          Exibindo {filteredLeads.length} de {totalCount} leads · Página {page} de {totalPages}
+          Exibindo {leads.length} de {totalCount} leads · Página {page} de {totalPages}
         </span>
 
         <div className="flex flex-wrap items-center justify-center gap-1.5">

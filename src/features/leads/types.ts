@@ -27,3 +27,18 @@ export type LeadForm = {
   setup_value: string
   mrr_value: string
 }
+
+export type LeadStageSummaryRow = {
+  stage: string
+  lead_count: number | string
+  setup_total: number | string
+  mrr_total: number | string
+}
+
+export type StageSummary = {
+  leadCount: number
+  setupTotal: number
+  mrrTotal: number
+}
+
+export type LeadStageSummary = Record<Stage, StageSummary>
