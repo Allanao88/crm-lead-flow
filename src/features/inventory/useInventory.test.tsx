@@ -27,7 +27,7 @@ const {
   let productsDb: DbProductRow[] = []
 
   const productUpdate = vi.fn(
-    (payload: { is_active?: boolean; updated_at?: string }) => ({
+    (payload: { is_active?: boolean }) => ({
       eq: vi.fn((_col: string, id: number) => ({
         select: vi.fn(async () => {
           let updated = false
@@ -236,6 +236,7 @@ describe('Desativar e reativar produtos de estoque (Fase 2)', () => {
     await waitFor(() => {
       expect(getProductsDb()[0].is_active).toBe(false)
     })
+    expect(mockProductUpdate).toHaveBeenCalledWith({ is_active: false })
     expect(mockProductDelete).not.toHaveBeenCalled()
     expect(screen.getByRole('status')).toHaveTextContent(
       'Produto desativado com sucesso.',
@@ -288,6 +289,7 @@ describe('Desativar e reativar produtos de estoque (Fase 2)', () => {
     await waitFor(() => {
       expect(getProductsDb()[0].is_active).toBe(true)
     })
+    expect(mockProductUpdate).toHaveBeenLastCalledWith({ is_active: true })
     expect(screen.getByRole('status')).toHaveTextContent(
       'Produto reativado com sucesso.',
     )

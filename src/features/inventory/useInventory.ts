@@ -192,7 +192,6 @@ export function useInventory(
         .from('inventory_products')
         .update({
           is_active: isActive,
-          updated_at: new Date().toISOString(),
         })
         .eq('id', productId)
         .select('id')
