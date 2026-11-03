@@ -11,7 +11,6 @@ CREATE INDEX IF NOT EXISTS leads_active_created_at_id_idx
 -- 2. Endurecimento de privilégios em leads e inventory_products (sem privilégios para anon e sem DELETE).
 REVOKE ALL ON TABLE public.leads FROM PUBLIC, anon;
 REVOKE DELETE, TRUNCATE, REFERENCES, TRIGGER ON TABLE public.leads FROM authenticated;
-GRANT UPDATE (archived_at) ON TABLE public.leads TO authenticated;
 
 REVOKE ALL ON TABLE public.inventory_products FROM PUBLIC, anon;
 REVOKE DELETE ON TABLE public.inventory_products FROM authenticated;
