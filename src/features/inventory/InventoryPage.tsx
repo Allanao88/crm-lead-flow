@@ -1,5 +1,6 @@
 import { useMemo, useState, type FormEvent } from 'react'
 import Button from '../../components/Button'
+import ConfirmDialog from '../../components/ConfirmDialog'
 import { MetricCardSkeleton } from '../../components/Skeleton'
 import type {
   InventoryMovement,
@@ -23,6 +24,10 @@ type InventoryPageProps = {
   onSaveProduct: (
     form: ProductForm,
     productId: number | null,
+  ) => Promise<boolean>
+  onSetProductActive: (
+    productId: number,
+    isActive: boolean,
   ) => Promise<boolean>
   onRegisterMovement: (
     form: MovementForm,
@@ -54,6 +59,7 @@ export default function InventoryPage({
   loading,
   saving,
   onSaveProduct,
+  onSetProductActive,
   onRegisterMovement,
   onReverseMovement,
   onError,
@@ -63,6 +69,8 @@ export default function InventoryPage({
   const [search, setSearch] = useState('')
   const [showProductForm, setShowProductForm] = useState(false)
   const [editingProductId, setEditingProductId] = useState<number | null>(null)
+  const [productToDeactivate, setProductToDeactivate] =
+    useState<InventoryProduct | null>(null)
   const [productForm, setProductForm] =
     useState<ProductForm>(emptyProductForm)
   const [showMovementForm, setShowMovementForm] = useState(false)
@@ -192,6 +200,13 @@ export default function InventoryPage({
     setReversingMovementId(movement.id)
     setReversalReason('')
     clearMessages()
+  }
+
+  async function handleConfirmDeactivate() {
+    if (!productToDeactivate) return
+
+    await onSetProductActive(productToDeactivate.id, false)
+    setProductToDeactivate(null)
   }
 
   return (
@@ -349,10 +364,19 @@ export default function InventoryPage({
             <InventoryProductsTable
               products={filteredProducts}
               loading={loading}
+              saving={saving}
               search={search}
               onSearchChange={setSearch}
               onCreateProduct={openNewProductForm}
               onEdit={openEditProductForm}
+              onDeactivate={(product) => {
+                clearMessages()
+                setProductToDeactivate(product)
+              }}
+              onReactivate={(product) => {
+                clearMessages()
+                void onSetProductActive(product.id, true)
+              }}
             />
           </div>
         ) : (
@@ -393,6 +417,23 @@ export default function InventoryPage({
           }}
         />
       )}
+      <ConfirmDialog
+        open={productToDeactivate !== null}
+        title="Desativar produto"
+        message={
+          productToDeactivate
+            ? `Desativar ${productToDeactivate.name}? Ele deixará de aparecer nas seleções de movimentação e de leads, mas o saldo e o histórico de movimentações serão preservados.`
+            : ''
+        }
+        confirmLabel="Desativar"
+        confirmVariant="danger"
+        busy={saving}
+        onConfirm={() => void handleConfirmDeactivate()}
+        onCancel={() => {
+          if (!saving) setProductToDeactivate(null)
+        }}
+      />
+
       <footer className="pb-2 text-center text-[length:var(--text-xs)] text-[var(--color-text-muted)]">
         LeadFlow CRM · AKS - Tech
       </footer>

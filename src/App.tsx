@@ -149,6 +149,7 @@ function App() {
     saving: inventorySaving,
     reload: reloadInventory,
     saveProduct,
+    setProductActive,
     registerMovement,
     reverseMovement,
   } = useInventory(activeSession?.user.id ?? null, setError, setNotice)
@@ -448,6 +449,7 @@ function App() {
                 loading={inventoryLoading}
                 saving={inventorySaving}
                 onSaveProduct={saveProduct}
+                onSetProductActive={setProductActive}
                 onRegisterMovement={registerMovement}
                 onReverseMovement={reverseMovement}
                 onError={setError}
