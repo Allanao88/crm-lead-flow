@@ -1,17 +1,17 @@
-import { useMemo, useState, type FormEvent } from 'react'
+import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import Button from '../../components/Button'
 import ConfirmDialog from '../../components/ConfirmDialog'
 import EmptyState from '../../components/EmptyState'
 import FormField from '../../components/FormField'
 import GlassDialog from '../../components/GlassDialog'
 import { TableRowsSkeleton } from '../../components/Skeleton'
-import type { Lead } from '../leads/types'
+import type { LeadOption } from '../leads/useLeadOptions'
 import type { Contact, ContactForm } from './types'
 import { emptyContactForm } from './types'
 
 type ContactsPageProps = {
   contacts: Contact[]
-  leads: Lead[]
+  leadOptions: LeadOption[]
   loading: boolean
   saving: boolean
   onSave: (
@@ -19,17 +19,19 @@ type ContactsPageProps = {
     editingContactId: number | null,
   ) => Promise<boolean>
   onDelete: (contactId: number) => Promise<boolean>
+  getLeadName?: (leadId: number) => Promise<string | null>
   onError: (message: string) => void
   onNotice: (message: string) => void
 }
 
 export default function ContactsPage({
   contacts,
-  leads,
+  leadOptions,
   loading,
   saving,
   onSave,
   onDelete,
+  getLeadName,
   onError,
   onNotice,
 }: ContactsPageProps) {
@@ -39,6 +41,78 @@ export default function ContactsPage({
   const [contactToDelete, setContactToDelete] = useState<Contact | null>(null)
   const [form, setForm] = useState<ContactForm>(emptyContactForm)
   const [nameTouched, setNameTouched] = useState(false)
+  const [customLeadNames, setCustomLeadNames] = useState<Record<number, string>>({})
+
+  // Mapeia nomes de leads já presentes em leadOptions
+  const leadOptionsMap = useMemo(() => {
+    const map = new Map<number, string>()
+    for (const lead of leadOptions) {
+      map.set(lead.id, lead.name)
+    }
+    return map
+  }, [leadOptions])
+
+  // Busca nomes de leads vinculados a contatos que não estão em leadOptions (ex.: leads arquivados)
+  useEffect(() => {
+    const missingLeadIds = contacts
+      .map((c) => c.lead_id)
+      .filter((id): id is number => id !== null && !leadOptionsMap.has(id) && !(id in customLeadNames))
+
+    if (missingLeadIds.length === 0 || !getLeadName) return
+
+    let isCurrent = true
+    const uniqueIds = Array.from(new Set(missingLeadIds))
+
+    void Promise.all(
+      uniqueIds.map(async (id) => {
+        const name = await getLeadName(id)
+        return { id, name }
+      }),
+    ).then((results) => {
+      if (!isCurrent) return
+      setCustomLeadNames((prev) => {
+        const next = { ...prev }
+        let changed = false
+        for (const { id, name } of results) {
+          if (name && next[id] !== name) {
+            next[id] = name
+            changed = true
+          }
+        }
+        return changed ? next : prev
+      })
+    })
+
+    return () => {
+      isCurrent = false
+    }
+  }, [contacts, leadOptionsMap, customLeadNames, getLeadName])
+
+  // Quando abre a confirmação de exclusão, busca o nome do lead vinculado caso não esteja em cache
+  useEffect(() => {
+    if (!contactToDelete || contactToDelete.lead_id === null) {
+      return
+    }
+
+    const leadId = contactToDelete.lead_id
+    const cachedName = leadOptionsMap.get(leadId) || customLeadNames[leadId]
+
+    if (cachedName) {
+      return
+    }
+
+    if (getLeadName) {
+      let isCurrent = true
+      void getLeadName(leadId).then((name) => {
+        if (isCurrent && name) {
+          setCustomLeadNames((prev) => ({ ...prev, [leadId]: name }))
+        }
+      })
+      return () => {
+        isCurrent = false
+      }
+    }
+  }, [contactToDelete, leadOptionsMap, customLeadNames, getLeadName])
 
   const filteredContacts = useMemo(() => {
     const term = search.trim().toLowerCase()
@@ -245,23 +319,36 @@ export default function ContactsPage({
           </FormField>
 
           <FormField label="Lead relacionado" className="sm:col-span-2">
-            {(fieldProps) => (
-              <select
-                {...fieldProps}
-                value={form.lead_id}
-                onChange={(event) =>
-                  setForm({ ...form, lead_id: event.target.value })
-                }
-              >
-                <option value="">Nenhum lead vinculado</option>
-                {leads.map((lead) => (
-                  <option key={lead.id} value={lead.id}>
-                    {lead.name}
-                    {lead.company ? ` — ${lead.company}` : ''}
-                  </option>
-                ))}
-              </select>
-            )}
+            {(fieldProps) => {
+              const currentLeadId = form.lead_id ? Number(form.lead_id) : null
+              const isCurrentLeadArchivedOrExtra =
+                currentLeadId !== null &&
+                !leadOptionsMap.has(currentLeadId) &&
+                Boolean(customLeadNames[currentLeadId])
+
+              return (
+                <select
+                  {...fieldProps}
+                  value={form.lead_id}
+                  onChange={(event) =>
+                    setForm({ ...form, lead_id: event.target.value })
+                  }
+                >
+                  <option value="">Nenhum lead vinculado</option>
+                  {isCurrentLeadArchivedOrExtra && (
+                    <option key={currentLeadId} value={currentLeadId}>
+                      {customLeadNames[currentLeadId]} (arquivado)
+                    </option>
+                  )}
+                  {leadOptions.map((lead) => (
+                    <option key={lead.id} value={lead.id}>
+                      {lead.name}
+                      {lead.company ? ` — ${lead.company}` : ''}
+                    </option>
+                  ))}
+                </select>
+              )
+            }}
           </FormField>
 
           <FormField label="Observações" className="sm:col-span-2">
@@ -372,9 +459,10 @@ export default function ContactsPage({
                 </tr>
               ) : (
                 filteredContacts.map((contact) => {
-                  const relatedLead = leads.find(
-                    (lead) => lead.id === contact.lead_id,
-                  )
+                  const relatedLeadName =
+                    (contact.lead_id !== null
+                      ? leadOptionsMap.get(contact.lead_id) || customLeadNames[contact.lead_id]
+                      : null) || null
 
                   return (
                     <tr key={contact.id}>
@@ -407,9 +495,9 @@ export default function ContactsPage({
                         )}
                       </td>
                       <td>
-                        {relatedLead ? (
+                        {relatedLeadName ? (
                           <span className="text-[var(--color-text-primary)]">
-                            {relatedLead.name}
+                            {relatedLeadName}
                           </span>
                         ) : (
                           '—'
@@ -464,12 +552,12 @@ export default function ContactsPage({
             : contactToDelete.lead_id === null
               ? `Excluir ${contactToDelete.name}? Esta ação não pode ser desfeita.`
               : (() => {
-                  const relatedLead = leads.find(
-                    (lead) => lead.id === contactToDelete.lead_id,
-                  )
+                  const leadName =
+                    leadOptionsMap.get(contactToDelete.lead_id) ||
+                    customLeadNames[contactToDelete.lead_id]
 
-                  return relatedLead
-                    ? `Excluir ${contactToDelete.name}? Este contato está vinculado ao lead "${relatedLead.name}"; o lead não será alterado. Esta ação não pode ser desfeita.`
+                  return leadName
+                    ? `Excluir ${contactToDelete.name}? Este contato está vinculado ao lead "${leadName}"; o lead não será alterado. Esta ação não pode ser desfeita.`
                     : `Excluir ${contactToDelete.name}? Este contato possui lead vinculado; o lead não será alterado. Esta ação não pode ser desfeita.`
                 })()
         }
