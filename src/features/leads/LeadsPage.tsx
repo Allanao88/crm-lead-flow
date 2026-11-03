@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
+import ConfirmDialog from '../../components/ConfirmDialog'
 import LeadFormPanel from './LeadFormPanel'
 import LeadsTable from './LeadsTable'
 import SalesPipeline from './SalesPipeline'
@@ -19,6 +20,7 @@ type LeadsPageProps = {
   saving: boolean
   search: string
   stageFilter: string
+  showArchived: boolean
   form: LeadForm
   showForm: boolean
   editingLeadId: number | null
@@ -29,6 +31,7 @@ type LeadsPageProps = {
   error: string
   onSearchChange: (value: string) => void
   onStageFilterChange: (value: string) => void
+  onShowArchivedChange: (value: boolean) => void
   onFormChange: (form: LeadForm) => void
   onSubmit: (event: FormEvent<HTMLFormElement>) => void
   onCreateLead: () => void
@@ -36,6 +39,7 @@ type LeadsPageProps = {
   onQuantityChange: (productId: number, quantity: string) => void
   onEditLead: (lead: Lead) => void
   onStageChange: (lead: Lead, stage: Stage) => void | Promise<void>
+  onSetLeadArchived: (lead: Lead, archived: boolean) => Promise<boolean>
   onClearFilters: () => void
   onPageChange: (page: number) => void
   onSelectStage: (stage: string) => void
@@ -54,6 +58,7 @@ export default function LeadsPage({
   saving,
   search,
   stageFilter,
+  showArchived,
   form,
   showForm,
   editingLeadId,
@@ -64,6 +69,7 @@ export default function LeadsPage({
   error,
   onSearchChange,
   onStageFilterChange,
+  onShowArchivedChange,
   onFormChange,
   onSubmit,
   onCreateLead,
@@ -71,6 +77,7 @@ export default function LeadsPage({
   onQuantityChange,
   onEditLead,
   onStageChange,
+  onSetLeadArchived,
   onClearFilters,
   onPageChange,
   onSelectStage,
@@ -81,6 +88,8 @@ export default function LeadsPage({
     to: Stage
   } | null>(null)
   const movedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const [leadToArchive, setLeadToArchive] = useState<Lead | null>(null)
+  const [leadToRestore, setLeadToRestore] = useState<Lead | null>(null)
 
   useEffect(() => {
     return () => {
@@ -147,16 +156,64 @@ export default function LeadsPage({
         page={page}
         totalPages={totalPages}
         loading={loading}
+        saving={saving}
         search={search}
         stageFilter={stageFilter}
+        showArchived={showArchived}
         onSearchChange={onSearchChange}
         onStageFilterChange={onStageFilterChange}
+        onShowArchivedChange={onShowArchivedChange}
         onClearFilters={onClearFilters}
         onPageChange={onPageChange}
         onCreateLead={onCreateLead}
         onEditLead={onEditLead}
         onStageChange={handleStageMove}
+        onArchiveLead={(lead) => setLeadToArchive(lead)}
+        onRestoreLead={(lead) => setLeadToRestore(lead)}
       />
+
+      <ConfirmDialog
+        open={leadToArchive !== null}
+        title="Arquivar lead"
+        message={
+          leadToArchive
+            ? `Deseja arquivar o lead "${leadToArchive.name}"? Ele deixará de ser contabilizado no funil e nos indicadores comerciais, mas poderá ser visualizado e restaurado a qualquer momento.`
+            : ''
+        }
+        confirmLabel="Arquivar"
+        confirmVariant="danger"
+        busy={saving}
+        onConfirm={async () => {
+          if (!leadToArchive) return
+          const ok = await onSetLeadArchived(leadToArchive, true)
+          if (ok) setLeadToArchive(null)
+        }}
+        onCancel={() => {
+          if (!saving) setLeadToArchive(null)
+        }}
+      />
+
+      <ConfirmDialog
+        open={leadToRestore !== null}
+        title="Restaurar lead"
+        message={
+          leadToRestore
+            ? `Deseja restaurar o lead "${leadToRestore.name}"? Ele voltará para a lista ativa e para os cálculos do pipeline comercial.`
+            : ''
+        }
+        confirmLabel="Restaurar"
+        confirmVariant="primary"
+        busy={saving}
+        onConfirm={async () => {
+          if (!leadToRestore) return
+          const ok = await onSetLeadArchived(leadToRestore, false)
+          if (ok) setLeadToRestore(null)
+        }}
+        onCancel={() => {
+          if (!saving) setLeadToRestore(null)
+        }}
+      />
+
       <footer className="pb-2 text-center text-[length:var(--text-xs)] text-[var(--color-text-muted)]">
         LeadFlow CRM · AKS - Tech
       </footer>

@@ -11,15 +11,20 @@ type LeadsTableProps = {
   page: number
   totalPages: number
   loading: boolean
+  saving?: boolean
   search: string
   stageFilter: string
+  showArchived: boolean
   onSearchChange: (value: string) => void
   onStageFilterChange: (value: string) => void
+  onShowArchivedChange: (value: boolean) => void
   onClearFilters: () => void
   onPageChange: (page: number) => void
   onCreateLead: () => void
   onEditLead: (lead: Lead) => void
   onStageChange: (lead: Lead, stage: Stage) => void | Promise<void>
+  onArchiveLead: (lead: Lead) => void
+  onRestoreLead: (lead: Lead) => void
 }
 
 function buildPageItems(
@@ -57,17 +62,23 @@ export default function LeadsTable({
   page,
   totalPages,
   loading,
+  saving = false,
   search,
   stageFilter,
+  showArchived,
   onSearchChange,
   onStageFilterChange,
+  onShowArchivedChange,
   onClearFilters,
   onPageChange,
   onCreateLead,
   onEditLead,
   onStageChange,
+  onArchiveLead,
+  onRestoreLead,
 }: LeadsTableProps) {
-  const hasActiveFilters = Boolean(search.trim()) || stageFilter !== 'Todas'
+  const hasActiveFilters =
+    Boolean(search.trim()) || stageFilter !== 'Todas' || showArchived
   const pageItems = buildPageItems(page, totalPages)
 
   return (
@@ -115,10 +126,20 @@ export default function LeadsTable({
             )}
           </FormField>
 
+          <label className="glass-subtle inline-flex min-h-[42px] cursor-pointer items-center gap-2 rounded-[var(--radius-sm)] border border-[var(--glass-border)] px-3 py-2 text-[length:var(--text-xs)] font-[var(--font-weight-medium)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]">
+            <input
+              type="checkbox"
+              checked={showArchived}
+              onChange={(event) => onShowArchivedChange(event.target.checked)}
+              className="crm-checkbox h-4 w-4 rounded accent-[var(--color-brand)]"
+            />
+            <span>Mostrar arquivados</span>
+          </label>
+
           <Button
             variant="secondary"
             onClick={onClearFilters}
-            disabled={!search && stageFilter === 'Todas'}
+            disabled={!search && stageFilter === 'Todas' && !showArchived}
           >
             Limpar filtros
           </Button>
@@ -135,14 +156,15 @@ export default function LeadsTable({
               <th className="text-right">SETUP</th>
               <th className="text-right">MRR/mês</th>
               <th className="text-right">Criado em</th>
+              <th className="text-right">Ações</th>
             </tr>
           </thead>
           <tbody className="crm-stagger-rows">
             {loading ? (
-              <TableRowsSkeleton columns={6} rows={6} />
+              <TableRowsSkeleton columns={7} rows={6} />
             ) : leads.length === 0 ? (
               <tr>
-                <td colSpan={6} className="p-0">
+                <td colSpan={7} className="p-0">
                   {!hasActiveFilters ? (
                     <EmptyState
                       icon="leads"
@@ -164,57 +186,108 @@ export default function LeadsTable({
                 </td>
               </tr>
             ) : (
-              leads.map((lead) => (
-                <tr key={lead.id}>
-                  <td>
-                    <button
-                      type="button"
-                      onClick={() => onEditLead(lead)}
-                      className="min-h-6 text-left font-[var(--font-weight-semibold)] text-[var(--color-text-primary)] hover:text-[var(--color-brand)] hover:underline"
-                      title="Editar lead"
-                    >
-                      {lead.name}
-                    </button>
-                    <p className="mt-1 text-[length:var(--text-xs)] text-[var(--color-text-muted)]">
-                      {lead.email || lead.phone || 'Sem contato informado'}
-                    </p>
-                  </td>
-                  <td>
-                    <span className="text-[var(--color-text-primary)]">
-                      {lead.company || '—'}
-                    </span>
-                  </td>
-                  <td>
-                    <select
-                      aria-label={`Etapa de ${lead.name}`}
-                      value={lead.stage}
-                      onChange={(event) =>
-                        void onStageChange(lead, event.target.value as Stage)
-                      }
-                      className={`crm-stage-select ${stageStyles[lead.stage]}`}
-                    >
-                      {stages.map((stage) => (
-                        <option key={stage} value={stage}>
-                          {stage}
-                        </option>
-                      ))}
-                    </select>
-                  </td>
-                  <td className="text-right tabular-nums">
-                    <span className="font-[var(--font-weight-semibold)] text-[var(--color-text-primary)]">
-                      {currency(Number(lead.setup_value))}
-                    </span>
-                  </td>
-                  <td className="text-right tabular-nums">
-                    <span className="font-[var(--font-weight-semibold)] text-[var(--color-positive-text)]">
-                      {currency(Number(lead.mrr_value))}
-                    </span>
-                  </td>
-                  <td className="text-right tabular-nums">
-                    {new Date(lead.created_at).toLocaleDateString('pt-BR')}
-                  </td>
-                </tr>
-              ))
+              leads.map((lead) => {
+                const isArchived = Boolean(lead.archived_at)
+
+                return (
+                  <tr key={lead.id}>
+                    <td>
+                      <div className="flex items-center gap-2">
+                        {isArchived ? (
+                          <span
+                            className="font-[var(--font-weight-semibold)] text-[var(--color-text-primary)]"
+                            title={lead.name}
+                          >
+                            {lead.name}
+                          </span>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => onEditLead(lead)}
+                            disabled={saving}
+                            className="min-h-6 text-left font-[var(--font-weight-semibold)] text-[var(--color-text-primary)] hover:text-[var(--color-brand)] hover:underline"
+                            title="Editar lead"
+                          >
+                            {lead.name}
+                          </button>
+                        )}
+                        {isArchived && (
+                          <span className="crm-badge crm-badge--neutral">
+                            Arquivado
+                          </span>
+                        )}
+                      </div>
+                      <p className="mt-1 text-[length:var(--text-xs)] text-[var(--color-text-muted)]">
+                        {lead.email || lead.phone || 'Sem contato informado'}
+                      </p>
+                    </td>
+                    <td>
+                      <span className="text-[var(--color-text-primary)]">
+                        {lead.company || '—'}
+                      </span>
+                    </td>
+                    <td>
+                      {isArchived ? (
+                        <span className={stageStyles[lead.stage]}>
+                          {lead.stage}
+                        </span>
+                      ) : (
+                        <select
+                          aria-label={`Etapa de ${lead.name}`}
+                          value={lead.stage}
+                          disabled={saving}
+                          onChange={(event) =>
+                            void onStageChange(lead, event.target.value as Stage)
+                          }
+                          className={`crm-stage-select ${stageStyles[lead.stage]}`}
+                        >
+                          {stages.map((stage) => (
+                            <option key={stage} value={stage}>
+                              {stage}
+                            </option>
+                          ))}
+                        </select>
+                      )}
+                    </td>
+                    <td className="text-right tabular-nums">
+                      <span className="font-[var(--font-weight-semibold)] text-[var(--color-text-primary)]">
+                        {currency(Number(lead.setup_value))}
+                      </span>
+                    </td>
+                    <td className="text-right tabular-nums">
+                      <span className="font-[var(--font-weight-semibold)] text-[var(--color-positive-text)]">
+                        {currency(Number(lead.mrr_value))}
+                      </span>
+                    </td>
+                    <td className="text-right tabular-nums">
+                      {new Date(lead.created_at).toLocaleDateString('pt-BR')}
+                    </td>
+                    <td className="text-right">
+                      {isArchived ? (
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          disabled={saving}
+                          title={`Restaurar ${lead.name}`}
+                          onClick={() => onRestoreLead(lead)}
+                        >
+                          Restaurar
+                        </Button>
+                      ) : (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          disabled={saving}
+                          title={`Arquivar ${lead.name}`}
+                          onClick={() => onArchiveLead(lead)}
+                        >
+                          Arquivar
+                        </Button>
+                      )}
+                    </td>
+                  </tr>
+                )
+              })
             )}
           </tbody>
         </table>

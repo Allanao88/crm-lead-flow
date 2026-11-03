@@ -96,6 +96,7 @@ const sampleLead: Lead = {
   stage: 'Proposta',
   setup_value: 5000,
   mrr_value: 1200,
+  archived_at: null,
   created_at: '2026-10-20T12:00:00Z',
   updated_at: '2026-10-20T12:00:00Z',
 }
