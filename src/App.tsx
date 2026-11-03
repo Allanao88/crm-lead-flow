@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useState, type FormEvent } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useState, type FormEvent } from 'react'
 import { flushSync } from 'react-dom'
 
 import AuthScreen from './components/AuthScreen'
@@ -15,6 +15,7 @@ import { useInventory } from './features/inventory/useInventory'
 import { useLeadProducts } from './features/leads/useLeadProducts'
 import { useLeadForm } from './features/leads/useLeadForm'
 import type { Lead, Stage } from './features/leads/types'
+import { useLeadOptions } from './features/leads/useLeadOptions'
 import { useLeads } from './features/leads/useLeads'
 import { useLeadSummary } from './features/leads/useLeadSummary'
 import { useSalesMetrics } from './features/overview/useSalesMetrics'
@@ -105,6 +106,16 @@ function App() {
   const { totalLeads: summaryTotalLeads } = useSalesMetrics(leadSummary)
 
   const {
+    leadOptions,
+    reload: reloadLeadOptions,
+    getLeadName,
+  } = useLeadOptions(activeSession, setError, setNotice)
+
+  const handleLeadsChanged = useCallback(async () => {
+    await Promise.all([reloadLeadSummary(), reloadLeadOptions()])
+  }, [reloadLeadSummary, reloadLeadOptions])
+
+  const {
     leads,
     totalCount: leadsTotalCount,
     page: leadsPage,
@@ -126,7 +137,7 @@ function App() {
     activeSession,
     setError,
     setNotice,
-    reloadLeadSummary,
+    handleLeadsChanged,
   )
 
   const {
@@ -427,11 +438,12 @@ function App() {
             {activeSection === 'contacts' ? (
               <ContactsPage
                 contacts={contacts}
-                leads={leads}
+                leadOptions={leadOptions}
                 loading={contactsLoading}
                 saving={contactSaving}
                 onSave={saveContact}
                 onDelete={deleteContact}
+                getLeadName={getLeadName}
                 onError={setError}
                 onNotice={setNotice}
               />

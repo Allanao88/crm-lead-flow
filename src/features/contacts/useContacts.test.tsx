@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import type { Session } from '@supabase/supabase-js'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import type { Lead } from '../leads/types'
+import type { LeadOption } from '../leads/useLeadOptions'
 import ContactsPage from './ContactsPage'
 import type { Contact } from './types'
 import { useContacts } from './useContacts'
@@ -46,7 +46,13 @@ const mockSession = {
   user: { id: 'user-1', email: 'allan@empresa.com.br' },
 } as Session
 
-function ContactsHarness({ leads = [] }: { leads?: Lead[] }) {
+function ContactsHarness({
+  leadOptions = [],
+  getLeadName,
+}: {
+  leadOptions?: LeadOption[]
+  getLeadName?: (id: number) => Promise<string | null>
+}) {
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
   const { contacts, loading, saving, saveContact, deleteContact } = useContacts(
@@ -61,11 +67,12 @@ function ContactsHarness({ leads = [] }: { leads?: Lead[] }) {
       {notice && <p role="status">{notice}</p>}
       <ContactsPage
         contacts={contacts}
-        leads={leads}
+        leadOptions={leadOptions}
         loading={loading}
         saving={saving}
         onSave={saveContact}
         onDelete={deleteContact}
+        getLeadName={getLeadName}
         onError={setError}
         onNotice={setNotice}
       />
@@ -87,18 +94,10 @@ const sampleContact: Contact = {
   updated_at: '2026-10-25T12:00:00Z',
 }
 
-const sampleLead: Lead = {
+const sampleLeadOption: LeadOption = {
   id: 7,
   name: 'Expansão Cloud',
   company: 'Cliente S.A.',
-  email: 'comercial@cliente.com.br',
-  phone: null,
-  stage: 'Proposta',
-  setup_value: 5000,
-  mrr_value: 1200,
-  archived_at: null,
-  created_at: '2026-10-20T12:00:00Z',
-  updated_at: '2026-10-20T12:00:00Z',
 }
 
 describe('useContacts e ContactsPage — criar e excluir contato (Fase 1)', () => {
@@ -182,7 +181,7 @@ describe('useContacts e ContactsPage — criar e excluir contato (Fase 1)', () =
       error: null,
     })
 
-    render(<ContactsHarness leads={[sampleLead]} />)
+    render(<ContactsHarness leadOptions={[sampleLeadOption]} />)
 
     const brunoRow = (await screen.findByText('Bruno Lima')).closest('tr')!
     fireEvent.click(within(brunoRow).getByRole('button', { name: 'Excluir' }))
