@@ -131,6 +131,7 @@ function App() {
     loading: contactsLoading,
     saving: contactSaving,
     saveContact,
+    deleteContact,
   } = useContacts(activeSession, setError, setNotice)
 
   const {
@@ -138,6 +139,7 @@ function App() {
     loading: companiesLoading,
     saving: companySaving,
     saveCompany,
+    deleteCompany,
   } = useCompanies(activeSession, setError, setNotice)
 
   const {
@@ -425,6 +427,7 @@ function App() {
                 loading={contactsLoading}
                 saving={contactSaving}
                 onSave={saveContact}
+                onDelete={deleteContact}
                 onError={setError}
                 onNotice={setNotice}
               />
@@ -434,6 +437,7 @@ function App() {
                 loading={companiesLoading}
                 saving={companySaving}
                 onSave={saveCompany}
+                onDelete={deleteCompany}
                 onError={setError}
                 onNotice={setNotice}
               />

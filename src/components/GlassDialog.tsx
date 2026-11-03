@@ -53,9 +53,11 @@ export default function GlassDialog({
 
     const panel = panelRef.current
     if (panel) {
-      const preferred = panel.querySelector<HTMLElement>(
-        '[data-autofocus], input:not(:disabled), select:not(:disabled), textarea:not(:disabled), button:not(:disabled)',
-      )
+      const preferred =
+        panel.querySelector<HTMLElement>('[data-autofocus]:not(:disabled)') ??
+        panel.querySelector<HTMLElement>(
+          'input:not(:disabled), select:not(:disabled), textarea:not(:disabled), button:not(:disabled)',
+        )
       preferred?.focus()
     }
 

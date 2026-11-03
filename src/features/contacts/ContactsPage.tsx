@@ -1,5 +1,6 @@
 import { useMemo, useState, type FormEvent } from 'react'
 import Button from '../../components/Button'
+import ConfirmDialog from '../../components/ConfirmDialog'
 import EmptyState from '../../components/EmptyState'
 import FormField from '../../components/FormField'
 import GlassDialog from '../../components/GlassDialog'
@@ -17,6 +18,7 @@ type ContactsPageProps = {
     form: ContactForm,
     editingContactId: number | null,
   ) => Promise<boolean>
+  onDelete: (contactId: number) => Promise<boolean>
   onError: (message: string) => void
   onNotice: (message: string) => void
 }
@@ -27,12 +29,14 @@ export default function ContactsPage({
   loading,
   saving,
   onSave,
+  onDelete,
   onError,
   onNotice,
 }: ContactsPageProps) {
   const [search, setSearch] = useState('')
   const [showForm, setShowForm] = useState(false)
   const [editingContactId, setEditingContactId] = useState<number | null>(null)
+  const [contactToDelete, setContactToDelete] = useState<Contact | null>(null)
   const [form, setForm] = useState<ContactForm>(emptyContactForm)
   const [nameTouched, setNameTouched] = useState(false)
 
@@ -93,6 +97,18 @@ export default function ContactsPage({
       resetForm(false)
       setSearch('')
     }
+  }
+
+  async function handleConfirmDelete() {
+    if (!contactToDelete) return
+
+    const deleted = await onDelete(contactToDelete.id)
+
+    if (deleted && editingContactId === contactToDelete.id) {
+      resetForm(false)
+    }
+
+    setContactToDelete(null)
   }
 
   const nameError =
@@ -318,14 +334,15 @@ export default function ContactsPage({
                 <th>Lead relacionado</th>
                 <th>Origem</th>
                 <th className="text-right">Cadastro</th>
+                <th className="text-right">Ações</th>
               </tr>
             </thead>
             <tbody className="crm-stagger-rows">
               {loading ? (
-                <TableRowsSkeleton columns={5} rows={5} />
+                <TableRowsSkeleton columns={6} rows={5} />
               ) : filteredContacts.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="p-0">
+                  <td colSpan={6} className="p-0">
                     {contacts.length === 0 ? (
                       <EmptyState
                         icon="contacts"
@@ -410,6 +427,21 @@ export default function ContactsPage({
                       <td className="text-right tabular-nums">
                         {new Date(contact.created_at).toLocaleDateString('pt-BR')}
                       </td>
+                      <td className="text-right">
+                        <Button
+                          variant="danger"
+                          size="sm"
+                          disabled={saving}
+                          title={`Excluir ${contact.name}`}
+                          onClick={() => {
+                            onError('')
+                            onNotice('')
+                            setContactToDelete(contact)
+                          }}
+                        >
+                          Excluir
+                        </Button>
+                      </td>
                     </tr>
                   )
                 })
@@ -422,6 +454,23 @@ export default function ContactsPage({
           Exibindo {filteredContacts.length} de {contacts.length} contatos
         </div>
       </section>
+
+      <ConfirmDialog
+        open={contactToDelete !== null}
+        title="Excluir contato"
+        message={
+          contactToDelete
+            ? `Excluir ${contactToDelete.name}? Esta ação não pode ser desfeita.`
+            : ''
+        }
+        confirmLabel="Excluir"
+        confirmVariant="danger"
+        busy={saving}
+        onConfirm={() => void handleConfirmDelete()}
+        onCancel={() => {
+          if (!saving) setContactToDelete(null)
+        }}
+      />
 
       <footer className="pb-2 text-center text-[length:var(--text-xs)] text-[var(--color-text-muted)]">
         LeadFlow CRM · AKS - Tech

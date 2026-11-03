@@ -12,6 +12,15 @@ import type { Contact, ContactForm } from './types'
 const contactFields =
   'id, name, email, phone, company, job_title, notes, source, lead_id, created_at, updated_at'
 
+function isForeignKeyViolation(error: { code?: string; message?: string }) {
+  return (
+    error.code === '23503' ||
+    /violates foreign key constraint|foreign key constraint/i.test(
+      error.message ?? '',
+    )
+  )
+}
+
 type UseContactsResult = {
   contacts: Contact[]
   loading: boolean
@@ -20,6 +29,7 @@ type UseContactsResult = {
     form: ContactForm,
     editingContactId: number | null,
   ) => Promise<boolean>
+  deleteContact: (contactId: number) => Promise<boolean>
 }
 
 export function useContacts(
@@ -189,10 +199,62 @@ export function useContacts(
     }
   }
 
+  async function deleteContact(contactId: number): Promise<boolean> {
+    setError('')
+    setNotice('')
+
+    if (!session) {
+      setError('Sua sessão expirou. Entre novamente para excluir o contato.')
+      return false
+    }
+
+    setSaving(true)
+
+    try {
+      const { data, error } = await supabase
+        .from('contacts')
+        .delete()
+        .eq('id', contactId)
+        .select('id')
+
+      if (error) {
+        setError(
+          isForeignKeyViolation(error)
+            ? 'Não é possível excluir este contato porque ele está vinculado a outros registros.'
+            : `Não foi possível excluir o contato: ${error.message}`,
+        )
+        return false
+      }
+
+      if (!Array.isArray(data) || data.length === 0) {
+        setError(
+          'Não foi possível excluir o contato: registro não encontrado ou sem permissão.',
+        )
+        return false
+      }
+
+      setContacts((current) =>
+        current.filter((contact) => contact.id !== contactId),
+      )
+      setNotice('Contato excluído com sucesso.')
+      return true
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? `Não foi possível excluir o contato: ${err.message}`
+          : 'Não foi possível excluir o contato.',
+      )
+      return false
+    } finally {
+      setSaving(false)
+    }
+  }
+
   return {
     contacts,
     loading: session ? loading : false,
     saving,
     saveContact,
+    deleteContact,
   }
 }

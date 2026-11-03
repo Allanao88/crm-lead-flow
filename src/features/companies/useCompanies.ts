@@ -12,6 +12,15 @@ import type { Company, CompanyForm } from './types'
 const companyFields =
   'id, user_id, name, cnpj, website, email, phone, industry, address, notes, created_at, updated_at'
 
+function isForeignKeyViolation(error: { code?: string; message?: string }) {
+  return (
+    error.code === '23503' ||
+    /violates foreign key constraint|foreign key constraint/i.test(
+      error.message ?? '',
+    )
+  )
+}
+
 type UseCompaniesResult = {
   companies: Company[]
   loading: boolean
@@ -20,6 +29,7 @@ type UseCompaniesResult = {
     form: CompanyForm,
     editingCompanyId: number | null,
   ) => Promise<boolean>
+  deleteCompany: (companyId: number) => Promise<boolean>
 }
 
 export function useCompanies(
@@ -184,10 +194,63 @@ export function useCompanies(
     }
   }
 
+  async function deleteCompany(companyId: number): Promise<boolean> {
+    setError('')
+    setNotice('')
+
+    if (!session?.user.id) {
+      setError('Sua sessão expirou. Entre novamente para excluir a empresa.')
+      return false
+    }
+
+    setSaving(true)
+
+    try {
+      const { data, error } = await supabase
+        .from('companies')
+        .delete()
+        .eq('id', companyId)
+        .eq('user_id', session.user.id)
+        .select('id')
+
+      if (error) {
+        setError(
+          isForeignKeyViolation(error)
+            ? 'Não é possível excluir esta empresa porque ela está vinculada a outros registros.'
+            : `Não foi possível excluir a empresa: ${error.message}`,
+        )
+        return false
+      }
+
+      if (!Array.isArray(data) || data.length === 0) {
+        setError(
+          'Não foi possível excluir a empresa: registro não encontrado ou sem permissão.',
+        )
+        return false
+      }
+
+      setCompanies((current) =>
+        current.filter((company) => company.id !== companyId),
+      )
+      setNotice('Empresa excluída com sucesso.')
+      return true
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? `Não foi possível excluir a empresa: ${err.message}`
+          : 'Não foi possível excluir a empresa.',
+      )
+      return false
+    } finally {
+      setSaving(false)
+    }
+  }
+
   return {
     companies,
     loading: session ? loading : false,
     saving,
     saveCompany,
+    deleteCompany,
   }
 }
