@@ -426,7 +426,7 @@ export default function CompaniesPage({
         title="Excluir empresa"
         message={
           companyToDelete
-            ? `Excluir ${companyToDelete.name}? Esta ação não pode ser desfeita.`
+            ? `Excluir ${companyToDelete.name}? Contatos e leads com este nome de empresa não serão alterados. Esta ação não pode ser desfeita.`
             : ''
         }
         confirmLabel="Excluir"

@@ -116,7 +116,7 @@ describe('useCompanies e CompaniesPage — criar e excluir empresa (Fase 1)', ()
     const dialog = await screen.findByRole('dialog')
     expect(
       within(dialog).getByText(
-        'Excluir AKS Tech Ltda? Esta ação não pode ser desfeita.',
+        'Excluir AKS Tech Ltda? Contatos e leads com este nome de empresa não serão alterados. Esta ação não pode ser desfeita.',
       ),
     ).toBeInTheDocument()
     expect(

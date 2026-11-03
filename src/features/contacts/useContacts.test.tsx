@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import type { Session } from '@supabase/supabase-js'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import type { Lead } from '../leads/types'
 import ContactsPage from './ContactsPage'
 import type { Contact } from './types'
 import { useContacts } from './useContacts'
@@ -45,7 +46,7 @@ const mockSession = {
   user: { id: 'user-1', email: 'allan@empresa.com.br' },
 } as Session
 
-function ContactsHarness() {
+function ContactsHarness({ leads = [] }: { leads?: Lead[] }) {
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
   const { contacts, loading, saving, saveContact, deleteContact } = useContacts(
@@ -60,7 +61,7 @@ function ContactsHarness() {
       {notice && <p role="status">{notice}</p>}
       <ContactsPage
         contacts={contacts}
-        leads={[]}
+        leads={leads}
         loading={loading}
         saving={saving}
         onSave={saveContact}
@@ -86,13 +87,26 @@ const sampleContact: Contact = {
   updated_at: '2026-10-25T12:00:00Z',
 }
 
+const sampleLead: Lead = {
+  id: 7,
+  name: 'Expansão Cloud',
+  company: 'Cliente S.A.',
+  email: 'comercial@cliente.com.br',
+  phone: null,
+  stage: 'Proposta',
+  setup_value: 5000,
+  mrr_value: 1200,
+  created_at: '2026-10-20T12:00:00Z',
+  updated_at: '2026-10-20T12:00:00Z',
+}
+
 describe('useContacts e ContactsPage — criar e excluir contato (Fase 1)', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockSelectOrder.mockResolvedValue({ data: [], error: null })
   })
 
-  it('cria um contato, abre confirmação com foco em Cancelar (Esc fecha) e exclui com sucesso', async () => {
+  it('cria um contato sem lead, abre confirmação padrão com foco em Cancelar (Esc fecha) e exclui com sucesso', async () => {
     mockInsertSingle.mockResolvedValue({ data: sampleContact, error: null })
     mockDeleteSelect.mockResolvedValue({ data: [{ id: 10 }], error: null })
 
@@ -146,6 +160,51 @@ describe('useContacts e ContactsPage — criar e excluir contato (Fase 1)', () =
     expect(screen.getByRole('status')).toHaveTextContent(
       'Contato excluído com sucesso.',
     )
+  })
+
+  it('detalha o lead vinculado na confirmação (com nome quando carregado e fallback "lead vinculado" fora da página)', async () => {
+    const contactWithLoadedLead: Contact = {
+      ...sampleContact,
+      id: 11,
+      name: 'Bruno Lima',
+      lead_id: 7,
+    }
+    const contactWithPaginatedLead: Contact = {
+      ...sampleContact,
+      id: 12,
+      name: 'Carla Mendes',
+      lead_id: 999,
+    }
+
+    mockSelectOrder.mockResolvedValue({
+      data: [contactWithLoadedLead, contactWithPaginatedLead],
+      error: null,
+    })
+
+    render(<ContactsHarness leads={[sampleLead]} />)
+
+    const brunoRow = (await screen.findByText('Bruno Lima')).closest('tr')!
+    fireEvent.click(within(brunoRow).getByRole('button', { name: 'Excluir' }))
+
+    const brunoDialog = await screen.findByRole('dialog')
+    expect(
+      within(brunoDialog).getByText(
+        'Excluir Bruno Lima? Este contato está vinculado ao lead "Expansão Cloud"; o lead não será alterado. Esta ação não pode ser desfeita.',
+      ),
+    ).toBeInTheDocument()
+
+    fireEvent.keyDown(document, { key: 'Escape' })
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+
+    const carlaRow = screen.getByText('Carla Mendes').closest('tr')!
+    fireEvent.click(within(carlaRow).getByRole('button', { name: 'Excluir' }))
+
+    const carlaDialog = await screen.findByRole('dialog')
+    expect(
+      within(carlaDialog).getByText(
+        'Excluir Carla Mendes? Este contato possui lead vinculado; o lead não será alterado. Esta ação não pode ser desfeita.',
+      ),
+    ).toBeInTheDocument()
   })
 
   it('exibe mensagem clara em pt-BR quando houver violação de chave estrangeira (23503)', async () => {

@@ -459,9 +459,19 @@ export default function ContactsPage({
         open={contactToDelete !== null}
         title="Excluir contato"
         message={
-          contactToDelete
-            ? `Excluir ${contactToDelete.name}? Esta ação não pode ser desfeita.`
-            : ''
+          !contactToDelete
+            ? ''
+            : contactToDelete.lead_id === null
+              ? `Excluir ${contactToDelete.name}? Esta ação não pode ser desfeita.`
+              : (() => {
+                  const relatedLead = leads.find(
+                    (lead) => lead.id === contactToDelete.lead_id,
+                  )
+
+                  return relatedLead
+                    ? `Excluir ${contactToDelete.name}? Este contato está vinculado ao lead "${relatedLead.name}"; o lead não será alterado. Esta ação não pode ser desfeita.`
+                    : `Excluir ${contactToDelete.name}? Este contato possui lead vinculado; o lead não será alterado. Esta ação não pode ser desfeita.`
+                })()
         }
         confirmLabel="Excluir"
         confirmVariant="danger"
