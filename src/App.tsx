@@ -114,11 +114,14 @@ function App() {
     setSearch,
     stageFilter,
     setStageFilter,
+    showArchived,
+    setShowArchived,
     resetFilters,
     loading,
     saving,
     saveLead,
     handleStageChange,
+    setLeadArchived,
   } = useLeads(
     activeSession,
     setError,
@@ -131,6 +134,7 @@ function App() {
     loading: contactsLoading,
     saving: contactSaving,
     saveContact,
+    deleteContact,
   } = useContacts(activeSession, setError, setNotice)
 
   const {
@@ -138,6 +142,7 @@ function App() {
     loading: companiesLoading,
     saving: companySaving,
     saveCompany,
+    deleteCompany,
   } = useCompanies(activeSession, setError, setNotice)
 
   const {
@@ -147,6 +152,7 @@ function App() {
     saving: inventorySaving,
     reload: reloadInventory,
     saveProduct,
+    setProductActive,
     registerMovement,
     reverseMovement,
   } = useInventory(activeSession?.user.id ?? null, setError, setNotice)
@@ -425,6 +431,7 @@ function App() {
                 loading={contactsLoading}
                 saving={contactSaving}
                 onSave={saveContact}
+                onDelete={deleteContact}
                 onError={setError}
                 onNotice={setNotice}
               />
@@ -434,6 +441,7 @@ function App() {
                 loading={companiesLoading}
                 saving={companySaving}
                 onSave={saveCompany}
+                onDelete={deleteCompany}
                 onError={setError}
                 onNotice={setNotice}
               />
@@ -444,6 +452,7 @@ function App() {
                 loading={inventoryLoading}
                 saving={inventorySaving}
                 onSaveProduct={saveProduct}
+                onSetProductActive={setProductActive}
                 onRegisterMovement={registerMovement}
                 onReverseMovement={reverseMovement}
                 onError={setError}
@@ -472,6 +481,7 @@ function App() {
                 saving={saving}
                 search={search}
                 stageFilter={stageFilter}
+                showArchived={showArchived}
                 form={form}
                 showForm={showForm}
                 editingLeadId={editingLeadId}
@@ -482,6 +492,7 @@ function App() {
                 error={error}
                 onSearchChange={setSearch}
                 onStageFilterChange={setStageFilter}
+                onShowArchivedChange={setShowArchived}
                 onFormChange={setForm}
                 onSubmit={handleCreateLead}
                 onCreateLead={() => {
@@ -497,6 +508,7 @@ function App() {
                 onQuantityChange={setProductQuantity}
                 onEditLead={handleEditLead}
                 onStageChange={handleLeadStageChange}
+                onSetLeadArchived={setLeadArchived}
                 onClearFilters={resetFilters}
                 onPageChange={setLeadsPage}
                 onRetrySummary={() => void reloadLeadSummary()}

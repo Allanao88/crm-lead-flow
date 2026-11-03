@@ -1,5 +1,6 @@
 import { useMemo, useState, type FormEvent } from 'react'
 import Button from '../../components/Button'
+import ConfirmDialog from '../../components/ConfirmDialog'
 import EmptyState from '../../components/EmptyState'
 import FormField from '../../components/FormField'
 import GlassDialog from '../../components/GlassDialog'
@@ -15,6 +16,7 @@ type CompaniesPageProps = {
     form: CompanyForm,
     editingCompanyId: number | null,
   ) => Promise<boolean>
+  onDelete: (companyId: number) => Promise<boolean>
   onError: (message: string) => void
   onNotice: (message: string) => void
 }
@@ -24,12 +26,14 @@ export default function CompaniesPage({
   loading,
   saving,
   onSave,
+  onDelete,
   onError,
   onNotice,
 }: CompaniesPageProps) {
   const [search, setSearch] = useState('')
   const [showForm, setShowForm] = useState(false)
   const [editingCompanyId, setEditingCompanyId] = useState<number | null>(null)
+  const [companyToDelete, setCompanyToDelete] = useState<Company | null>(null)
   const [form, setForm] = useState<CompanyForm>(emptyCompanyForm)
   const [nameTouched, setNameTouched] = useState(false)
 
@@ -91,6 +95,18 @@ export default function CompaniesPage({
       resetForm(false)
       setSearch('')
     }
+  }
+
+  async function handleConfirmDelete() {
+    if (!companyToDelete) return
+
+    const deleted = await onDelete(companyToDelete.id)
+
+    if (deleted && editingCompanyId === companyToDelete.id) {
+      resetForm(false)
+    }
+
+    setCompanyToDelete(null)
   }
 
   function updateField(field: keyof CompanyForm, value: string) {
@@ -299,14 +315,15 @@ export default function CompaniesPage({
                 <th>Contato</th>
                 <th>CNPJ</th>
                 <th className="text-right">Cadastro</th>
+                <th className="text-right">Ações</th>
               </tr>
             </thead>
             <tbody className="crm-stagger-rows">
               {loading ? (
-                <TableRowsSkeleton columns={5} rows={5} />
+                <TableRowsSkeleton columns={6} rows={5} />
               ) : filteredCompanies.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="p-0">
+                  <td colSpan={6} className="p-0">
                     {companies.length === 0 ? (
                       <EmptyState
                         icon="companies"
@@ -377,6 +394,21 @@ export default function CompaniesPage({
                     <td className="text-right tabular-nums">
                       {new Date(company.created_at).toLocaleDateString('pt-BR')}
                     </td>
+                    <td className="text-right">
+                      <Button
+                        variant="danger"
+                        size="sm"
+                        disabled={saving}
+                        title={`Excluir ${company.name}`}
+                        onClick={() => {
+                          onError('')
+                          onNotice('')
+                          setCompanyToDelete(company)
+                        }}
+                      >
+                        Excluir
+                      </Button>
+                    </td>
                   </tr>
                 ))
               )}
@@ -388,6 +420,23 @@ export default function CompaniesPage({
           Exibindo {filteredCompanies.length} de {companies.length} empresas
         </div>
       </section>
+
+      <ConfirmDialog
+        open={companyToDelete !== null}
+        title="Excluir empresa"
+        message={
+          companyToDelete
+            ? `Excluir ${companyToDelete.name}? Contatos e leads com este nome de empresa não serão alterados. Esta ação não pode ser desfeita.`
+            : ''
+        }
+        confirmLabel="Excluir"
+        confirmVariant="danger"
+        busy={saving}
+        onConfirm={() => void handleConfirmDelete()}
+        onCancel={() => {
+          if (!saving) setCompanyToDelete(null)
+        }}
+      />
 
       <footer className="pb-2 text-center text-[length:var(--text-xs)] text-[var(--color-text-muted)]">
         LeadFlow CRM · AKS - Tech

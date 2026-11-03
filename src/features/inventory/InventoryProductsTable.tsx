@@ -16,19 +16,25 @@ const quantityFormat = new Intl.NumberFormat('pt-BR', {
 type InventoryProductsTableProps = {
   products: InventoryProduct[]
   loading: boolean
+  saving?: boolean
   search: string
   onSearchChange: (value: string) => void
   onCreateProduct: () => void
   onEdit: (product: InventoryProduct) => void
+  onDeactivate: (product: InventoryProduct) => void
+  onReactivate: (product: InventoryProduct) => void
 }
 
 export default function InventoryProductsTable({
   products,
   loading,
+  saving = false,
   search,
   onSearchChange,
   onCreateProduct,
   onEdit,
+  onDeactivate,
+  onReactivate,
 }: InventoryProductsTableProps) {
   return (
     <>
@@ -134,13 +140,37 @@ export default function InventoryProductsTable({
                       <span className={badgeClass}>{statusLabel}</span>
                     </td>
                     <td className="text-right">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => onEdit(product)}
-                      >
-                        Editar
-                      </Button>
+                      <div className="inline-flex items-center justify-end gap-1.5">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          disabled={saving}
+                          onClick={() => onEdit(product)}
+                        >
+                          Editar
+                        </Button>
+                        {product.is_active ? (
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            disabled={saving}
+                            title={`Desativar ${product.name}`}
+                            onClick={() => onDeactivate(product)}
+                          >
+                            Desativar
+                          </Button>
+                        ) : (
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            disabled={saving}
+                            title={`Reativar ${product.name}`}
+                            onClick={() => onReactivate(product)}
+                          >
+                            Reativar
+                          </Button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 )

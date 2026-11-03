@@ -179,6 +179,58 @@ export function useInventory(
     return true
   }
 
+  async function setProductActive(
+    productId: number,
+    isActive: boolean,
+  ): Promise<boolean> {
+    setSaving(true)
+    onError('')
+    onNotice('')
+
+    try {
+      const { data, error } = await supabase
+        .from('inventory_products')
+        .update({
+          is_active: isActive,
+        })
+        .eq('id', productId)
+        .select('id')
+
+      if (error) {
+        onError(
+          isActive
+            ? `Não foi possível reativar o produto: ${getErrorMessage(error)}`
+            : `Não foi possível desativar o produto: ${getErrorMessage(error)}`,
+        )
+        return false
+      }
+
+      if (!Array.isArray(data) || data.length === 0) {
+        onError(
+          'Não foi possível atualizar a situação do produto: registro não encontrado ou sem permissão.',
+        )
+        return false
+      }
+
+      await loadInventory()
+      onNotice(
+        isActive
+          ? 'Produto reativado com sucesso.'
+          : 'Produto desativado com sucesso.',
+      )
+      return true
+    } catch (err) {
+      onError(
+        err instanceof Error
+          ? `Não foi possível atualizar o produto: ${err.message}`
+          : 'Não foi possível atualizar o produto.',
+      )
+      return false
+    } finally {
+      setSaving(false)
+    }
+  }
+
   async function registerMovement(
     form: MovementForm,
     movementType: 'entry' | 'exit',
@@ -272,6 +324,7 @@ export function useInventory(
     saving,
     reload: loadInventory,
     saveProduct,
+    setProductActive,
     registerMovement,
     reverseMovement,
   }

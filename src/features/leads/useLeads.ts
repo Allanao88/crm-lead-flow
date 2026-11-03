@@ -15,7 +15,7 @@ export const LEADS_PAGE_SIZE = 50
 export const LEADS_SEARCH_DEBOUNCE_MS = 300
 
 const leadFields =
-  'id, name, email, phone, company, stage, setup_value, mrr_value, created_at, updated_at'
+  'id, name, email, phone, company, stage, setup_value, mrr_value, archived_at, created_at, updated_at'
 
 export function escapeIlikePattern(value: string): string {
   return value.replace(/[\\%_]/g, '\\$&')
@@ -36,6 +36,7 @@ type QueryState = {
   search: string
   debouncedSearch: string
   stageFilter: string
+  showArchived: boolean
   page: number
   reloadKey: number
 }
@@ -46,6 +47,7 @@ function createInitialQueryState(userId: string | null): QueryState {
     search: '',
     debouncedSearch: '',
     stageFilter: 'Todas',
+    showArchived: false,
     page: 1,
     reloadKey: 0,
   }
@@ -62,6 +64,8 @@ type UseLeadsResult = {
   setSearch: (value: string) => void
   stageFilter: string
   setStageFilter: Dispatch<SetStateAction<string>>
+  showArchived: boolean
+  setShowArchived: Dispatch<SetStateAction<boolean>>
   resetFilters: () => void
   loading: boolean
   saving: boolean
@@ -71,6 +75,7 @@ type UseLeadsResult = {
     productItems: LeadProductItem[],
   ) => Promise<boolean>
   handleStageChange: (lead: Lead, stage: Stage) => Promise<void>
+  setLeadArchived: (lead: Lead, archived: boolean) => Promise<boolean>
 }
 
 export function useLeads(
@@ -95,6 +100,7 @@ export function useLeads(
   const search = isSameUser ? queryState.search : ''
   const debouncedSearch = isSameUser ? queryState.debouncedSearch : ''
   const stageFilter = isSameUser ? queryState.stageFilter : 'Todas'
+  const showArchived = isSameUser ? queryState.showArchived : false
   const page = isSameUser ? queryState.page : 1
   const reloadKey = isSameUser ? queryState.reloadKey : 0
 
@@ -155,6 +161,28 @@ export function useLeads(
     [userId],
   )
 
+  const setShowArchived: Dispatch<SetStateAction<boolean>> = useCallback(
+    (action) => {
+      setQueryState((current) => {
+        const base =
+          current.userId === userId
+            ? current
+            : createInitialQueryState(userId)
+        const nextShowArchived =
+          typeof action === 'function' ? action(base.showArchived) : action
+
+        if (nextShowArchived === base.showArchived) return base
+
+        return {
+          ...base,
+          showArchived: nextShowArchived,
+          page: 1,
+        }
+      })
+    },
+    [userId],
+  )
+
   const resetFilters = useCallback(() => {
     setQueryState((current) => {
       const base =
@@ -167,6 +195,7 @@ export function useLeads(
         search: '',
         debouncedSearch: '',
         stageFilter: 'Todas',
+        showArchived: false,
         page: 1,
       }
     })
@@ -235,6 +264,12 @@ export function useLeads(
           .from('leads')
           .select(leadFields, { count: 'exact' })
 
+        if (showArchived) {
+          query = query.not('archived_at', 'is', null)
+        } else {
+          query = query.is('archived_at', null)
+        }
+
         if (stageFilter !== 'Todas') {
           query = query.eq('stage', stageFilter)
         }
@@ -291,7 +326,7 @@ export function useLeads(
     return () => {
       active = false
     }
-  }, [userId, page, debouncedSearch, stageFilter, reloadKey, setError])
+  }, [userId, page, debouncedSearch, stageFilter, showArchived, reloadKey, setError])
 
   async function saveLead(
     form: LeadForm,
@@ -362,6 +397,7 @@ export function useLeads(
           search: '',
           debouncedSearch: '',
           stageFilter: 'Todas',
+          showArchived: false,
           page: editingLeadId !== null ? base.page : 1,
           reloadKey: base.reloadKey + 1,
         }
@@ -383,6 +419,12 @@ export function useLeads(
 
   async function handleStageChange(lead: Lead, stage: Stage) {
     if (lead.stage === stage) return
+    if (lead.archived_at) {
+      setError(
+        'Não é possível alterar a etapa de um lead arquivado. Restaure o lead antes de continuar.',
+      )
+      return
+    }
 
     setError('')
     setNotice('')
@@ -444,6 +486,61 @@ export function useLeads(
     }
   }
 
+  async function setLeadArchived(
+    lead: Lead,
+    archived: boolean,
+  ): Promise<boolean> {
+    setError('')
+    setNotice('')
+    setSaving(true)
+
+    try {
+      const { error } = await supabase.rpc('set_lead_archived', {
+        p_lead_id: lead.id,
+        p_archived: archived,
+      })
+
+      if (error) {
+        setError(
+          archived
+            ? `Não foi possível arquivar o lead: ${error.message}`
+            : `Não foi possível restaurar o lead: ${error.message}`,
+        )
+        return false
+      }
+
+      setNotice(
+        archived
+          ? 'Lead arquivado com sucesso.'
+          : 'Lead restaurado com sucesso.',
+      )
+
+      setQueryState((current) => {
+        const base =
+          current.userId === userId
+            ? current
+            : createInitialQueryState(userId)
+
+        return {
+          ...base,
+          reloadKey: base.reloadKey + 1,
+        }
+      })
+
+      await onChanged?.()
+      return true
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? `Não foi possível ${archived ? 'arquivar' : 'restaurar'} o lead: ${err.message}`
+          : `Não foi possível ${archived ? 'arquivar' : 'restaurar'} o lead.`,
+      )
+      return false
+    } finally {
+      setSaving(false)
+    }
+  }
+
   return {
     leads,
     totalCount,
@@ -455,10 +552,13 @@ export function useLeads(
     setSearch,
     stageFilter,
     setStageFilter,
+    showArchived,
+    setShowArchived,
     resetFilters,
     loading: userId ? loading : false,
     saving,
     saveLead,
     handleStageChange,
+    setLeadArchived,
   }
 }
