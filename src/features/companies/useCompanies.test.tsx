@@ -74,10 +74,10 @@ function CompaniesHarness() {
 const sampleCompany: Company = {
   id: 25,
   user_id: 'user-owner',
-  name: 'AKS Tech Ltda',
+  name: 'Tech Solutions Ltda',
   cnpj: '12.345.678/0001-90',
-  website: 'https://akstech.com.br',
-  email: 'contato@akstech.com.br',
+  website: 'https://techsolutions.com.br',
+  email: 'contato@techsolutions.com.br',
   phone: '(11) 3000-0000',
   industry: 'Tecnologia',
   address: null,
@@ -104,19 +104,19 @@ describe('useCompanies e CompaniesPage — criar e excluir empresa (Fase 1)', ()
       screen.getAllByRole('button', { name: '+ Nova empresa' })[0],
     )
     fireEvent.change(screen.getByLabelText('Nome da empresa *'), {
-      target: { value: 'AKS Tech Ltda' },
+      target: { value: 'Tech Solutions Ltda' },
     })
     fireEvent.click(screen.getByRole('button', { name: 'Cadastrar empresa' }))
 
-    expect(await screen.findByText('AKS Tech Ltda')).toBeInTheDocument()
+    expect(await screen.findByText('Tech Solutions Ltda')).toBeInTheDocument()
 
-    const row = screen.getByText('AKS Tech Ltda').closest('tr')!
+    const row = screen.getByText('Tech Solutions Ltda').closest('tr')!
     fireEvent.click(within(row).getByRole('button', { name: 'Excluir' }))
 
     const dialog = await screen.findByRole('dialog')
     expect(
       within(dialog).getByText(
-        'Excluir AKS Tech Ltda? Contatos e leads com este nome de empresa não serão alterados. Esta ação não pode ser desfeita.',
+        'Excluir Tech Solutions Ltda? Contatos e leads com este nome de empresa não serão alterados. Esta ação não pode ser desfeita.',
       ),
     ).toBeInTheDocument()
     expect(
@@ -137,7 +137,7 @@ describe('useCompanies e CompaniesPage — criar e excluir empresa (Fase 1)', ()
       expect(mockDeleteEqUser).toHaveBeenCalledWith('user_id', 'user-owner')
     })
 
-    expect(screen.queryByText('AKS Tech Ltda')).not.toBeInTheDocument()
+    expect(screen.queryByText('Tech Solutions Ltda')).not.toBeInTheDocument()
     expect(screen.getByRole('status')).toHaveTextContent(
       'Empresa excluída com sucesso.',
     )
@@ -155,7 +155,7 @@ describe('useCompanies e CompaniesPage — criar e excluir empresa (Fase 1)', ()
 
     render(<CompaniesHarness />)
 
-    const nameCell = await screen.findByText('AKS Tech Ltda')
+    const nameCell = await screen.findByText('Tech Solutions Ltda')
     const row = nameCell.closest('tr')!
     fireEvent.click(within(row).getByRole('button', { name: 'Excluir' }))
     fireEvent.click(
@@ -167,7 +167,7 @@ describe('useCompanies e CompaniesPage — criar e excluir empresa (Fase 1)', ()
     expect(await screen.findByRole('alert')).toHaveTextContent(
       'Não é possível excluir esta empresa porque ela está vinculada a outros registros.',
     )
-    expect(screen.getByText('AKS Tech Ltda')).toBeInTheDocument()
+    expect(screen.getByText('Tech Solutions Ltda')).toBeInTheDocument()
 
     // Simula RLS negando exclusão de registro de outro usuário (0 linhas afetadas)
     mockDeleteSelect.mockResolvedValueOnce({ data: [], error: null })
@@ -181,6 +181,6 @@ describe('useCompanies e CompaniesPage — criar e excluir empresa (Fase 1)', ()
     expect(await screen.findByRole('alert')).toHaveTextContent(
       'Não foi possível excluir a empresa: registro não encontrado ou sem permissão.',
     )
-    expect(screen.getByText('AKS Tech Ltda')).toBeInTheDocument()
+    expect(screen.getByText('Tech Solutions Ltda')).toBeInTheDocument()
   })
 })

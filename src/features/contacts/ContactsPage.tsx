@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import Button from '../../components/Button'
 import ConfirmDialog from '../../components/ConfirmDialog'
 import EmptyState from '../../components/EmptyState'
+import Footer from '../../components/Footer'
 import FormField from '../../components/FormField'
 import GlassDialog from '../../components/GlassDialog'
 import { TableRowsSkeleton } from '../../components/Skeleton'
@@ -570,9 +571,7 @@ export default function ContactsPage({
         }}
       />
 
-      <footer className="pb-2 text-center text-[length:var(--text-xs)] text-[var(--color-text-muted)]">
-        LeadFlow CRM · AKS - Tech
-      </footer>
+      <Footer />
     </div>
   )
 }

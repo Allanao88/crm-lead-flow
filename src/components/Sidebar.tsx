@@ -1,4 +1,6 @@
 import type { ReactNode } from 'react'
+import { brand } from '../config/brand'
+import BrandLogo from './BrandLogo'
 
 export type CrmSection = 'overview' | 'leads' | 'contacts' | 'companies' | 'inventory'
 
@@ -156,12 +158,10 @@ export default function Sidebar({
 
       <div className="border-t border-[var(--glass-border)] p-[var(--space-4)]">
         <div className="glass-subtle mb-[var(--space-3)] flex items-center gap-[var(--space-3)] rounded-[var(--radius-md)] p-[var(--space-3)]">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[var(--color-brand-border)] bg-[var(--color-brand-soft)] text-[length:var(--text-sm)] font-[var(--font-weight-bold)] text-[var(--color-brand)]">
-            {(userEmail?.trim().charAt(0) || 'U').toUpperCase()}
-          </div>
+          <BrandLogo size="sm" />
           <div className="min-w-0 flex-1">
-            <p className="text-[length:var(--text-xs)] font-[var(--font-weight-semibold)] text-[var(--color-text-primary)]">
-              AKS - Tech
+            <p className="truncate text-[length:var(--text-xs)] font-[var(--font-weight-semibold)] text-[var(--color-text-primary)]">
+              {brand.clientName}
             </p>
             <p
               className="mt-0.5 truncate text-[length:var(--text-2xs)] text-[var(--color-text-muted)]"

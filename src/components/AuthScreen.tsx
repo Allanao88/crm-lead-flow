@@ -3,6 +3,9 @@ import { MIN_PASSWORD_LENGTH } from '../features/auth/useAuth'
 import type { Theme } from '../hooks/useTheme'
 import Button from './Button'
 import FormField from './FormField'
+import Footer from './Footer'
+import BrandLogo from './BrandLogo'
+import { brand } from '../config/brand'
 
 type AuthScreenProps = {
   authMode: 'login' | 'signup'
@@ -114,23 +117,26 @@ export default function AuthScreen({
           />
         )}
 
-        <div className="mb-7 flex items-center gap-3.5">
-          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[var(--radius-md)] border border-[var(--glass-border)] bg-[var(--glass-bg-subtle)] shadow-[var(--shadow-xs)]">
-            <img
-              src="/brand/lead-flow-icon.svg"
-              alt=""
-              aria-hidden="true"
-              className="h-8 w-8 shrink-0"
-            />
-          </span>
-          <div className="min-w-0">
-            <p className="text-[length:var(--text-lg)] font-[var(--font-weight-bold)] tracking-[var(--tracking-tight)] text-[var(--color-text-primary)]">
-              LeadFlow
-            </p>
-            <p className="mt-0.5 text-[length:var(--text-2xs)] font-[var(--font-weight-semibold)] uppercase tracking-[var(--tracking-wide)] text-[var(--color-text-muted)]">
-              CRM Comercial · AKS - Tech
-            </p>
+        <div className="mb-7 flex items-center justify-between gap-3.5">
+          <div className="flex items-center gap-3.5 min-w-0">
+            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[var(--radius-md)] border border-[var(--glass-border)] bg-[var(--glass-bg-subtle)] shadow-[var(--shadow-xs)]">
+              <img
+                src="/brand/lead-flow-icon.svg"
+                alt=""
+                aria-hidden="true"
+                className="h-8 w-8 shrink-0"
+              />
+            </span>
+            <div className="min-w-0">
+              <p className="text-[length:var(--text-lg)] font-[var(--font-weight-bold)] tracking-[var(--tracking-tight)] text-[var(--color-text-primary)]">
+                LeadFlow
+              </p>
+              <p className="mt-0.5 text-[length:var(--text-2xs)] font-[var(--font-weight-semibold)] uppercase tracking-[var(--tracking-wide)] text-[var(--color-text-muted)]">
+                CRM Comercial · {brand.clientName}
+              </p>
+            </div>
           </div>
+          <BrandLogo size="md" />
         </div>
 
         <h1 className="text-[length:var(--text-xl)] font-[var(--font-weight-bold)] tracking-[var(--tracking-tight)] text-[var(--color-text-primary)]">
@@ -301,9 +307,7 @@ export default function AuthScreen({
         )}
       </section>
 
-      <footer className="mt-6 text-center text-[length:var(--text-xs)] text-[var(--color-text-muted)]">
-        LeadFlow CRM · AKS - Tech
-      </footer>
+      <Footer className="mt-6" />
     </main>
   )
 }
