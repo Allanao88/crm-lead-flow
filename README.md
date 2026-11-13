@@ -1,6 +1,57 @@
-# LeadFlow CRM — AKS Tech
+# LeadFlow CRM
 
 Aplicação web de CRM comercial e controle de estoque construída com **React 19**, **TypeScript**, **Vite 8**, **Tailwind CSS 4** e **Supabase** (Auth, Postgres, RLS e RPCs).
+
+---
+
+## Modelo de implantação e personalização por cliente
+
+O **LeadFlow CRM** adota a estratégia de **uma instalação isolada por cliente**:
+- **1 projeto Supabase dedicado por cliente:** isolamento total de banco de dados, storage, chaves e políticas de acesso (RLS).
+- **1 projeto Vercel dedicado por cliente:** mesmo repositório e código-fonte, configurado via variáveis de ambiente injetadas no momento do build (Vite).
+- **Código 100% agnóstico:** o repositório não contém dados, marcas, nomes, logotipos, e-mails ou cores atrelados a nenhum cliente real.
+
+### Variáveis de ambiente de personalização
+
+Todas as variáveis de marca são **opcionais** e contam com fallbacks defensivos — valores ausentes ou inválidos nunca quebram a aplicação.
+
+| Variável | Tipo | Padrão | Regras de validação | Descrição |
+| --- | --- | --- | --- | --- |
+| `VITE_CLIENT_NAME` | `string` | `"Sua empresa"` | `trim()`, limite de 60 caracteres. Vazio ou espaços reverte ao padrão. | Nome da empresa exibido no título da aba (`document.title`), cabeçalhos, rodapé e sidebar. |
+| `VITE_CLIENT_LOGO_URL` | `string` | `null` | Deve ser URL estritamente com protocolo `https://`. Inválidas são descartadas. | URL do logotipo da empresa. Se ausente ou falhar (`onError`), gera avatar com as iniciais do nome. |
+| `VITE_BRAND_COLOR` | `string` | `#007a29` | Hex `#RRGGBB` (7 caracteres). Requer contraste mínimo de 4.5:1 (WCAG AA). | Cor primária da marca. Injeta dinamicamente botões, links, anéis de foco e clareamento para modo escuro. |
+| `VITE_CONTACT_EMAIL` | `string` | `null` | Formato válido de e-mail (`usuario@dominio.com`). | E-mail de suporte institucional exibido com link `mailto:` no rodapé das telas e no login. |
+
+### Configuração no Vercel (Novo cliente)
+
+Para implantar uma nova instância de cliente:
+1. No painel da Vercel, crie um novo projeto importando este repositório (`crm-lead-flow`).
+2. Acesse **Project Settings > Environment Variables**.
+3. Adicione as variáveis obrigatórias de conexão ao Supabase do cliente:
+   - `VITE_SUPABASE_URL`: URL da instância Supabase do cliente.
+   - `VITE_SUPABASE_PUBLISHABLE_KEY`: Chave pública `anon` / `publishable`.
+4. Adicione as variáveis de marca do cliente:
+   ```env
+   VITE_CLIENT_NAME=Acme Indústria
+   VITE_CLIENT_LOGO_URL=https://acme.com.br/logo.png
+   VITE_BRAND_COLOR=#2563eb
+   VITE_CONTACT_EMAIL=suporte@acme.com.br
+   ```
+5. Dispare o deploy. O Vite compilará a interface com as cores, logotipo e título específicos do cliente.
+
+### Exemplo local (`.env.local`)
+
+```dotenv
+# Conexão Supabase
+VITE_SUPABASE_URL=https://<seu-project-ref>.supabase.co
+VITE_SUPABASE_PUBLISHABLE_KEY=<sua-publishable-key>
+
+# Identidade visual do cliente (opcionais)
+VITE_CLIENT_NAME=Cliente Exemplo
+VITE_CLIENT_LOGO_URL=https://exemplo.com.br/logo.png
+VITE_BRAND_COLOR=#2563eb
+VITE_CONTACT_EMAIL=contato@exemplo.com.br
+```
 
 ---
 

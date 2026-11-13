@@ -2,6 +2,8 @@ import { defineConfig } from 'vitest/config'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 
+process.env.VITE_CLIENT_NAME = process.env.VITE_CLIENT_NAME?.trim() || 'Sua empresa'
+
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   test: {

@@ -1,6 +1,7 @@
 import { useMemo, useState, type FormEvent } from 'react'
 import Button from '../../components/Button'
 import ConfirmDialog from '../../components/ConfirmDialog'
+import Footer from '../../components/Footer'
 import { MetricCardSkeleton } from '../../components/Skeleton'
 import type {
   InventoryMovement,
@@ -434,9 +435,7 @@ export default function InventoryPage({
         }}
       />
 
-      <footer className="pb-2 text-center text-[length:var(--text-xs)] text-[var(--color-text-muted)]">
-        LeadFlow CRM · AKS - Tech
-      </footer>
+      <Footer />
     </div>
   )
 }

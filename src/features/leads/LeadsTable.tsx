@@ -4,6 +4,7 @@ import FormField from '../../components/FormField'
 import { TableRowsSkeleton } from '../../components/Skeleton'
 import type { Lead, Stage } from './types'
 import { currency, stages, stageStyles } from './constants'
+import { brand } from '../../config/brand'
 
 type LeadsTableProps = {
   leads: Lead[]
@@ -88,7 +89,7 @@ export default function LeadsTable({
           <div>
             <h2 className="crm-section-title">Todos os leads</h2>
             <p className="mt-1 text-[length:var(--text-sm)] text-[var(--color-text-secondary)]">
-              Consulte e acompanhe os contatos comerciais da AKS - Tech.
+              Consulte e acompanhe as oportunidades de {brand.clientName}.
             </p>
           </div>
           <span className="text-[length:var(--text-xs)] font-[var(--font-weight-semibold)] text-[var(--color-text-muted)] tabular-nums">

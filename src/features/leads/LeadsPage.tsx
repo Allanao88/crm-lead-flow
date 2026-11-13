@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import ConfirmDialog from '../../components/ConfirmDialog'
+import Footer from '../../components/Footer'
 import LeadFormPanel from './LeadFormPanel'
 import LeadsTable from './LeadsTable'
 import SalesPipeline from './SalesPipeline'
@@ -214,9 +215,7 @@ export default function LeadsPage({
         }}
       />
 
-      <footer className="pb-2 text-center text-[length:var(--text-xs)] text-[var(--color-text-muted)]">
-        LeadFlow CRM · AKS - Tech
-      </footer>
+      <Footer />
     </div>
   )
 }

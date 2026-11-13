@@ -6,6 +6,8 @@ import { currency, stages, stageStyles } from '../leads/constants'
 import type { LeadStageSummary } from '../leads/types'
 import SummaryErrorState from './SummaryErrorState'
 import { useSalesMetrics } from './useSalesMetrics'
+import Footer from '../../components/Footer'
+import { brand } from '../../config/brand'
 
 type OverviewPageProps = {
   summary: LeadStageSummary
@@ -40,7 +42,7 @@ export default function OverviewPage({
     <div className="crm-page">
       <section>
         <p className="text-[length:var(--text-sm)] text-[var(--color-text-secondary)]">
-          Acompanhe os principais indicadores comerciais da AKS - Tech.
+          Acompanhe os principais indicadores comerciais de {brand.clientName}.
         </p>
         <h2 className="crm-page-title mt-1">
           Resumo comercial
@@ -193,9 +195,7 @@ export default function OverviewPage({
         </>
       )}
 
-      <footer className="pb-2 text-center text-[length:var(--text-xs)] text-[var(--color-text-muted)]">
-        LeadFlow CRM · AKS - Tech
-      </footer>
+      <Footer />
     </div>
   )
 }

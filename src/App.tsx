@@ -21,6 +21,7 @@ import { useLeads } from './features/leads/useLeads'
 import { useLeadSummary } from './features/leads/useLeadSummary'
 import { useSalesMetrics } from './features/overview/useSalesMetrics'
 import { useTheme } from './hooks/useTheme'
+import { brand } from './config/brand'
 
 const CompaniesPage = lazy(() => import('./features/companies/CompaniesPage'))
 const ContactsPage = lazy(() => import('./features/contacts/ContactsPage'))
@@ -78,23 +79,23 @@ function App() {
 
   useEffect(() => {
     if (!authReady) {
-      document.title = 'LeadFlow CRM | AKS - Tech'
+      document.title = `LeadFlow · ${brand.clientName}`
       return
     }
 
     if (passwordRecovery) {
-      document.title = 'Definir nova senha · LeadFlow CRM | AKS - Tech'
+      document.title = `Definir nova senha · LeadFlow · ${brand.clientName}`
       return
     }
 
     if (!session) {
       document.title = `${
         authMode === 'login' ? 'Entrar' : 'Criar conta'
-      } · LeadFlow CRM | AKS - Tech`
+      } · LeadFlow · ${brand.clientName}`
       return
     }
 
-    document.title = `${getSectionTitle(activeSection)} · LeadFlow CRM | AKS - Tech`
+    document.title = `${getSectionTitle(activeSection)} · LeadFlow · ${brand.clientName}`
   }, [authReady, passwordRecovery, session, authMode, activeSection])
 
   const {
