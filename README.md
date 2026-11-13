@@ -55,6 +55,52 @@ VITE_CONTACT_EMAIL=contato@exemplo.com.br
 
 ---
 
+## Módulo Financeiro
+
+O **Módulo Financeiro** centraliza o controle de margem de contribuição líquida e gestão de custos mensais recorrentes por cliente. O acesso a este módulo é **estritamente restrito a administradores**, com proteção garantida tanto a nível de banco (RLS e funções RPC com verificação `is_admin()`) quanto na interface visual.
+
+### Regras de negócio e cálculos
+
+1. **Clientes elegíveis:** Entram no módulo e nos cálculos apenas leads na etapa **"Ganho"** (`stage = 'Ganho'`) e **não arquivados** (`archived_at IS NULL`). Cada lead em Ganho representa um cliente ativo.
+2. **Receita Recorrente (MRR):** O valor de MRR provém de `leads.mrr_value`. O valor pontual de **SETUP** não entra neste módulo.
+3. **Custos por fornecedor:** Cadastrados como valor mensal recorrente em reais (`numeric(12,2) >= 0`), vinculados a um fornecedor (`finance_suppliers`) e com campo de observação opcional de até 200 caracteres (usado para rateios manuais, ex.: *"Supabase rateado entre 3 projetos"* ou *"Licença Pro compartilhada"*). O módulo não armazena histórico mês a mês.
+4. **Fórmulas automáticas:**
+   - **Margem Líquida:** `MRR − Soma dos Custos do Cliente`
+   - **% de Custo:** `(Soma dos Custos ÷ MRR) × 100` (se `MRR = 0`, exibe `—` para evitar divisão por zero).
+5. **Clientes sem custos cadastrados:** Exibem custo total `R$ 0,00`, margem líquida igual ao MRR, badge indicativo `"Sem custos cadastrados"` e alerta preventivo no topo da listagem.
+6. **Desativação / Mudança de etapa:** Se um lead for arquivado ou movido para outra etapa do funil (ex.: *"Perdido"* ou *"Negociação"*), seus custos permanecem salvos no banco, porém deixam de compor os totais ativos. Se o lead retornar para *"Ganho"*, volta automaticamente a contabilizar.
+7. **Somente leitura:** Na interface, apenas fornecedor, valor e observação de custos são digitáveis. Nome do cliente, MRR, margens e totais gerais são calculados pelo servidor.
+
+### Gestão e concessão do papel de Administrador
+
+Por segurança, **nenhum usuário tem permissão para conceder papéis de administrador via aplicação web**. O controle é feito na tabela `public.user_roles`.
+
+Para promover um usuário existente a administrador, execute o comando SQL abaixo no **SQL Editor** do painel do Supabase do cliente:
+
+```sql
+-- Conceder papel de administrador ao usuário (substitua pelo UUID do auth.users)
+insert into public.user_roles (user_id, role)
+values ('<uuid-do-usuario>', 'admin')
+on conflict (user_id) do update set role = 'admin';
+```
+
+Para verificar quais usuários possuem papel de administrador:
+
+```sql
+select u.id, u.email, r.role, r.created_at
+from auth.users u
+inner join public.user_roles r on r.user_id = u.id;
+```
+
+Para revogar o acesso de administrador:
+
+```sql
+delete from public.user_roles
+where user_id = '<uuid-do-usuario>';
+```
+
+---
+
 ## Pré-requisitos
 
 - **Node.js 22+** e **npm**
@@ -116,6 +162,7 @@ VITE_CONTACT_EMAIL=contato@exemplo.com.br
 │   │   ├── auth/                   # Sessão, autenticação e fluxo de senha
 │   │   ├── companies/              # Cadastro e listagem de empresas
 │   │   ├── contacts/               # Cadastro e listagem de contatos
+│   │   ├── finance/                # Gestão de custos, margem por cliente e totais financeiros
 │   │   ├── inventory/              # Catálogo de produtos e movimentações de estoque
 │   │   ├── leads/                  # Funil comercial, paginação/filtros no servidor, validação e resumo RPC
 │   │   └── overview/               # Visão geral executiva e cálculo de indicadores comerciais
