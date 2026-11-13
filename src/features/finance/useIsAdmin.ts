@@ -12,6 +12,11 @@ export function resetIsAdminCache() {
 }
 
 export function useIsAdmin(userId: string | null) {
+  const isCached =
+    Boolean(userId) &&
+    cachedAdminUserId === userId &&
+    cachedAdminResult !== null
+
   const [isAdmin, setIsAdmin] = useState<boolean>(() => {
     if (!userId) return false
     if (cachedAdminUserId === userId && cachedAdminResult !== null) {
@@ -22,19 +27,15 @@ export function useIsAdmin(userId: string | null) {
 
   const [loading, setLoading] = useState<boolean>(() => {
     if (!userId) return false
-    return !(cachedAdminUserId === userId && cachedAdminResult !== null)
+    return !isCached
   })
 
   useEffect(() => {
     if (!userId) {
-      setIsAdmin(false)
-      setLoading(false)
       return
     }
 
     if (cachedAdminUserId === userId && cachedAdminResult !== null) {
-      setIsAdmin(cachedAdminResult)
-      setLoading(false)
       return
     }
 
@@ -46,34 +47,44 @@ export function useIsAdmin(userId: string | null) {
       cachedAdminPromise = null
     }
 
-    setLoading(true)
+    const timeoutId = setTimeout(() => {
+      setLoading(true)
 
-    if (!cachedAdminPromise) {
-      cachedAdminPromise = (async () => {
-        try {
-          const { data, error } = await supabase.rpc('is_admin')
-          if (error) {
+      if (!cachedAdminPromise) {
+        cachedAdminPromise = (async () => {
+          try {
+            const { data, error } = await supabase.rpc('is_admin')
+            if (error) {
+              return false
+            }
+            return Boolean(data)
+          } catch {
             return false
           }
-          return Boolean(data)
-        } catch {
-          return false
-        }
-      })()
-    }
-
-    cachedAdminPromise.then((result) => {
-      cachedAdminResult = result
-      if (active) {
-        setIsAdmin(result)
-        setLoading(false)
+        })()
       }
-    })
+
+      void cachedAdminPromise.then((result) => {
+        cachedAdminResult = result
+        if (active) {
+          setIsAdmin(result)
+          setLoading(false)
+        }
+      })
+    }, 0)
 
     return () => {
       active = false
+      clearTimeout(timeoutId)
     }
   }, [userId])
 
-  return { isAdmin, loading }
+  const resolvedIsAdmin =
+    Boolean(userId) &&
+    cachedAdminUserId === userId &&
+    cachedAdminResult !== null
+      ? cachedAdminResult
+      : isAdmin
+
+  return { isAdmin: resolvedIsAdmin, loading }
 }

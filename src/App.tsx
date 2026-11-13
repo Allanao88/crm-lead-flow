@@ -12,6 +12,7 @@ import { ModulePageSkeleton, Skeleton } from './components/Skeleton'
 import { useAuth } from './features/auth/useAuth'
 import { useCompanies } from './features/companies/useCompanies'
 import { useContacts } from './features/contacts/useContacts'
+import { useIsAdmin } from './features/finance/useIsAdmin'
 import { useInventory } from './features/inventory/useInventory'
 import { useLeadProducts } from './features/leads/useLeadProducts'
 import { useLeadForm } from './features/leads/useLeadForm'
@@ -25,6 +26,7 @@ import { brand } from './config/brand'
 
 const CompaniesPage = lazy(() => import('./features/companies/CompaniesPage'))
 const ContactsPage = lazy(() => import('./features/contacts/ContactsPage'))
+const FinancePage = lazy(() => import('./features/finance/FinancePage'))
 const InventoryPage = lazy(() => import('./features/inventory/InventoryPage'))
 const LeadsPage = lazy(() => import('./features/leads/LeadsPage'))
 const OverviewPage = lazy(() => import('./features/overview/OverviewPage'))
@@ -69,6 +71,7 @@ function App() {
   } = useAuth(setError, setNotice)
 
   const activeSession = passwordRecovery ? null : session
+  const { isAdmin } = useIsAdmin(activeSession?.user?.id ?? null)
 
   useEffect(() => {
     const meta = document.querySelector('meta[name="theme-color"]')
@@ -333,6 +336,7 @@ function App() {
         companiesCount={companies.length}
         userEmail={session.user.email}
         activeSection={activeSection}
+        isAdmin={isAdmin}
         onNavigate={handleNavigateSection}
         onLogout={handleLogoutAndReset}
       />
@@ -438,7 +442,15 @@ function App() {
 
         <Suspense fallback={<ModulePageSkeleton />}>
           <div key={activeSection} className="crm-page-transition">
-            {activeSection === 'contacts' ? (
+            {activeSection === 'finance' ? (
+              <FinancePage
+                isAdmin={isAdmin}
+                userId={session.user.id}
+                onBackToOverview={() => handleNavigateSection('overview')}
+                onError={setError}
+                onNotice={setNotice}
+              />
+            ) : activeSection === 'contacts' ? (
               <ContactsPage
                 contacts={contacts}
                 leadOptions={leadOptions}
@@ -546,6 +558,7 @@ function App() {
 
       <MobileNavigation
         activeSection={activeSection}
+        isAdmin={isAdmin}
         onNavigate={handleNavigateSection}
       />
     </div>

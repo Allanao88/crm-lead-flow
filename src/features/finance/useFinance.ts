@@ -180,8 +180,19 @@ export function useFinance(
   }, [userId, onError])
 
   useEffect(() => {
-    loadFinance()
-  }, [loadFinance])
+    if (!userId) {
+      requestId.current += 1
+      return
+    }
+
+    const timeoutId = setTimeout(() => {
+      void loadFinance()
+    }, 0)
+
+    return () => {
+      clearTimeout(timeoutId)
+    }
+  }, [userId, loadFinance])
 
   const resolveSupplierId = async (
     supplierName: string,

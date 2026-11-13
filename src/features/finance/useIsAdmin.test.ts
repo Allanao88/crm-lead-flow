@@ -27,7 +27,7 @@ describe('useIsAdmin', () => {
     vi.mocked(supabase.rpc).mockResolvedValueOnce({
       data: true,
       error: null,
-    } as any)
+    } as unknown as Awaited<ReturnType<typeof supabase.rpc>>)
 
     const { result } = renderHook(() => useIsAdmin('user-1'))
 
@@ -45,7 +45,7 @@ describe('useIsAdmin', () => {
     vi.mocked(supabase.rpc).mockResolvedValueOnce({
       data: null,
       error: { message: 'permission denied' },
-    } as any)
+    } as unknown as Awaited<ReturnType<typeof supabase.rpc>>)
 
     const { result } = renderHook(() => useIsAdmin('user-2'))
 
@@ -60,7 +60,7 @@ describe('useIsAdmin', () => {
     vi.mocked(supabase.rpc).mockResolvedValueOnce({
       data: true,
       error: null,
-    } as any)
+    } as unknown as Awaited<ReturnType<typeof supabase.rpc>>)
 
     const { result: firstResult } = renderHook(() => useIsAdmin('user-admin'))
 

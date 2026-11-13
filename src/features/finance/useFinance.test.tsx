@@ -1,18 +1,13 @@
 import { renderHook, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { supabase } from '../../lib/supabase'
 import { useFinance } from './useFinance'
 
-vi.mock('../../lib/supabase', () => ({
-  supabase: {
-    rpc: vi.fn(),
-    from: vi.fn(),
-  },
-}))
-
-describe('useFinance', () => {
-  const onError = vi.fn()
-  const onNotice = vi.fn()
+const {
+  mockRpc,
+  mockFrom,
+  setRpcError,
+} = vi.hoisted(() => {
+  let rpcErrorMessage: string | null = null
 
   const mockClients = [
     {
@@ -53,62 +48,80 @@ describe('useFinance', () => {
     },
   ]
 
+  const rpc = vi.fn(async (fnName: string) => {
+    if (rpcErrorMessage) {
+      return { data: null, error: { message: rpcErrorMessage } }
+    }
+    if (fnName === 'finance_client_margins') {
+      return { data: mockClients, error: null }
+    }
+    if (fnName === 'finance_totals') {
+      return { data: mockTotals, error: null }
+    }
+    return { data: null, error: null }
+  })
+
+  const from = vi.fn((table: string) => {
+    if (table === 'finance_suppliers') {
+      return {
+        select: vi.fn(() => ({
+          order: vi.fn(async () => ({ data: mockSuppliers, error: null })),
+          ilike: vi.fn(() => ({
+            maybeSingle: vi.fn(async () => ({ data: mockSuppliers[0], error: null })),
+          })),
+        })),
+        insert: vi.fn(() => ({
+          select: vi.fn(() => ({
+            single: vi.fn(async () => ({
+              data: { id: 20, name: 'Google Cloud' },
+              error: null,
+            })),
+          })),
+        })),
+      }
+    }
+
+    if (table === 'lead_costs') {
+      return {
+        select: vi.fn(() => ({
+          order: vi.fn(async () => ({ data: mockCosts, error: null })),
+        })),
+        insert: vi.fn(async () => ({ data: null, error: null })),
+        update: vi.fn(() => ({
+          eq: vi.fn(async () => ({ data: null, error: null })),
+        })),
+        delete: vi.fn(() => ({
+          eq: vi.fn(async () => ({ data: null, error: null })),
+        })),
+      }
+    }
+
+    throw new Error(`Unexpected table: ${table}`)
+  })
+
+  return {
+    mockRpc: rpc,
+    mockFrom: from,
+    setRpcError: (msg: string | null) => {
+      rpcErrorMessage = msg
+    },
+  }
+})
+
+vi.mock('../../lib/supabase', () => ({
+  supabase: {
+    rpc: mockRpc,
+    from: mockFrom,
+  },
+}))
+
+describe('useFinance', () => {
+  const onError = vi.fn()
+  const onNotice = vi.fn()
+
   beforeEach(() => {
     vi.clearAllMocks()
-
-    vi.mocked(supabase.rpc).mockImplementation((fnName: string) => {
-      if (fnName === 'finance_client_margins') {
-        return Promise.resolve({ data: mockClients, error: null } as any)
-      }
-      if (fnName === 'finance_totals') {
-        return Promise.resolve({ data: mockTotals, error: null } as any)
-      }
-      return Promise.resolve({ data: null, error: null } as any)
-    })
-
-    vi.mocked(supabase.from).mockImplementation((table: string) => {
-      if (table === 'finance_suppliers') {
-        return {
-          select: vi.fn().mockReturnValue({
-            order: vi
-              .fn()
-              .mockResolvedValue({ data: mockSuppliers, error: null }),
-            ilike: vi.fn().mockReturnValue({
-              maybeSingle: vi
-                .fn()
-                .mockResolvedValue({ data: mockSuppliers[0], error: null }),
-            }),
-          }),
-          insert: vi.fn().mockReturnValue({
-            select: vi.fn().mockReturnValue({
-              single: vi.fn().mockResolvedValue({
-                data: { id: 20, name: 'Google Cloud' },
-                error: null,
-              }),
-            }),
-          }),
-        } as any
-      }
-
-      if (table === 'lead_costs') {
-        return {
-          select: vi.fn().mockReturnValue({
-            order: vi
-              .fn()
-              .mockResolvedValue({ data: mockCosts, error: null }),
-          }),
-          insert: vi.fn().mockResolvedValue({ data: null, error: null }),
-          update: vi.fn().mockReturnValue({
-            eq: vi.fn().mockResolvedValue({ data: null, error: null }),
-          }),
-          delete: vi.fn().mockReturnValue({
-            eq: vi.fn().mockResolvedValue({ data: null, error: null }),
-          }),
-        } as any
-      }
-
-      return {} as any
-    })
+    setRpcError(null)
   })
 
   it('resets state when userId is null', () => {
@@ -126,13 +139,11 @@ describe('useFinance', () => {
       useFinance('user-1', onError, onNotice),
     )
 
-    expect(result.current.loading).toBe(true)
-
     await waitFor(() => {
       expect(result.current.loading).toBe(false)
+      expect(result.current.clients).toHaveLength(1)
     })
 
-    expect(result.current.clients).toHaveLength(1)
     expect(result.current.clients[0].lead_name).toBe('Cliente Alpha')
     expect(result.current.totals).toEqual({
       total_mrr: 2000,
@@ -148,15 +159,7 @@ describe('useFinance', () => {
   })
 
   it('displays error in pt-BR when load fails due to admin restriction', async () => {
-    vi.mocked(supabase.rpc).mockImplementation((fnName: string) => {
-      if (fnName === 'finance_client_margins') {
-        return Promise.resolve({
-          data: null,
-          error: { message: 'Acesso restrito a administradores.' },
-        } as any)
-      }
-      return Promise.resolve({ data: null, error: null } as any)
-    })
+    setRpcError('Acesso restrito a administradores.')
 
     const { result } = renderHook(() =>
       useFinance('user-non-admin', onError, onNotice),

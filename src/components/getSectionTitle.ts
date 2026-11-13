@@ -6,6 +6,7 @@ const sectionTitles: Record<CrmSection, string> = {
   contacts: 'Contatos',
   companies: 'Empresas',
   inventory: 'Gestão de estoque',
+  finance: 'Financeiro',
 }
 
 export function getSectionTitle(section: CrmSection): string {

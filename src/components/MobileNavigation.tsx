@@ -2,27 +2,34 @@ import { NavIcon, type CrmSection } from './Sidebar'
 
 type MobileNavigationProps = {
   activeSection: CrmSection
+  isAdmin?: boolean
   onNavigate: (section: CrmSection) => void
 }
 
-const navigationItems: { id: CrmSection; label: string }[] = [
-  { id: 'overview', label: 'Início' },
-  { id: 'leads', label: 'Leads' },
-  { id: 'contacts', label: 'Contatos' },
-  { id: 'companies', label: 'Empresas' },
-  { id: 'inventory', label: 'Estoque' },
-]
-
 export default function MobileNavigation({
   activeSection,
+  isAdmin = false,
   onNavigate,
 }: MobileNavigationProps) {
+  const navigationItems: { id: CrmSection; label: string }[] = [
+    { id: 'overview', label: 'Início' },
+    { id: 'leads', label: 'Leads' },
+    { id: 'contacts', label: 'Contatos' },
+    { id: 'companies', label: 'Empresas' },
+    { id: 'inventory', label: 'Estoque' },
+    ...(isAdmin ? [{ id: 'finance' as const, label: 'Financeiro' }] : []),
+  ]
+
   return (
     <nav
       aria-label="Navegação móvel"
       className="crm-mobile-nav fixed inset-x-0 bottom-0 z-30 lg:hidden"
     >
-      <div className="mx-auto grid max-w-lg grid-cols-5 px-1.5 py-1">
+      <div
+        className={`mx-auto grid max-w-lg ${
+          isAdmin ? 'grid-cols-6' : 'grid-cols-5'
+        } px-1.5 py-1`}
+      >
         {navigationItems.map((item) => {
           const isActive = activeSection === item.id
 

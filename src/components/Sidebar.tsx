@@ -2,7 +2,13 @@ import type { ReactNode } from 'react'
 import { brand } from '../config/brand'
 import BrandLogo from './BrandLogo'
 
-export type CrmSection = 'overview' | 'leads' | 'contacts' | 'companies' | 'inventory'
+export type CrmSection =
+  | 'overview'
+  | 'leads'
+  | 'contacts'
+  | 'companies'
+  | 'inventory'
+  | 'finance'
 
 type SidebarProps = {
   leadsCount?: number
@@ -10,6 +16,7 @@ type SidebarProps = {
   companiesCount?: number
   userEmail: string | undefined
   activeSection?: CrmSection
+  isAdmin?: boolean
   onNavigate?: (section: CrmSection) => void
   onLogout: () => void
 }
@@ -49,6 +56,12 @@ const navIconPaths: Record<CrmSection, ReactNode> = {
       <path d="m3 12 9 5 9-5M3 16l9 5 9-5M12 13v4" />
     </>
   ),
+  finance: (
+    <>
+      <line x1="12" y1="2" x2="12" y2="22" />
+      <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+    </>
+  ),
 }
 
 export function NavIcon({ name, size = 20 }: { name: CrmSection; size?: number }) {
@@ -75,6 +88,7 @@ export default function Sidebar({
   companiesCount = 0,
   userEmail,
   activeSection = 'overview',
+  isAdmin = false,
   onNavigate = () => {},
   onLogout,
 }: SidebarProps) {
@@ -88,6 +102,7 @@ export default function Sidebar({
     { id: 'contacts', label: 'Contatos', count: contactsCount },
     { id: 'companies', label: 'Empresas', count: companiesCount },
     { id: 'inventory', label: 'Estoque' },
+    ...(isAdmin ? [{ id: 'finance' as const, label: 'Financeiro' }] : []),
   ]
 
   return (
