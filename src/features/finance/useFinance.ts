@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { supabase } from '../../lib/supabase'
+import { escapeIlikePattern } from '../leads/useLeads'
 import type {
   FinanceClientMargin,
   FinanceSupplier,
@@ -220,7 +221,7 @@ export function useFinance(
     const { data: fetched } = await supabase
       .from('finance_suppliers')
       .select('id, name')
-      .ilike('name', trimmed)
+      .ilike('name', escapeIlikePattern(trimmed))
       .maybeSingle()
 
     if (fetched) {
