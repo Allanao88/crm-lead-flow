@@ -250,7 +250,7 @@ BEGIN
             COALESCE(sum(ac.mrr), 0)::numeric(12,2) AS agg_mrr,
             COALESCE(sum(cc.sum_costs), 0)::numeric(12,2) AS agg_costs,
             count(ac.id)::bigint AS agg_clients,
-            count(ac.id) FILTER (WHERE cc.sum_costs IS NULL OR cc.sum_costs = 0)::bigint AS agg_without_costs
+            count(ac.id) FILTER (WHERE cc.lead_id IS NULL)::bigint AS agg_without_costs
           FROM active_clients ac
           LEFT JOIN client_costs cc ON cc.lead_id = ac.id
     )
