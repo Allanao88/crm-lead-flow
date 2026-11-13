@@ -1,5 +1,6 @@
 import { lazy, Suspense, useCallback, useEffect, useState, type FormEvent } from 'react'
 import { flushSync } from 'react-dom'
+import { Analytics } from '@vercel/analytics/react'
 
 import AuthScreen from './components/AuthScreen'
 import FeedbackMessages from './components/FeedbackMessages'
@@ -314,6 +315,7 @@ function App() {
 
   return (
     <div className="crm-app-canvas min-h-screen text-[var(--color-text-primary)]">
+      <Analytics />
       <FeedbackMessages
         error={showForm ? '' : error}
         notice={notice}
